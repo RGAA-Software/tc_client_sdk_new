@@ -11,17 +11,27 @@
 #include <iostream>
 #include <string>
 
+#include "tc_message.pb.h"
+
 typedef websocketpp::client<websocketpp::config::asio_client> client;
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
+using websocketpp::frame::opcode::value::binary;
+using websocketpp::frame::opcode::value::text;
 
 // pull out the type of messages sent by our config
 typedef websocketpp::config::asio_client::message_type::ptr message_ptr;
 
 namespace tc
 {
+    class Data;
+    class Thread;
+
+    using OnVideoFrameMsgCallback = std::function<void(const VideoFrame& frame)>;
+    using OnAudioFrameMsgCallback = std::function<void(const AudioFrame& frame)>;
+
     class ThunderSdkParams {
     public:
         [[nodiscard]] std::string MakeReqPath() const;
@@ -41,6 +51,13 @@ namespace tc
         bool Init(const ThunderSdkParams& params);
         void Start();
 
+        void PostBinaryMessage(const std::string& msg);
+        void PostBinaryMessage(const std::shared_ptr<Data>& msg);
+        void PostTextMessage(const std::string& msg);
+
+        void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
+        void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
+
     private:
         void OnOpen(client* c, websocketpp::connection_hdl hdl);
         void OnClose(client* c, websocketpp::connection_hdl hdl);
@@ -52,6 +69,12 @@ namespace tc
     private:
 
         std::shared_ptr<client> client_ = nullptr;
+        websocketpp::connection_hdl target_server_;
+
+        OnVideoFrameMsgCallback video_frame_cbk_;
+        OnAudioFrameMsgCallback audio_frame_cbk_;
+
+        bool stop_connecting_ = false;
 
     };
 
