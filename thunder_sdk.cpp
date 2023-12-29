@@ -8,6 +8,9 @@
 #include "tc_common/file.h"
 
 #include "ws_client.h"
+#include "ffmpeg_video_decoder.h"
+#include "raw_image.h"
+#include "tc_message.pb.h"
 
 namespace tc
 {
@@ -38,11 +41,39 @@ namespace tc
     }
 
     void ThunderSdk::Start() {
+        // video decoder
+        video_decoder_ = FFmpegVideoDecoder::Make();
+
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
+        ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
+            bool need_init = video_decoder_->NeedReConstruct(frame.type(), frame.frame_width(), frame.frame_height());
+            if (need_init) {
+                auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height());
+                if (result != 0) {
+                    LOGI("Video decoder init failed!");
+                    return;
+                }
+                LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
+            }
+
+            auto raw_image = video_decoder_->Decode(frame.data());
+            if (!raw_image) {
+                LOGE("Decode failed!");
+                return;
+            }
+
+            if (video_frame_cbk_) {
+                video_frame_cbk_(raw_image);
+            }
+
+        });
+
+        ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
+
+        });
+
         ws_client_->Start();
-
-
     }
 
     void ThunderSdk::Exit() {

@@ -15,7 +15,10 @@ namespace tc
     class Data;
     class Thread;
     class WSClient;
+    class FFmpegVideoDecoder;
+    class RawImage;
 
+    // param
     class ThunderSdkParams {
     public:
         [[nodiscard]] std::string MakeReqPath() const;
@@ -26,6 +29,9 @@ namespace tc
         int port_;
         std::string req_path_;
     };
+
+    // callbacks
+    using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&)>;
 
     class ThunderSdk {
     public:
@@ -39,6 +45,8 @@ namespace tc
         void Start();
         void Exit();
 
+        void RegisterOnVideoFrameDecodedCallback(OnVideoFrameDecodedCallback&& cbk) { this->video_frame_cbk_ = std::move(cbk); }
+
     private:
 
 
@@ -46,7 +54,10 @@ namespace tc
 
         ThunderSdkParams sdk_params_;
         std::shared_ptr<WSClient> ws_client_ = nullptr;
+        std::shared_ptr<FFmpegVideoDecoder> video_decoder_ = nullptr;
 
+        // callbacks
+        OnVideoFrameDecodedCallback video_frame_cbk_;
     };
 
 }

@@ -27,16 +27,22 @@ namespace tc {
     class FFmpegVideoDecoder {
     public:
 
+        static std::shared_ptr<FFmpegVideoDecoder> Make(bool to_rgb = false);
+
         explicit FFmpegVideoDecoder(bool to_rgb = false);
         ~FFmpegVideoDecoder();
 
         int Init(int codec_type, int width, int height);
         std::shared_ptr<RawImage> Decode(const std::shared_ptr<Data>& frame);
+        std::shared_ptr<RawImage> Decode(const std::string& frame);
+        std::shared_ptr<RawImage> Decode(const uint8_t* data, int size);
         void Release();
 
         bool NeedReConstruct(int codec_type, int width, int height);
 
     private:
+
+        bool inited_ = false;
 
         int codec_type_ = -1;
         int frame_width_ = 0;

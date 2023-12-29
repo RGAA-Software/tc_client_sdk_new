@@ -14,6 +14,10 @@
 
 namespace tc {
 
+    std::shared_ptr<FFmpegVideoDecoder> FFmpegVideoDecoder::Make(bool to_rgb) {
+        return std::make_shared<FFmpegVideoDecoder>(to_rgb);
+    }
+
     FFmpegVideoDecoder::FFmpegVideoDecoder(bool to_rgb) {
         this->cvt_to_rgb = to_rgb;
     }
@@ -23,6 +27,10 @@ namespace tc {
     }
 
     int FFmpegVideoDecoder::Init(int codec_type, int width, int height) {
+        if (inited_) {
+            return 0;
+        }
+
         auto format_num = [](int val) -> int {
             auto t = val % 2;
             return val + t;
@@ -85,6 +93,9 @@ namespace tc {
         av_frame = av_frame_alloc();
 
         avcodec_parameters_free(&codec_params);
+
+        inited_ = true;
+
         return 0;
     }
 
@@ -100,6 +111,14 @@ namespace tc {
     }
 
     std::shared_ptr<RawImage> FFmpegVideoDecoder::Decode(const std::shared_ptr<Data>& frame) {
+        return this->Decode((uint8_t*)frame->CStr(), frame->Size());
+    }
+
+    std::shared_ptr<RawImage> FFmpegVideoDecoder::Decode(const std::string& frame) {
+        return this->Decode((uint8_t*)frame.data(), frame.size());
+    }
+
+    std::shared_ptr<RawImage> FFmpegVideoDecoder::Decode(const uint8_t* data, int size) {
         if (!codec_context || !av_frame || stop_) {
             return nullptr;
         }
@@ -108,8 +127,8 @@ namespace tc {
 
         av_frame_unref(av_frame);
 
-        packet->data = (uint8_t*)frame->CStr();
-        packet->size = frame->Size();
+        packet->data = (uint8_t*)data;//frame->CStr();
+        packet->size = size;//frame->Size();
 
         auto format = codec_context->pix_fmt;
 
