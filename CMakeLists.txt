@@ -5,6 +5,9 @@ find_package(FFMPEG REQUIRED)
 
 find_package(libyuv CONFIG REQUIRED)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tc_message)
+
 set(SDK_SRCS
         thunder_sdk.cpp
         ffmpeg_video_decoder.cpp
