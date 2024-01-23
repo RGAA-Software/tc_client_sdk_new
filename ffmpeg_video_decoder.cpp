@@ -7,6 +7,7 @@
 #include "raw_image.h"
 #include "tc_common/data.h"
 #include "tc_message.pb.h"
+#include "tc_common/log.h"
 
 #include <libyuv.h>
 #include <iostream>
@@ -134,11 +135,13 @@ namespace tc {
 
         int ret = avcodec_send_packet(codec_context, packet);
         if (ret != 0) {
+            LOGE("avcodec_send_packet err: {}", ret);
             return nullptr;
         }
 
         ret = avcodec_receive_frame(codec_context, av_frame);
         if (ret != 0) {
+            LOGE("avcodec_receive_frame err: {}", ret);
             return nullptr;
         }
 

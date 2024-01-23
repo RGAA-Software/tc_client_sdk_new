@@ -44,7 +44,7 @@ namespace tc
                     websocketpp::lib::error_code ec;
                     client::connection_ptr con = client_->get_connection(url_, ec);
                     if (ec) {
-                        ALOGI("could not create connection because: %s", ec.message().c_str());
+                        LOGW("could not create connection because: %s", ec.message().c_str());
                     }
 
                     // Note that connect here only requests a connection. No network messages are
@@ -81,12 +81,12 @@ namespace tc
 
     void WSClient::OnOpen(client* c, websocketpp::connection_hdl hdl) {
         target_server_ = hdl;
-        ALOGI("OnOpen");
+        LOGI("OnOpen");
     }
 
     void WSClient::OnClose(client* c, websocketpp::connection_hdl hdl) {
         target_server_.reset();
-        ALOGI("OnClose");
+        LOGI("OnClose");
     }
 
     void WSClient::OnFailed(client* c, websocketpp::connection_hdl hdl) {

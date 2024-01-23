@@ -55,7 +55,6 @@ namespace tc
                     return;
                 }
                 LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
-                ALOGI("Create decoder success %dx%d, type: %d", frame.frame_width(), frame.frame_height(), (int)frame.type());
             }
 
             auto raw_image = video_decoder_->Decode(frame.data());
@@ -64,7 +63,7 @@ namespace tc
                 return;
             }
 
-            ALOGI("decode success: %dx%d", raw_image->img_width, raw_image->img_height);
+            LOGI("decode success: {}x{}", raw_image->img_width, raw_image->img_height);
 
             if (video_frame_cbk_) {
                 video_frame_cbk_(raw_image);
