@@ -57,18 +57,16 @@ namespace tc
                 LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
             }
 
-            auto raw_image = video_decoder_->Decode(frame.data());
-            if (!raw_image) {
-                LOGE("Decode failed!");
-                return;
-            }
+            auto ret = video_decoder_->Decode(frame.data(), [=](const auto& raw_image) {
+                if (!raw_image) {
+                    return;
+                }
+                LOGI("decode success: {}x{}", raw_image->img_width, raw_image->img_height);
 
-            LOGI("decode success: {}x{}", raw_image->img_width, raw_image->img_height);
-
-            if (video_frame_cbk_) {
-                video_frame_cbk_(raw_image);
-            }
-
+                if (video_frame_cbk_) {
+                    video_frame_cbk_(raw_image);
+                }
+            });
         });
 
         ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {

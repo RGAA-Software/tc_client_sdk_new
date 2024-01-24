@@ -13,6 +13,7 @@ extern "C" {
     #include <libswscale/swscale.h>
     #include <libavutil/imgutils.h>
     #include <libavutil/opt.h>
+    #include <libavutil/log.h>
 }
 
 #include <memory>
@@ -24,6 +25,8 @@ namespace tc {
     class Data;
     class RawImage;
 
+    using DecodedCallback = std::function<void(const std::shared_ptr<RawImage>)>;
+
     class FFmpegVideoDecoder {
     public:
 
@@ -33,12 +36,15 @@ namespace tc {
         ~FFmpegVideoDecoder();
 
         int Init(int codec_type, int width, int height);
-        std::shared_ptr<RawImage> Decode(const std::shared_ptr<Data>& frame);
-        std::shared_ptr<RawImage> Decode(const std::string& frame);
-        std::shared_ptr<RawImage> Decode(const uint8_t* data, int size);
+        int Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk);
+        int Decode(const std::string& frame, DecodedCallback&& cbk);
+        int Decode(const uint8_t* data, int size, DecodedCallback&& cbk);
         void Release();
 
         bool NeedReConstruct(int codec_type, int width, int height);
+
+    private:
+        void ListCodecs();
 
     private:
 

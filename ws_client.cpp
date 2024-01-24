@@ -110,7 +110,7 @@ namespace tc
 
         if (net_msg->type() == tc::kVideoFrame) {
             const auto& video_frame = net_msg->video_frame();
-            LOGI("video: {} x {}, index: {}", video_frame.frame_width(), video_frame.frame_height(), video_frame.frame_index());
+            //LOGI("video: {} x {}, index: {}", video_frame.frame_width(), video_frame.frame_height(), video_frame.frame_index());
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }

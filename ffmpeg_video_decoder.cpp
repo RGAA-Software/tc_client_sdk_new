@@ -32,6 +32,25 @@ namespace tc {
             return 0;
         }
 
+        av_log_set_level(AV_LOG_INFO);
+        av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
+            #if defined(__ANDROID__) && defined(ENABLE_FFMPEG_LOG)
+            if (level == AV_LOG_ERROR) {
+                __android_log_vprint(ANDROID_LOG_ERROR, "FFmpeg", fmt, vl);
+            }
+            else if (level == AV_LOG_WARNING) {
+                __android_log_vprint(ANDROID_LOG_WARN, "FFmpeg", fmt, vl);
+            }
+            else {
+                __android_log_vprint(ANDROID_LOG_INFO, "FFmpeg", fmt, vl);
+            }
+            #else
+            vprintf(fmt, vl);
+            #endif
+        });
+
+        ListCodecs();
+
         auto format_num = [](int val) -> int {
             auto t = val % 2;
             return val + t;
@@ -57,37 +76,37 @@ namespace tc {
 
         codec = const_cast<AVCodec*>(avcodec_find_decoder(codec_id));
         if (!codec) {
-            printf("can not find H265 codec\n");
+            LOGE("can not find codec");
             return -1;
         }
 
         codec_context = avcodec_alloc_context3(codec);
         if (codec_context == NULL) {
-            printf("Could not alloc video context!\n");
+            LOGE("Could not alloc video context!");
             return -1;
         }
 
         AVCodecParameters* codec_params = avcodec_parameters_alloc();
         if (avcodec_parameters_from_context(codec_params, codec_context) < 0) {
-            printf("Failed to copy av codec parameters from codec context.");
+            LOGE("Failed to copy av codec parameters from codec context.");
             avcodec_parameters_free(&codec_params);
             avcodec_free_context(&codec_context);
             return -1;
         }
 
         if (!codec_params) {
-            printf("Source codec context is NULL.");
+            LOGE("Source codec context is NULL.");
             return -1;
         }
-        codec_context->thread_count = (int)std::thread::hardware_concurrency()/2;
+        codec_context->thread_count = (int)std::thread::hardware_concurrency();
         codec_context->thread_type = FF_THREAD_SLICE;
         if (avcodec_open2(codec_context, codec, NULL) < 0) {
-            printf("Failed to open decoder");
+            LOGE("Failed to open decoder");
             Release();
             return -1;
         }
 
-        std::cout << "thread count : " << codec_context->thread_count << std::endl;
+        LOGI("Decoder thread count: {}", codec_context->thread_count);
 
         //av_init_packet(&packet);
         packet = av_packet_alloc();
@@ -98,6 +117,24 @@ namespace tc {
         inited_ = true;
 
         return 0;
+    }
+
+    void FFmpegVideoDecoder::ListCodecs() {
+        const AVCodec *codec = NULL;
+        void *opaque = NULL;
+
+        // 使用 av_codec_iterate 遍历所有编解码器
+        LOGI("Available codecs:");
+        while ((codec = av_codec_iterate(&opaque)) != NULL) {
+            if (codec->type == AVMEDIA_TYPE_VIDEO || codec->type == AVMEDIA_TYPE_AUDIO) {
+                if (av_codec_is_encoder(codec)) {
+                    LOGI("Encoder: {}", codec->name);
+                }
+                if (av_codec_is_decoder(codec)) {
+                    LOGI("Decoder: {}", codec->name);
+                }
+            }
+        }
     }
 
     static void I420ToRGB24(unsigned char* yuvData, unsigned char* rgb24, int width, int height) {
@@ -111,17 +148,17 @@ namespace tc {
 
     }
 
-    std::shared_ptr<RawImage> FFmpegVideoDecoder::Decode(const std::shared_ptr<Data>& frame) {
-        return this->Decode((uint8_t*)frame->CStr(), frame->Size());
+    int FFmpegVideoDecoder::Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) {
+        return this->Decode((uint8_t*)frame->CStr(), frame->Size(), std::move(cbk));
     }
 
-    std::shared_ptr<RawImage> FFmpegVideoDecoder::Decode(const std::string& frame) {
-        return this->Decode((uint8_t*)frame.data(), frame.size());
+    int FFmpegVideoDecoder::Decode(const std::string& frame, DecodedCallback&& cbk) {
+        return this->Decode((uint8_t*)frame.data(), frame.size(), std::move(cbk));
     }
 
-    std::shared_ptr<RawImage> FFmpegVideoDecoder::Decode(const uint8_t* data, int size) {
+    int FFmpegVideoDecoder::Decode(const uint8_t* data, int size, DecodedCallback&& cbk) {
         if (!codec_context || !av_frame || stop_) {
-            return nullptr;
+            return -1;
         }
 
         std::lock_guard<std::mutex> guard(decode_mtx_);
@@ -134,64 +171,76 @@ namespace tc {
         auto format = codec_context->pix_fmt;
 
         int ret = avcodec_send_packet(codec_context, packet);
-        if (ret != 0) {
+        if (ret < 0) {
             LOGE("avcodec_send_packet err: {}", ret);
-            return nullptr;
+            return ret;
         }
 
-        ret = avcodec_receive_frame(codec_context, av_frame);
-        if (ret != 0) {
-            LOGE("avcodec_receive_frame err: {}", ret);
-            return nullptr;
+        while (ret == 0) {
+            ret = avcodec_receive_frame(codec_context, av_frame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                //LOGE("avcodec_receive_frame again...");
+                break;
+            } else if (ret < 0) {
+                LOGI("avcodec_receive_frame error: {}", ret);
+                break;
+            }
+
+            auto width = av_frame->width;
+            auto height = av_frame->height;
+
+            auto x1 = av_frame->linesize[0];
+            auto x2 = av_frame->linesize[1];
+            auto x3 = av_frame->linesize[2];
+            width = x1;
+
+            if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
+                frame_width_ = std::min(frame_width_, width);
+                frame_height_ = std::min(frame_height_, height);
+                if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
+                    frame_height_ != decoded_image_->img_height) {
+                    decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5,
+                                                        frame_width_, frame_height_);
+                }
+                char *buffer = decoded_image_->Data();
+                for (int i = 0; i < frame_height_; i++) {
+                    memcpy(buffer + frame_width_ * i, av_frame->data[0] + width * i, frame_width_);
+                }
+
+                int y_offset = frame_width_ * frame_height_;
+                for (int j = 0; j < frame_height_ / 2; j++) {
+                    memcpy(buffer + y_offset + (frame_width_ / 2 * j),
+                           av_frame->data[1] + width / 2 * j, frame_width_ / 2);
+                }
+
+                int yu_offset = y_offset + (frame_width_ / 2) * (frame_height_ / 2);
+                for (int k = 0; k < frame_height_ / 2; k++) {
+                    memcpy(buffer + yu_offset + (frame_width_ / 2 * k),
+                           av_frame->data[2] + width / 2 * k, frame_width_ / 2);
+                }
+            }
+
+            if (decoded_image_ && !stop_) {
+                if (cvt_to_rgb) {
+                    auto rgb = RawImage::MakeRGB(nullptr, frame_width_ * frame_height_ * 3,
+                                                 frame_width_, frame_height_);
+                    auto rgb_data = rgb->Data();
+                    auto yuv_data = decoded_image_->Data();
+                    I420ToRGB24((uint8_t *) yuv_data, (uint8_t *) rgb_data, frame_width_,
+                                frame_height_);
+                    cbk(rgb);
+                    return 0;
+                }
+                else {
+                    cbk(decoded_image_);
+                }
+            }
+
+            //
+            av_frame_unref(av_frame);
         }
-
-        auto width = av_frame->width;
-        auto height = av_frame->height;
-
-        auto x1 = av_frame->linesize[0];
-        auto x2 = av_frame->linesize[1];
-        auto x3 = av_frame->linesize[2];
-        width = x1;
-
-        if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
-            //std::cout << "width : " << width << " height : " << height << " frame width : " << frame_width_ << " frame height : " << frame_height_ << std::endl;
-            //image = RawImage::MakeI420(nullptr, width * height * 1.5, width, height);
-            //char* buffer = image->Data();
-            //memcpy(buffer, av_frame->data[0], width * height);
-            //memcpy(buffer + (width * height), av_frame->data[1], width * height / 4);
-            //memcpy(buffer + (width * height * 5 / 4), av_frame->data[2], width * height / 4);
-
-            frame_width_ = std::min(frame_width_, width);
-            frame_height_ = std::min(frame_height_, height);
-            if (!decoded_image_ || frame_width_ != decoded_image_->img_width || frame_height_ != decoded_image_->img_height) {
-                decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5, frame_width_, frame_height_);
-            }
-            char* buffer = decoded_image_->Data();
-            for (int i = 0; i < frame_height_; i++) {
-                memcpy(buffer + frame_width_*i, av_frame->data[0] + width*i, frame_width_);
-            }
-
-            int y_offset = frame_width_ * frame_height_;
-            for (int j = 0; j < frame_height_ / 2; j++) {
-                memcpy(buffer + y_offset + (frame_width_/2 * j), av_frame->data[1] + width/2 * j, frame_width_/2);
-            }
-
-            int yu_offset = y_offset + (frame_width_ / 2) * (frame_height_ / 2);
-            for (int k = 0; k < frame_height_ / 2; k++) {
-                memcpy(buffer + yu_offset + (frame_width_/2 * k), av_frame->data[2] + width/2 * k, frame_width_/2);
-            }
-        }
-
-        if (decoded_image_ && !stop_) {
-            if (cvt_to_rgb) {
-                auto rgb = RawImage::MakeRGB(nullptr, frame_width_ * frame_height_ * 3, frame_width_, frame_height_);
-                auto rgb_data = rgb->Data();
-                auto yuv_data = decoded_image_->Data();
-                I420ToRGB24((uint8_t*)yuv_data, (uint8_t*)rgb_data, frame_width_, frame_height_);
-                return rgb;
-            }
-        }
-        return decoded_image_;
+        av_packet_unref(packet);
+        return 0;
     }
 
     void FFmpegVideoDecoder::Release() {
