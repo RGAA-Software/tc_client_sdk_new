@@ -100,7 +100,7 @@ namespace tc
         this->ParseMessage(msg->get_payload());
     }
 
-    static FilePtr video_file = File::OpenForAppendB("1.recv.h265");
+    static FilePtr video_file = File::OpenForWriteB("1.recv.h265");
     void WSClient::ParseMessage(const std::string& msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParseFromString(msg);
