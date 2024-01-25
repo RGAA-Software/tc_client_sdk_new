@@ -27,6 +27,8 @@ namespace tc
 		int Size();
 		RawImageFormat Format();
 
+		std::shared_ptr<RawImage> Clone();
+
 	public:
 
 		char*	img_buf = nullptr;

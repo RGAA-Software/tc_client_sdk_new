@@ -1,4 +1,5 @@
 ﻿#include "raw_image.h"
+#include "tc_common/log.h"
 
 namespace tc
 {
@@ -51,6 +52,10 @@ namespace tc
 
 	RawImageFormat RawImage::Format() {
 		return img_format;
+	}
+
+	std::shared_ptr<RawImage> RawImage::Clone() {
+		return std::make_shared<RawImage>(img_buf, img_buf_size, img_width, img_height, img_ch, img_format);
 	}
 
 }

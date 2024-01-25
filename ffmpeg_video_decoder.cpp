@@ -34,7 +34,8 @@ namespace tc {
 
         av_log_set_level(AV_LOG_INFO);
         av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
-            #if defined(__ANDROID__) && defined(ENABLE_FFMPEG_LOG)
+        #if defined(__ANDROID__)
+            #if defined(ENABLE_FFMPEG_LOG)
             if (level == AV_LOG_ERROR) {
                 __android_log_vprint(ANDROID_LOG_ERROR, "FFmpeg", fmt, vl);
             }
@@ -44,12 +45,13 @@ namespace tc {
             else {
                 __android_log_vprint(ANDROID_LOG_INFO, "FFmpeg", fmt, vl);
             }
-            #else
-            vprintf(fmt, vl);
             #endif
+        #else
+            vprintf(fmt, vl);
+        #endif
         });
 
-        ListCodecs();
+        //ListCodecs();
 
         auto format_num = [](int val) -> int {
             auto t = val % 2;
@@ -75,6 +77,7 @@ namespace tc {
         }
 
         codec = const_cast<AVCodec*>(avcodec_find_decoder(codec_id));
+//        codec = const_cast<AVCodec*>(avcodec_find_decoder_by_name("hevc"));
         if (!codec) {
             LOGE("can not find codec");
             return -1;
@@ -128,7 +131,7 @@ namespace tc {
         while ((codec = av_codec_iterate(&opaque)) != NULL) {
             if (codec->type == AVMEDIA_TYPE_VIDEO || codec->type == AVMEDIA_TYPE_AUDIO) {
                 if (av_codec_is_encoder(codec)) {
-                    LOGI("Encoder: {}", codec->name);
+                    //LOGI("Encoder: {}", codec->name);
                 }
                 if (av_codec_is_decoder(codec)) {
                     LOGI("Decoder: {}", codec->name);
