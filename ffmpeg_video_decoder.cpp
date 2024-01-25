@@ -47,7 +47,9 @@ namespace tc {
             }
             #endif
         #else
+            #if defined(ENABLE_FFMPEG_LOG)
             vprintf(fmt, vl);
+            #endif
         #endif
         });
 
@@ -101,7 +103,7 @@ namespace tc {
             LOGE("Source codec context is NULL.");
             return -1;
         }
-        codec_context->thread_count = (int)std::thread::hardware_concurrency();
+        codec_context->thread_count = std::min(4, (int)std::thread::hardware_concurrency()/2);
         codec_context->thread_type = FF_THREAD_SLICE;
         if (avcodec_open2(codec_context, codec, NULL) < 0) {
             LOGE("Failed to open decoder");

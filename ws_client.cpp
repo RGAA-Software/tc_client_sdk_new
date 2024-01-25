@@ -8,6 +8,7 @@
 #include "tc_common/log.h"
 #include "tc_common/data.h"
 #include "tc_common/thread.h"
+#include "tc_common/file.h"
 
 namespace tc
 {
@@ -28,7 +29,7 @@ namespace tc
         auto conn_task = [=, this]() {
             while (!stop_connecting_) {
                 client_ = std::make_shared<client>();
-                LOGI("URL: %s", url_.c_str());
+                LOGI("URL: {}", url_.c_str());
 
                 try {
                     // Set logging to be pretty verbose (everything except message payloads)
@@ -99,7 +100,7 @@ namespace tc
         this->ParseMessage(msg->get_payload());
     }
 
-    //static FilePtr video_file = File::OpenForAppendB("1.recv.h264");
+    static FilePtr video_file = File::OpenForAppendB("1.recv.h265");
     void WSClient::ParseMessage(const std::string& msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParseFromString(msg);
@@ -114,8 +115,10 @@ namespace tc
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }
-            //auto data = net_msg->video_frame().data();
-            //video_file->Append(data);
+#if 1
+            auto data = net_msg->video_frame().data();
+            video_file->Append(data);
+#endif
         }
 
     }
