@@ -17,6 +17,7 @@ namespace tc
     class WSClient;
     class FFmpegVideoDecoder;
     class RawImage;
+    class MessageNotifier;
 
     // param
     class ThunderSdkParams {
@@ -36,9 +37,9 @@ namespace tc
     class ThunderSdk {
     public:
 
-        static std::shared_ptr<ThunderSdk> Make();
+        static std::shared_ptr<ThunderSdk> Make(const std::shared_ptr<MessageNotifier>& notifier);
 
-        ThunderSdk();
+        ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
         ~ThunderSdk();
 
         bool Init(const ThunderSdkParams& params);
@@ -49,15 +50,18 @@ namespace tc
 
     private:
 
+        void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image);
 
     private:
-
+        std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
         ThunderSdkParams sdk_params_;
         std::shared_ptr<WSClient> ws_client_ = nullptr;
         std::shared_ptr<FFmpegVideoDecoder> video_decoder_ = nullptr;
 
         // callbacks
         OnVideoFrameDecodedCallback video_frame_cbk_;
+
+        bool first_frame_ = false;
     };
 
 }

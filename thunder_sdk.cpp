@@ -6,11 +6,13 @@
 
 #include "tc_common/log.h"
 #include "tc_common/file.h"
+#include "tc_common/message_notifier.h"
 
 #include "ws_client.h"
 #include "ffmpeg_video_decoder.h"
 #include "raw_image.h"
 #include "tc_message.pb.h"
+#include "sdk_messages.h"
 
 namespace tc
 {
@@ -22,12 +24,12 @@ namespace tc
 
     ///
 
-    std::shared_ptr<ThunderSdk> ThunderSdk::Make() {
-        return std::make_shared<ThunderSdk>();
+    std::shared_ptr<ThunderSdk> ThunderSdk::Make(const std::shared_ptr<MessageNotifier>& notifier) {
+        return std::make_shared<ThunderSdk>(notifier);
     }
 
-    ThunderSdk::ThunderSdk() {
-
+    ThunderSdk::ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier) {
+        this->msg_notifier_ = notifier;
     }
 
     ThunderSdk::~ThunderSdk() {
@@ -61,12 +63,19 @@ namespace tc
                 if (!raw_image) {
                     return;
                 }
-                //LOGI("decode success: {}x{}", raw_image->img_width, raw_image->img_height);
 
                 if (video_frame_cbk_) {
                     video_frame_cbk_(raw_image);
                 }
+
+                if (!first_frame_) {
+                    first_frame_ = true;
+                    SendFirstFrameMessage(raw_image);
+                }
             });
+            if (ret != 0) {
+                LOGE("decode error: {}", ret);
+            }
         });
 
         ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
@@ -78,6 +87,12 @@ namespace tc
 
     void ThunderSdk::Exit() {
 
+    }
+
+    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image) {
+        MsgFirstFrameDecoded msg;
+        msg.raw_image_ = image;
+        msg_notifier_->SendAppMessage(msg);
     }
 
 }

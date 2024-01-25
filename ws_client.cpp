@@ -115,7 +115,7 @@ namespace tc
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }
-#if 1
+#if 0
             auto data = net_msg->video_frame().data();
             video_file->Append(data);
 #endif
