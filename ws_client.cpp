@@ -28,7 +28,7 @@ namespace tc
         auto conn_task = [=, this]() {
             while (!stop_connecting_) {
                 client_ = std::make_shared<client>();
-                ALOGI("URL: %s", url_.c_str());
+                LOGI("URL: %s", url_.c_str());
 
                 try {
                     // Set logging to be pretty verbose (everything except message payloads)
