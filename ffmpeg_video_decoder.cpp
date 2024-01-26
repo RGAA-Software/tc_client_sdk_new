@@ -13,14 +13,15 @@
 #include <iostream>
 #include <thread>
 
-namespace tc {
+namespace tc
+{
 
-    std::shared_ptr<FFmpegVideoDecoder> FFmpegVideoDecoder::Make(bool to_rgb) {
-        return std::make_shared<FFmpegVideoDecoder>(to_rgb);
+    std::shared_ptr<FFmpegVideoDecoder> FFmpegVideoDecoder::Make() {
+        return std::make_shared<FFmpegVideoDecoder>();
     }
 
-    FFmpegVideoDecoder::FFmpegVideoDecoder(bool to_rgb) {
-        this->cvt_to_rgb = to_rgb;
+    FFmpegVideoDecoder::FFmpegVideoDecoder() : VideoDecoder() {
+
     }
 
     FFmpegVideoDecoder::~FFmpegVideoDecoder() {
@@ -113,7 +114,6 @@ namespace tc {
 
         LOGI("Decoder thread count: {}", codec_context->thread_count);
 
-        //av_init_packet(&packet);
         packet = av_packet_alloc();
         av_frame = av_frame_alloc();
 
@@ -142,15 +142,13 @@ namespace tc {
         }
     }
 
-    static void I420ToRGB24(unsigned char* yuvData, unsigned char* rgb24, int width, int height) {
-
-        unsigned char* ybase = yuvData;
-        unsigned char* ubase = &yuvData[width * height];
-        unsigned char* vbase = &yuvData[width * height * 5 / 4];
-        libyuv::I420ToRGB24(ybase, width, ubase, width / 2, vbase, width / 2,
+    static void I420ToRGB24(unsigned char* yuv_data, unsigned char* rgb24, int width, int height) {
+        unsigned char* y = yuv_data;
+        unsigned char* u = &yuv_data[width * height];
+        unsigned char* v = &yuv_data[width * height * 5 / 4];
+        libyuv::I420ToRGB24(y, width, u, width / 2, v, width / 2,
                             rgb24,
                             width * 3, width, height);
-
     }
 
     int FFmpegVideoDecoder::Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) {
@@ -226,7 +224,7 @@ namespace tc {
             }
 
             if (decoded_image_ && !stop_) {
-                if (cvt_to_rgb) {
+                if (cvt_to_rgb_) {
                     auto rgb = RawImage::MakeRGB(nullptr, frame_width_ * frame_height_ * 3,
                                                  frame_width_, frame_height_);
                     auto rgb_data = rgb->Data();
@@ -265,8 +263,7 @@ namespace tc {
         av_packet_free(&packet);
     }
 
-    bool FFmpegVideoDecoder::NeedReConstruct(int codec_type, int width, int height) {
-        return codec_type != this->codec_type_ || width != this->frame_width_ || height != this->frame_height_;
+    void FFmpegVideoDecoder::EnableToRGBFormat() {
+        this->cvt_to_rgb_ = true;
     }
-
 }

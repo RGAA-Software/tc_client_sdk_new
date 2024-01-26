@@ -11,7 +11,9 @@ include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/eventbus/src)
 
 set(SDK_SRCS
         thunder_sdk.cpp
+        video_decoder.cpp
         ffmpeg_video_decoder.cpp
+        mediacodec_video_decoder.cpp
         raw_image.cpp
         ws_client.cpp
 )

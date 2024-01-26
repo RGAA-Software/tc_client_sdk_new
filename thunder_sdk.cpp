@@ -9,7 +9,7 @@
 #include "tc_common/message_notifier.h"
 
 #include "ws_client.h"
-#include "ffmpeg_video_decoder.h"
+#include "video_decoder_factory.h"
 #include "raw_image.h"
 #include "tc_message.pb.h"
 #include "sdk_messages.h"
@@ -49,6 +49,9 @@ namespace tc
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
+            if (exit_) {
+                return;
+            }
             bool need_init = video_decoder_->NeedReConstruct(frame.type(), frame.frame_width(), frame.frame_height());
             if (need_init) {
                 auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height());
@@ -60,6 +63,9 @@ namespace tc
             }
 
             auto ret = video_decoder_->Decode(frame.data(), [=](const auto& raw_image) {
+                if (exit_) {
+                    return;
+                }
                 if (!raw_image) {
                     return;
                 }
@@ -86,7 +92,11 @@ namespace tc
     }
 
     void ThunderSdk::Exit() {
+        exit_ = true;
 
+        if (ws_client_) {
+            ws_client_->Exit();
+        }
     }
 
     void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image) {

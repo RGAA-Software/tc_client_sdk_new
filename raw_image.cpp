@@ -58,4 +58,10 @@ namespace tc
 		return std::make_shared<RawImage>(img_buf, img_buf_size, img_width, img_height, img_ch, img_format);
 	}
 
+	void RawImage::CopyTo(const std::shared_ptr<RawImage>& target) {
+		if (target->Size() >= this->Size()) {
+			memcpy(target->Data(), this->Data(), this->Size());
+		}
+	}
+
 }

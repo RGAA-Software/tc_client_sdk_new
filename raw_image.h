@@ -28,6 +28,7 @@ namespace tc
 		RawImageFormat Format();
 
 		std::shared_ptr<RawImage> Clone();
+		void CopyTo(const std::shared_ptr<RawImage>& target);
 
 	public:
 

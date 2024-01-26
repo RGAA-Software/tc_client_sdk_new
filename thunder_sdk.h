@@ -62,6 +62,8 @@ namespace tc
         OnVideoFrameDecodedCallback video_frame_cbk_;
 
         bool first_frame_ = false;
+
+        bool exit_ = false;
     };
 
 }

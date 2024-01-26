@@ -16,44 +16,31 @@ extern "C" {
     #include <libavutil/log.h>
 }
 
-#include <memory>
-#include <functional>
-#include <mutex>
+#include "video_decoder.h"
 
 namespace tc {
 
-    class Data;
-    class RawImage;
-
-    using DecodedCallback = std::function<void(const std::shared_ptr<RawImage>)>;
-
-    class FFmpegVideoDecoder {
+    class FFmpegVideoDecoder : public VideoDecoder {
     public:
 
-        static std::shared_ptr<FFmpegVideoDecoder> Make(bool to_rgb = false);
+        static std::shared_ptr<FFmpegVideoDecoder> Make();
 
-        explicit FFmpegVideoDecoder(bool to_rgb = false);
-        ~FFmpegVideoDecoder();
+        explicit FFmpegVideoDecoder();
+        ~FFmpegVideoDecoder() override;
 
-        int Init(int codec_type, int width, int height);
-        int Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk);
-        int Decode(const std::string& frame, DecodedCallback&& cbk);
-        int Decode(const uint8_t* data, int size, DecodedCallback&& cbk);
-        void Release();
+        int Init(int codec_type, int width, int height) override;
+        int Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) override;
+        int Decode(const std::string& frame, DecodedCallback&& cbk) override;
+        int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) override;
+        void Release() override;
 
-        bool NeedReConstruct(int codec_type, int width, int height);
+        void EnableToRGBFormat();
 
     private:
         void ListCodecs();
 
     private:
 
-        bool inited_ = false;
-
-        int codec_type_ = -1;
-        int frame_width_ = 0;
-        int frame_height_ = 0;
-        bool stop_ = false;
         AVCodecContext* codec_context = nullptr;
         AVCodec* codec = nullptr;
         AVPacket* packet = nullptr;
@@ -61,9 +48,7 @@ namespace tc {
 
         std::shared_ptr<RawImage> decoded_image_ = nullptr;
 
-        bool cvt_to_rgb = false;
-
-        std::mutex decode_mtx_;
+        bool cvt_to_rgb_ = false;
 
     };
 
