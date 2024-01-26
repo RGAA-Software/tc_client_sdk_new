@@ -9,6 +9,10 @@
 #include <memory>
 #include <functional>
 
+#include <media/NdkMediaCodec.h>
+#include <media/NdkMediaExtractor.h>
+#include <media/NdkMediaFormat.h>
+
 #include "video_decoder.h"
 
 namespace tc
@@ -22,10 +26,13 @@ namespace tc
         ~MediacodecVideoDecoder() override;
 
         int Init(int codec_type, int width, int height) override;
-        int Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) override;
-        int Decode(const std::string& frame, DecodedCallback&& cbk) override;
         int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) override;
         void Release() override;
+
+    private:
+
+        AMediaCodec* media_codec_ = nullptr;
+        AMediaFormat* media_format_ = nullptr;
 
     };
 }

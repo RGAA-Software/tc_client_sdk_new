@@ -24,7 +24,7 @@ namespace tc
         virtual int Init(int codec_type, int width, int height);
         virtual int Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk);
         virtual int Decode(const std::string& frame, DecodedCallback&& cbk);
-        virtual int Decode(const uint8_t* data, int size, DecodedCallback&& cbk);
+        virtual int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) = 0;
         virtual void Release();
         virtual bool NeedReConstruct(int codec_type, int width, int height);
 

@@ -4,6 +4,8 @@
 
 #include "video_decoder.h"
 
+#include "tc_common/data.h"
+
 namespace tc
 {
 
@@ -20,15 +22,11 @@ namespace tc
     }
 
     int VideoDecoder::Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) {
-        return -1;
+        return this->Decode((uint8_t*)frame->CStr(), frame->Size(), std::move(cbk));
     }
 
     int VideoDecoder::Decode(const std::string& frame, DecodedCallback&& cbk) {
-        return -1;
-    }
-
-    int VideoDecoder::Decode(const uint8_t* data, int size, DecodedCallback&& cbk) {
-        return -1;
+        return this->Decode((uint8_t*)frame.data(), frame.size(), std::move(cbk));
     }
 
     void VideoDecoder::Release() {

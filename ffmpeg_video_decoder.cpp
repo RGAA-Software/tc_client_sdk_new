@@ -62,8 +62,8 @@ namespace tc
         };
 
         this->codec_type_ = codec_type;
-        this->frame_width_ = format_num(width);
-        this->frame_height_ = format_num(height);
+        this->frame_width_ = width;//format_num(width);
+        this->frame_height_ = height;//format_num(height);
         AVCodecID codec_id = AV_CODEC_ID_NONE;
         if (codec_type == VideoType::kNetH264) {
             codec_id = AV_CODEC_ID_H264;
@@ -80,7 +80,6 @@ namespace tc
         }
 
         codec = const_cast<AVCodec*>(avcodec_find_decoder(codec_id));
-//        codec = const_cast<AVCodec*>(avcodec_find_decoder_by_name("hevc"));
         if (!codec) {
             LOGE("can not find codec");
             return -1;
@@ -149,14 +148,6 @@ namespace tc
         libyuv::I420ToRGB24(y, width, u, width / 2, v, width / 2,
                             rgb24,
                             width * 3, width, height);
-    }
-
-    int FFmpegVideoDecoder::Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) {
-        return this->Decode((uint8_t*)frame->CStr(), frame->Size(), std::move(cbk));
-    }
-
-    int FFmpegVideoDecoder::Decode(const std::string& frame, DecodedCallback&& cbk) {
-        return this->Decode((uint8_t*)frame.data(), frame.size(), std::move(cbk));
     }
 
     int FFmpegVideoDecoder::Decode(const uint8_t* data, int size, DecodedCallback&& cbk) {
