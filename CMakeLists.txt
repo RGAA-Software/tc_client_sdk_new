@@ -16,6 +16,7 @@ set(SDK_SRCS
         mediacodec_video_decoder.cpp
         raw_image.cpp
         ws_client.cpp
+        stream_helper.cpp
 )
 
 add_library(tc_sdk ${SDK_SRCS})

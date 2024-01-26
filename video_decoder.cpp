@@ -17,10 +17,6 @@ namespace tc
 
     }
 
-    int VideoDecoder::Init(int codec_type, int width, int height) {
-        return -1;
-    }
-
     int VideoDecoder::Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) {
         return this->Decode((uint8_t*)frame->CStr(), frame->Size(), std::move(cbk));
     }

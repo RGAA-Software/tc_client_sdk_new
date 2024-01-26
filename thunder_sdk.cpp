@@ -36,9 +36,10 @@ namespace tc
 
     }
 
-    bool ThunderSdk::Init(const ThunderSdkParams& params, bool hw_codec) {
+    bool ThunderSdk::Init(const ThunderSdkParams& params, void* surface, bool hw_codec) {
         sdk_params_ = params;
         hw_codec_ = hw_codec;
+        render_surface_ = surface;
         return true;
     }
 
@@ -48,13 +49,13 @@ namespace tc
 
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
-        ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
+        ws_client_->SetOnVideoFrameMsgCallback([=](const VideoFrame& frame) {
             if (exit_) {
                 return;
             }
             bool need_init = video_decoder_->NeedReConstruct(frame.type(), frame.frame_width(), frame.frame_height());
             if (need_init) {
-                auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height());
+                auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_);
                 if (result != 0) {
                     LOGI("Video decoder init failed!");
                     return;
@@ -84,7 +85,7 @@ namespace tc
             }
         });
 
-        ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
+        ws_client_->SetOnAudioFrameMsgCallback([=](const AudioFrame& frame) {
 
         });
 
@@ -96,6 +97,10 @@ namespace tc
 
         if (ws_client_) {
             ws_client_->Exit();
+        }
+
+        if (video_decoder_) {
+            video_decoder_->Release();
         }
     }
 

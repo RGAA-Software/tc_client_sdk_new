@@ -8,9 +8,13 @@
 
 #include "tc_common/log.h"
 #include "raw_image.h"
+#include "stream_helper.h"
 
 namespace tc
 {
+
+    const int32_t kCOLOR_FormatSurface = 0x7f000789;
+    const int32_t kCOLOR_FormatYUV420SemiPlanar = 0x00000015;
 
     static int64_t getTimeNsec() {
         struct timespec now;
@@ -45,19 +49,77 @@ namespace tc
 
     }
 
-    int MediacodecVideoDecoder::Init(int codec_type, int width, int height) {
-        media_codec_ = AMediaCodec_createDecoderByType("video/avc");//h264
+    int MediacodecVideoDecoder::Init(int codec_type, int width, int height, const std::string& frame, void* surface) {
+        std::lock_guard<std::mutex> guard(decode_mtx_);
+        auto decoder_name = [&]() -> std::string {
+            if (codec_type == 1) {
+                return "video/hevc";
+            }
+            else {
+                return "video/avc";
+            }
+        }();
+
+        auto use_oes = surface != nullptr;
+        std::string csd0;
+        std::string csd1;
+        if (use_oes) {
+            auto in_frame_data = frame.data();
+            auto in_frame_size = frame.size();
+            size_t sps_size, pps_size;
+            std::string sps_buf;
+            std::string pps_buf;
+            sps_buf.resize(in_frame_size + 20);
+            pps_buf.resize(in_frame_size + 20);
+
+            if(codec_type == 0) {
+                if (0 != StreamHelper::ConvertH264SPSPPS((const uint8_t *) in_frame_data, (size_t) in_frame_size,
+                                               (uint8_t *) sps_buf.data(), &sps_size,
+                                               (uint8_t *) pps_buf.data(), &pps_size)) {
+                    LOGE("{}: convert_sps_pps: failed\n", __func__);
+                    return -1;
+                }
+                csd0 = pps_buf.substr(0,pps_size);
+                csd1 = sps_buf.substr(0,sps_size);
+            }
+            else
+            {
+                csd0 = StreamHelper::ConvertVPSH265SPSPPS((const uint8_t *) in_frame_data, (size_t) in_frame_size);
+                if (csd0.empty()) {
+                    LOGE("{} :convert_sps_pps: failed\n", __func__);
+                    return -1;
+                }
+            }
+
+            LOGI("csd0: {} size: {}, csd1: {}, size: {}", csd0.c_str(), csd0.size(), csd1.c_str(), csd1.size());
+        }
+
+        media_codec_ = AMediaCodec_createDecoderByType(decoder_name.c_str());
         media_format_ = AMediaFormat_new();
-        AMediaFormat_setString(media_format_, "mime", "video/avc");
+        AMediaFormat_setString(media_format_, "mime", decoder_name.c_str());
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_WIDTH, width);
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_HEIGHT, height);
+//        AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_COLOR_FORMAT, kCOLOR_FormatYUV420SemiPlanar);
+        //AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_FRAME_RATE, 60);
+        if (!csd0.empty()) {
+            AMediaFormat_setBuffer(media_format_, "csd-0", csd0.c_str(), csd0.size());
+        }
+        if (!csd1.empty()) {
+            AMediaFormat_setBuffer(media_format_, "csd-1", csd1.c_str(), csd1.size());
+        }
 
+        LOGI("decoder name: {}, surface: {}", decoder_name, surface);
+        ANativeWindow* target = use_oes ? (ANativeWindow*)(surface) : nullptr;
         media_status_t status = AMediaCodec_configure(media_codec_, media_format_,
-                                                      NULL,/*可以在这制定native surface, 直接渲染*/
-                                                      NULL,
+                                                      target,
+                                                      nullptr,
                                                       0);//解码，flags 给0，编码给AMEDIACODEC_CONFIGURE_FLAG_ENCODE
         if (status != AMEDIA_OK) {
             LOGE("error config {}", (int) status);
+            AMediaCodec_delete(media_codec_);
+            AMediaFormat_delete(media_format_);
+            media_codec_ = nullptr;
+            media_format_ = nullptr;
             return -1;
         }
 
@@ -94,33 +156,31 @@ namespace tc
             buf_idx = AMediaCodec_dequeueOutputBuffer(media_codec_, &info, 2000);
             if (buf_idx >= 0) {
                 size_t out_buf_size;
-                uint8_t *buf = NULL;
+                uint8_t* buf = nullptr;
                 int real_frame_size = 0;
-                int mWidth, mHeight;
                 auto format = AMediaCodec_getOutputFormat(media_codec_);
-                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &mWidth);
-                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &mHeight);
-                int32_t localColorFMT;
-                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &localColorFMT);
+                int width, height;
+                AMediaFormat_getInt32(format, "width", &width);
+                AMediaFormat_getInt32(format, "height", &height);
+                int32_t color_format;
+                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT,&color_format);
                 real_frame_size = info.size;
                 buf = AMediaCodec_getOutputBuffer(media_codec_, buf_idx, &out_buf_size);
 
-                //LOGI("out:[{}]X[{}], format: {}, real_frame_size:{}, buf_size: {} ", mWidth, mHeight, localColorFMT, real_frame_size, out_buf_size); //21 == nv21
+                LOGI("out:[{}]X[{}], format: {}, real_frame_size:{}, buf_size: {} ", width, height, color_format, real_frame_size, out_buf_size); //21 == nv21
                 if (buf && cbk && real_frame_size > 0) {
-                    auto image = RawImage::Make((char*)buf, real_frame_size, mWidth, mHeight, -1, RawImageFormat::kNV12);
+                    auto image = RawImage::Make((char*)buf, real_frame_size, width, height, -1, RawImageFormat::kNV12);
                     cbk(image);
                 }
                 AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, false);
 
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
-                int mWidth, mHeight;
+                int width, height;
                 auto format = AMediaCodec_getOutputFormat(media_codec_);
-                AMediaFormat_getInt32(format, "width", &mWidth);
-                AMediaFormat_getInt32(format, "height", &mHeight);
-                int32_t localColorFMT;
-
-                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT,
-                                      &localColorFMT);
+                AMediaFormat_getInt32(format, "width", &width);
+                AMediaFormat_getInt32(format, "height", &height);
+                int32_t color_format;
+                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT,&color_format);
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_BUFFERS_CHANGED) {
 
             } else {
@@ -132,9 +192,9 @@ namespace tc
     }
 
     void MediacodecVideoDecoder::Release() {
+        std::lock_guard<std::mutex> guard(decode_mtx_);
         VideoDecoder::Release();
         if (media_codec_) {
-            AMediaCodec_flush(media_codec_);
             AMediaCodec_stop(media_codec_);
             AMediaCodec_delete(media_codec_);
         }

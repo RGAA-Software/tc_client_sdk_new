@@ -42,7 +42,7 @@ namespace tc
         ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
         ~ThunderSdk();
 
-        bool Init(const ThunderSdkParams& params, bool hw_codec);
+        bool Init(const ThunderSdkParams& params, void* surface, bool hw_codec);
         void Start();
         void Exit();
 
@@ -57,6 +57,9 @@ namespace tc
         ThunderSdkParams sdk_params_;
         std::shared_ptr<WSClient> ws_client_ = nullptr;
         std::shared_ptr<VideoDecoder> video_decoder_ = nullptr;
+
+        // for android
+        void* render_surface_ = nullptr;
 
         // callbacks
         OnVideoFrameDecodedCallback video_frame_cbk_;
