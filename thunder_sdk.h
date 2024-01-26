@@ -15,7 +15,7 @@ namespace tc
     class Data;
     class Thread;
     class WSClient;
-    class FFmpegVideoDecoder;
+    class VideoDecoder;
     class RawImage;
     class MessageNotifier;
 
@@ -42,7 +42,7 @@ namespace tc
         ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
         ~ThunderSdk();
 
-        bool Init(const ThunderSdkParams& params);
+        bool Init(const ThunderSdkParams& params, bool hw_codec);
         void Start();
         void Exit();
 
@@ -56,13 +56,13 @@ namespace tc
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
         ThunderSdkParams sdk_params_;
         std::shared_ptr<WSClient> ws_client_ = nullptr;
-        std::shared_ptr<FFmpegVideoDecoder> video_decoder_ = nullptr;
+        std::shared_ptr<VideoDecoder> video_decoder_ = nullptr;
 
         // callbacks
         OnVideoFrameDecodedCallback video_frame_cbk_;
 
         bool first_frame_ = false;
-
+        bool hw_codec_ = false;
         bool exit_ = false;
     };
 

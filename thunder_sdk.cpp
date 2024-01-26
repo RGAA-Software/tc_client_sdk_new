@@ -36,15 +36,15 @@ namespace tc
 
     }
 
-    bool ThunderSdk::Init(const ThunderSdkParams& params) {
+    bool ThunderSdk::Init(const ThunderSdkParams& params, bool hw_codec) {
         sdk_params_ = params;
-
+        hw_codec_ = hw_codec;
         return true;
     }
 
     void ThunderSdk::Start() {
         // video decoder
-        video_decoder_ = FFmpegVideoDecoder::Make();
+        video_decoder_ = VideoDecoderFactory::Make(hw_codec_ ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
 
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
