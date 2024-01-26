@@ -13,9 +13,7 @@ namespace tc
 
     enum SupportedCodec {
         kFFmpeg,
-#ifdef ANDROID
         kMediaCodec
-#endif
     };
 
     class VideoDecoderFactory {
