@@ -62,10 +62,10 @@ namespace tc
             }
         }();
 
-        auto use_oes = surface != nullptr;
+        use_oes_ = surface != nullptr;
         std::string csd0;
         std::string csd1;
-        if (use_oes) {
+        if (use_oes_) {
             auto in_frame_data = frame.data();
             auto in_frame_size = frame.size();
             size_t sps_size, pps_size;
@@ -94,6 +94,10 @@ namespace tc
             }
 
             LOGI("csd0: {} size: {}, csd1: {}, size: {}", csd0.c_str(), csd0.size(), csd1.c_str(), csd1.size());
+            if (csd0.size() > 100 || csd1.size() > 100) {
+                LOGI("Ignore the error csd...");
+                return -1;
+            }
         }
 
         media_codec_ = AMediaCodec_createDecoderByType(decoder_name.c_str());
@@ -109,7 +113,7 @@ namespace tc
         }
 
         LOGI("decoder name: {}, surface: {}", decoder_name, surface);
-        ANativeWindow* target = use_oes ? (ANativeWindow*)(surface) : nullptr;
+        ANativeWindow* target = use_oes_ ? (ANativeWindow*)(surface) : nullptr;
         media_status_t status = AMediaCodec_configure(media_codec_, media_format_,
                                                       target,
                                                       nullptr,
@@ -155,7 +159,7 @@ namespace tc
         do {
             buf_idx = AMediaCodec_dequeueOutputBuffer(media_codec_, &info, 2000);
             if (buf_idx >= 0) {
-                size_t out_buf_size;
+                size_t out_buf_size = 0;
                 uint8_t* buf = nullptr;
                 int real_frame_size = 0;
                 auto format = AMediaCodec_getOutputFormat(media_codec_);
@@ -164,24 +168,27 @@ namespace tc
                 AMediaFormat_getInt32(format, "height", &height);
                 int32_t color_format;
                 AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT,&color_format);
-                real_frame_size = info.size;
-                buf = AMediaCodec_getOutputBuffer(media_codec_, buf_idx, &out_buf_size);
-
-                // test/beg
-                static int i = 0;
-                if (i < 5) {
-                    std::string name = fmt::format("/data/data/com.tc.client/cache/aa_{}.yuv", i++);
-                    std::ofstream file(name, std::ios::binary);
-                    file.write((char *) buf, real_frame_size);
-                    file.close();
-                }
-                // test/end
-
-                //LOGI("out:[{}]X[{}], format: {}, real_frame_size:{}, buf_size: {} ", width, height, color_format, real_frame_size, out_buf_size); //21 == nv21
-                if (buf && cbk && real_frame_size > 0) {
-                    auto image = RawImage::Make((char*)buf, real_frame_size, width, height, -1, RawImageFormat::kNV12);
-                    cbk(image);
-                }
+//                real_frame_size = info.size;
+//                buf = AMediaCodec_getOutputBuffer(media_codec_, buf_idx, &out_buf_size);
+//
+//                // test/beg
+//                // static int i = 0;
+//                // if (i < 5) {
+//                //     std::string name = fmt::format("/data/data/com.tc.client/cache/aa_{}.yuv", i++);
+//                //     std::ofstream file(name, std::ios::binary);
+//                //     file.write((char *) buf, real_frame_size);
+//                //     file.close();
+//                // }
+//                // test/end
+//
+//                LOGI("out:[{}]X[{}], format: {}, real_frame_size:{}, buf_size: {} ", width, height, color_format, real_frame_size, out_buf_size); //21 == nv21
+//                if (buf && cbk && real_frame_size > 0 && !use_oes_) {
+//                    auto image = RawImage::Make((char *) buf, real_frame_size, width, height, -1, RawImageFormat::kNV12);
+//                    cbk(image);
+//                }
+//                else {
+//                    cbk(nullptr);
+//                }
                 AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, false);
 
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {

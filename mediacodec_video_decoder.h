@@ -33,6 +33,7 @@ namespace tc
 
         AMediaCodec* media_codec_ = nullptr;
         AMediaFormat* media_format_ = nullptr;
+        bool use_oes_ = false;
 
     };
 }
