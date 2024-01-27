@@ -47,6 +47,8 @@ namespace tc
         // video decoder
         video_decoder_ = VideoDecoderFactory::Make(hw_codec_ ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
 
+        video_decoder_->Init(0, 1920, 1080, "", render_surface_);
+
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
         ws_client_->SetOnVideoFrameMsgCallback([=](const VideoFrame& frame) {

@@ -105,15 +105,17 @@ namespace tc
         AMediaFormat_setString(media_format_, "mime", decoder_name.c_str());
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_WIDTH, width);
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_HEIGHT, height);
+        AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_FRAME_RATE, 60);
+
         if (!csd0.empty()) {
-            AMediaFormat_setBuffer(media_format_, "csd-0", csd0.c_str(), csd0.size());
+            //AMediaFormat_setBuffer(media_format_, "csd-0", csd0.c_str(), csd0.size());
         }
         if (!csd1.empty()) {
-            AMediaFormat_setBuffer(media_format_, "csd-1", csd1.c_str(), csd1.size());
+            //AMediaFormat_setBuffer(media_format_, "csd-1", csd1.c_str(), csd1.size());
         }
 
-        LOGI("decoder name: {}, surface: {}", decoder_name, surface);
         ANativeWindow* target = use_oes_ ? (ANativeWindow*)(surface) : nullptr;
+        LOGI("decoder name: {}, target: {}", decoder_name, (void*)target);
         media_status_t status = AMediaCodec_configure(media_codec_, media_format_,
                                                       target,
                                                       nullptr,
@@ -189,7 +191,7 @@ namespace tc
 //                else {
 //                    cbk(nullptr);
 //                }
-                AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, false);
+                AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, true);
 
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
                 int width, height;
