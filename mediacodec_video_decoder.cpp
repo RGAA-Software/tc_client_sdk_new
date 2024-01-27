@@ -10,6 +10,8 @@
 #include "raw_image.h"
 #include "stream_helper.h"
 
+#include <fstream>
+
 namespace tc
 {
 
@@ -99,8 +101,6 @@ namespace tc
         AMediaFormat_setString(media_format_, "mime", decoder_name.c_str());
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_WIDTH, width);
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_HEIGHT, height);
-//        AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_COLOR_FORMAT, kCOLOR_FormatYUV420SemiPlanar);
-        //AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_FRAME_RATE, 60);
         if (!csd0.empty()) {
             AMediaFormat_setBuffer(media_format_, "csd-0", csd0.c_str(), csd0.size());
         }
@@ -167,7 +167,17 @@ namespace tc
                 real_frame_size = info.size;
                 buf = AMediaCodec_getOutputBuffer(media_codec_, buf_idx, &out_buf_size);
 
-                LOGI("out:[{}]X[{}], format: {}, real_frame_size:{}, buf_size: {} ", width, height, color_format, real_frame_size, out_buf_size); //21 == nv21
+                // test/beg
+                static int i = 0;
+                if (i < 5) {
+                    std::string name = fmt::format("/data/data/com.tc.client/cache/aa_{}.yuv", i++);
+                    std::ofstream file(name, std::ios::binary);
+                    file.write((char *) buf, real_frame_size);
+                    file.close();
+                }
+                // test/end
+
+                //LOGI("out:[{}]X[{}], format: {}, real_frame_size:{}, buf_size: {} ", width, height, color_format, real_frame_size, out_buf_size); //21 == nv21
                 if (buf && cbk && real_frame_size > 0) {
                     auto image = RawImage::Make((char*)buf, real_frame_size, width, height, -1, RawImageFormat::kNV12);
                     cbk(image);
