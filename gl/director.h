@@ -44,7 +44,7 @@ namespace tc
 
 }
 
-#ifdef WIN32
+#if defined(WIN32) || defined(PC_PLATFORM)
 #define GL_FUNC Director::Instance()->Funcs()->core_->
 #endif
 
