@@ -145,6 +145,9 @@ namespace tc
     }
 
     int MediacodecVideoDecoder::Decode(const uint8_t *in_data, int in_size, DecodedCallback &&cbk) {
+        if (!media_codec_ || !in_data || in_size <= 0) {
+            return -1;
+        }
         ssize_t buf_idx = AMediaCodec_dequeueInputBuffer(media_codec_, 2000);
         if (buf_idx >= 0) {
             size_t buf_size = 0;
