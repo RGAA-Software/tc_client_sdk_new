@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "shader_program.h"
+#include "gl_function.h"
 
 namespace tc
 {
@@ -15,12 +15,15 @@ namespace tc
 	class Director {
 	public:
 
-		static std::shared_ptr<Director> Make(GLFunctions* fk);
+		static Director* Instance() {
+            static Director director;
+            return &director;
+        }
 
-		Director(GLFunctions* fk);
+		Director();
 		~Director();
 
-		void Init(int width, int height);
+		void Init(GLFunctions* fk, int width, int height);
 
 		glm::mat4 GetProjection();
 		glm::mat4 GetView();
@@ -40,3 +43,11 @@ namespace tc
 	};
 
 }
+
+#ifdef WIN32
+#define GL_FUNC Director::Instance()->Funcs()->core_->
+#endif
+
+#ifdef ANDROID
+#define GL_FUNC
+#endif

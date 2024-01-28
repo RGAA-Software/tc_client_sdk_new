@@ -3,19 +3,15 @@
 namespace tc
 {
 
-	std::shared_ptr<Director> Director::Make(GLFunctions* funcs) {
-		return std::make_shared<Director>(funcs);
-	}
-
-	Director::Director(GLFunctions* funcs) {
-		this->funcs = funcs;
+	Director::Director() {
 	}
 
 	Director::~Director() {
 		
 	}
 
-	void Director::Init(int width, int height) {
+	void Director::Init(GLFunctions* fk, int width, int height) {
+        this->funcs = fk;
 		this->width = width;
 		this->height = height;
 

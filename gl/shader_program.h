@@ -8,37 +8,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#ifdef WIN32
-#include <QOpenGLFunctions_3_3_Core>
-#endif
-
-#ifdef ANDROID
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
-#include <GLES3/gl32.h>
-#include <GLES3/gl3ext.h>
-#include <GLES2/gl2ext.h>
-#endif
+#include "director.h"
 
 namespace tc
 {
-
-	class GLFunctions {
-	public:
-
-#ifdef WIN32
-		QOpenGLFunctions_3_3_Core* core_ = nullptr;
-#endif
-
-	};
-
-#ifdef WIN32
-#define GL_FUNC this->fk_->core_->
-#endif
-
-#ifdef ANDROID
-#define GL_FUNC
-#endif
 
 	class ShaderProgram {
 
