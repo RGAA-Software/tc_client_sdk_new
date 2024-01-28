@@ -7,7 +7,7 @@
 #ifdef ANDROID
 
 #include "tc_common/log.h"
-#include "raw_image.h"
+#include "tc_client_sdk/gl/raw_image.h"
 #include "stream_helper.h"
 
 #include <fstream>

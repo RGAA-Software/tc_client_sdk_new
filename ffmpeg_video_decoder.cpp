@@ -4,10 +4,11 @@
 
 #include "ffmpeg_video_decoder.h"
 
-#include "raw_image.h"
 #include "tc_common/data.h"
 #include "tc_message.pb.h"
 #include "tc_common/log.h"
+#include "tc_client_sdk/gl/raw_image.h"
+#include "tc_common/time_ext.h"
 
 #include <libyuv.h>
 #include <iostream>
@@ -103,13 +104,16 @@ namespace tc
             LOGE("Source codec context is NULL.");
             return -1;
         }
-        codec_context->thread_count = std::min(4, (int)std::thread::hardware_concurrency()/2);
+        codec_context->thread_count = std::min(16, (int)std::thread::hardware_concurrency());
         codec_context->thread_type = FF_THREAD_SLICE;
+
         if (avcodec_open2(codec_context, codec, NULL) < 0) {
             LOGE("Failed to open decoder");
             Release();
             return -1;
         }
+
+        av_opt_set_int(codec_context, "flags", AV_CODEC_FLAG_LOW_DELAY, 0);
 
         LOGI("Decoder thread count: {}", codec_context->thread_count);
 
@@ -157,6 +161,7 @@ namespace tc
 
         std::lock_guard<std::mutex> guard(decode_mtx_);
 
+        auto beg = TimeExt::GetCurrentTimestamp();
         av_frame_unref(av_frame);
 
         packet->data = (uint8_t*)data;//frame->CStr();
@@ -226,6 +231,8 @@ namespace tc
                     return 0;
                 }
                 else {
+                    auto end = TimeExt::GetCurrentTimestamp();
+                    LOGI("FFmpeg decode YUV420p(I420) used : {}ms", (end-beg));
                     cbk(decoded_image_);
                 }
             }

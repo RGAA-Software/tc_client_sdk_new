@@ -7,10 +7,10 @@
 #include "tc_common/log.h"
 #include "tc_common/file.h"
 #include "tc_common/message_notifier.h"
+#include "tc_client_sdk/gl/raw_image.h"
 
 #include "ws_client.h"
 #include "video_decoder_factory.h"
-#include "raw_image.h"
 #include "tc_message.pb.h"
 #include "sdk_messages.h"
 
@@ -36,18 +36,16 @@ namespace tc
 
     }
 
-    bool ThunderSdk::Init(const ThunderSdkParams& params, void* surface, bool hw_codec) {
+    bool ThunderSdk::Init(const ThunderSdkParams& params, void* surface, const DecoderRenderType& drt) {
         sdk_params_ = params;
-        hw_codec_ = hw_codec;
+        drt_ = drt;
         render_surface_ = surface;
         return true;
     }
 
     void ThunderSdk::Start() {
         // video decoder
-        video_decoder_ = VideoDecoderFactory::Make(hw_codec_ ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
-
-        video_decoder_->Init(0, 1920, 1080, "", render_surface_);
+        video_decoder_ = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface|| drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
 
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());

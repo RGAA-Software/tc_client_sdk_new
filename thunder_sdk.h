@@ -9,6 +9,7 @@
 #include <string>
 
 #include "tc_message.pb.h"
+#include "decoder_render_type.h"
 
 namespace tc
 {
@@ -42,7 +43,7 @@ namespace tc
         ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
         ~ThunderSdk();
 
-        bool Init(const ThunderSdkParams& params, void* surface, bool hw_codec);
+        bool Init(const ThunderSdkParams& params, void* surface, const DecoderRenderType& drt);
         void Start();
         void Exit();
 
@@ -65,7 +66,7 @@ namespace tc
         OnVideoFrameDecodedCallback video_frame_cbk_;
 
         bool first_frame_ = false;
-        bool hw_codec_ = false;
+        DecoderRenderType drt_;
         bool exit_ = false;
     };
 
