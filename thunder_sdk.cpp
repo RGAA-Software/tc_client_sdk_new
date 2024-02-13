@@ -110,4 +110,10 @@ namespace tc
         msg_notifier_->SendAppMessage(msg);
     }
 
+    void ThunderSdk::PostBinaryMessage(const std::string& msg) {
+        if(ws_client_) {
+            ws_client_->PostBinaryMessage(msg);
+        }
+    }
+
 }

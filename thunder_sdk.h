@@ -49,6 +49,9 @@ namespace tc
 
         void RegisterOnVideoFrameDecodedCallback(OnVideoFrameDecodedCallback&& cbk) { this->video_frame_cbk_ = std::move(cbk); }
 
+        // to do 需要在这里专门添加一个线程 用来发送消息吗？ 还是直接发
+        void PostBinaryMessage(const std::string& msg);
+
     private:
 
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image);
