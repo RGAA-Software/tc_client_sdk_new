@@ -26,6 +26,7 @@ namespace tc
     }
 
     void VideoDecoder::Release() {
+
     }
 
     bool VideoDecoder::NeedReConstruct(int codec_type, int width, int height) {

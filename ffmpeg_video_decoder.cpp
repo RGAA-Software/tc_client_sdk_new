@@ -170,7 +170,11 @@ namespace tc
         auto format = codec_context->pix_fmt;
 
         int ret = avcodec_send_packet(codec_context, packet);
-        if (ret < 0) {
+        if (ret == AVERROR(EAGAIN)) {
+            LOGW("EAGAIN...");
+            return ret;
+        }
+        else if (ret < 0) {
             LOGE("avcodec_send_packet err: {}", ret);
             return ret;
         }
@@ -194,8 +198,8 @@ namespace tc
             width = x1;
 
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
-                frame_width_ = std::max(frame_width_, width);
-                frame_height_ = std::max(frame_height_, height);
+                frame_width_ = width; //std::max(frame_width_, width);
+                frame_height_ = height; //std::max(frame_height_, height);
                 if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                     frame_height_ != decoded_image_->img_height) {
                     decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5,
@@ -232,7 +236,7 @@ namespace tc
                 }
                 else {
                     auto end = TimeExt::GetCurrentTimestamp();
-                    LOGI("FFmpeg decode YUV420p(I420) used : {}ms", (end-beg));
+                    LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     cbk(decoded_image_);
                 }
             }
@@ -247,7 +251,16 @@ namespace tc
     void FFmpegVideoDecoder::Release() {
         std::lock_guard<std::mutex> guard(decode_mtx_);
         stop_ = true;
+
+        while (true) {
+            auto ret = avcodec_receive_frame(codec_context, av_frame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                break;
+            }
+        }
+
         if (codec_context != nullptr) {
+            avcodec_close(codec_context);
             avcodec_free_context(&codec_context);
             codec_context = nullptr;
         }
@@ -259,6 +272,7 @@ namespace tc
         }
 
         av_packet_free(&packet);
+        LOGI("FFmpeg video decoder release.");
     }
 
     void FFmpegVideoDecoder::EnableToRGBFormat() {
