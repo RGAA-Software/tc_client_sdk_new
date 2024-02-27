@@ -17,6 +17,7 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/tc_message)
+include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/eventbus/src)
 
 set(SDK_SRCS
