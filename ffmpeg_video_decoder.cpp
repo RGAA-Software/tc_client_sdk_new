@@ -194,8 +194,8 @@ namespace tc
             width = x1;
 
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
-                frame_width_ = std::min(frame_width_, width);
-                frame_height_ = std::min(frame_height_, height);
+                frame_width_ = std::max(frame_width_, width);
+                frame_height_ = std::max(frame_height_, height);
                 if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                     frame_height_ != decoded_image_->img_height) {
                     decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5,
