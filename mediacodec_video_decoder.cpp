@@ -146,6 +146,7 @@ namespace tc
 
     int MediacodecVideoDecoder::Decode(const uint8_t *in_data, int in_size, DecodedCallback &&cbk) {
         if (!media_codec_ || !in_data || in_size <= 0) {
+            LOGE("param valid...");
             return -1;
         }
         ssize_t buf_idx = AMediaCodec_dequeueInputBuffer(media_codec_, 2000);
@@ -153,6 +154,7 @@ namespace tc
             size_t buf_size = 0;
             uint8_t* buf = AMediaCodec_getInputBuffer(media_codec_, buf_idx, &buf_size);
             if (buf_size <= 0) {
+                LOGE("getInputBuffer failed.");
                 return -1;
             }
             memcpy(buf, in_data, in_size);
@@ -224,6 +226,10 @@ namespace tc
         if (media_format_) {
             AMediaFormat_delete(media_format_);
         }
+    }
+
+    bool MediacodecVideoDecoder::Ready() {
+        return inited_;
     }
 
 }

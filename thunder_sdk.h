@@ -77,7 +77,7 @@ namespace tc
         bool exit_ = false;
 
         std::shared_ptr<OpusAudioDecoder> audio_decoder_ = nullptr;
-        bool debug_audio_decoder_ = true;
+        bool debug_audio_decoder_ = false;
     };
 
 }

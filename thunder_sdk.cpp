@@ -55,22 +55,15 @@ namespace tc
             // video decoder
             if (!video_decoder_) {
                 video_decoder_ = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
+            }
+            bool ready = video_decoder_->Ready();
+            if (!ready) {
                 auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_);
                 if (result != 0) {
                     LOGI("Video decoder init failed!");
                     return;
                 }
                 LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
-            }
-            bool need_init = video_decoder_->NeedReConstruct(frame.type(), frame.frame_width(), frame.frame_height());
-            if (need_init) {
-                // 这里理论上应该重新初始化一下，不过ffmpeg可以适应分辨率的变化
-#if 0
-                LOGI("will release decoder, and re-construct a new one.");
-                video_decoder_->Release();
-                video_decoder_.reset();
-                return;
-#endif
             }
 
             auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {

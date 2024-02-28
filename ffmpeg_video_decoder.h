@@ -31,7 +31,7 @@ namespace tc {
         int Init(int codec_type, int width, int height, const std::string& frame, void* surface) override;
         int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) override;
         void Release() override;
-
+        bool Ready() override;
         void EnableToRGBFormat();
 
     private:

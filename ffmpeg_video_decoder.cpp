@@ -275,6 +275,10 @@ namespace tc
         LOGI("FFmpeg video decoder release.");
     }
 
+    bool FFmpegVideoDecoder::Ready() {
+        return inited_;
+    }
+
     void FFmpegVideoDecoder::EnableToRGBFormat() {
         this->cvt_to_rgb_ = true;
     }

@@ -27,6 +27,7 @@ namespace tc
         virtual int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) = 0;
         virtual void Release();
         virtual bool NeedReConstruct(int codec_type, int width, int height);
+        virtual bool Ready() = 0;
 
     protected:
 
