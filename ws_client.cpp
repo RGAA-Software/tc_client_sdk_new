@@ -100,7 +100,6 @@ namespace tc
         this->ParseMessage(msg->get_payload());
     }
 
-    static FilePtr video_file = File::OpenForWriteB("1.recv.h265");
     void WSClient::ParseMessage(const std::string& msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParseFromString(msg);
@@ -111,14 +110,15 @@ namespace tc
 
         if (net_msg->type() == tc::kVideoFrame) {
             const auto& video_frame = net_msg->video_frame();
-            //LOGI("video: {} x {}, index: {}", video_frame.frame_width(), video_frame.frame_height(), video_frame.frame_index());
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }
-#if 0
-            auto data = net_msg->video_frame().data();
-            video_file->Append(data);
-#endif
+        }
+        else if (net_msg->type() == tc::kAudioFrame) {
+            const auto& audio_frame = net_msg->audio_frame();
+            if (audio_frame_cbk_) {
+                audio_frame_cbk_(audio_frame);
+            }
         }
 
     }

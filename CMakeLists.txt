@@ -40,6 +40,7 @@ set(GL_SRCS
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
 target_link_libraries(tc_sdk PRIVATE websocketpp::websocketpp ${FFMPEG_LIBRARIES} Opus::opus yuv glm::glm)
 target_link_libraries(tc_sdk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
+target_link_libraries(tc_sdk PRIVATE tc_opus_codec)
 
 if (ANDROID)
 

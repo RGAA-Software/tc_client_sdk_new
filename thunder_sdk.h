@@ -19,6 +19,7 @@ namespace tc
     class VideoDecoder;
     class RawImage;
     class MessageNotifier;
+    class OpusAudioDecoder;
 
     // param
     class ThunderSdkParams {
@@ -34,13 +35,14 @@ namespace tc
 
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&)>;
+    using OnAudioFrameDecodedCallback = std::function<void(const std::shared_ptr<Data>&, int samples, int channels, int bits)>;
 
     class ThunderSdk {
     public:
 
         static std::shared_ptr<ThunderSdk> Make(const std::shared_ptr<MessageNotifier>& notifier);
 
-        ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
+        explicit ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
         ~ThunderSdk();
 
         bool Init(const ThunderSdkParams& params, void* surface, const DecoderRenderType& drt);
@@ -48,6 +50,7 @@ namespace tc
         void Exit();
 
         void RegisterOnVideoFrameDecodedCallback(OnVideoFrameDecodedCallback&& cbk) { this->video_frame_cbk_ = std::move(cbk); }
+        void RegisterOnAudioFrameDecodedCallback(OnAudioFrameDecodedCallback&& cbk) { this->audio_frame_cbk_ = std::move(cbk); }
 
         // to do 需要在这里专门添加一个线程 用来发送消息吗？ 还是直接发
         void PostBinaryMessage(const std::string& msg);
@@ -67,10 +70,14 @@ namespace tc
 
         // callbacks
         OnVideoFrameDecodedCallback video_frame_cbk_;
+        OnAudioFrameDecodedCallback audio_frame_cbk_;
 
         bool first_frame_ = false;
         DecoderRenderType drt_;
         bool exit_ = false;
+
+        std::shared_ptr<OpusAudioDecoder> audio_decoder_ = nullptr;
+        bool debug_audio_decoder_ = true;
     };
 
 }
