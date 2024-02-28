@@ -236,7 +236,7 @@ namespace tc
                 }
                 else {
                     auto end = TimeExt::GetCurrentTimestamp();
-                    LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
+                    //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     cbk(decoded_image_);
                 }
             }
