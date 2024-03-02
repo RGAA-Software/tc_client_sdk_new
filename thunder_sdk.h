@@ -20,6 +20,7 @@ namespace tc
     class RawImage;
     class MessageNotifier;
     class OpusAudioDecoder;
+    class WebRtcClient;
 
     // param
     class ThunderSdkParams {
@@ -78,6 +79,9 @@ namespace tc
 
         std::shared_ptr<OpusAudioDecoder> audio_decoder_ = nullptr;
         bool debug_audio_decoder_ = false;
+
+        std::shared_ptr<WebRtcClient> webrtc_client_ = nullptr;
+
     };
 
 }

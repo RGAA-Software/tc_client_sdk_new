@@ -9,8 +9,9 @@
 #include "tc_common/log.h"
 #include "tc_client_sdk/gl/raw_image.h"
 #include "tc_common/time_ext.h"
-
+#if 000
 #include <libyuv.h>
+#endif
 #include <iostream>
 #include <thread>
 
@@ -144,7 +145,7 @@ namespace tc
             }
         }
     }
-
+#if 000
     static void I420ToRGB24(unsigned char* yuv_data, unsigned char* rgb24, int width, int height) {
         unsigned char* y = yuv_data;
         unsigned char* u = &yuv_data[width * height];
@@ -153,6 +154,7 @@ namespace tc
                             rgb24,
                             width * 3, width, height);
     }
+#endif
 
     int FFmpegVideoDecoder::Decode(const uint8_t* data, int size, DecodedCallback&& cbk) {
         if (!codec_context || !av_frame || stop_) {
@@ -225,6 +227,7 @@ namespace tc
 
             if (decoded_image_ && !stop_) {
                 if (cvt_to_rgb_) {
+#if 000
                     auto rgb = RawImage::MakeRGB(nullptr, frame_width_ * frame_height_ * 3,
                                                  frame_width_, frame_height_);
                     auto rgb_data = rgb->Data();
@@ -233,6 +236,7 @@ namespace tc
                                 frame_height_);
                     cbk(rgb);
                     return 0;
+#endif
                 }
                 else {
                     auto end = TimeExt::GetCurrentTimestamp();

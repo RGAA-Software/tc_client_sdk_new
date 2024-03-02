@@ -13,8 +13,7 @@
 #include "tc_message.pb.h"
 #include "sdk_messages.h"
 #include "tc_opus_codec/opus_codec.h"
-
-#include <fstream>
+#include "webrtc_client.h"
 
 namespace tc
 {
@@ -46,6 +45,10 @@ namespace tc
     }
 
     void ThunderSdk::Start() {
+        // webrtc
+        webrtc_client_ = WebRtcClient::Make();
+        webrtc_client_->Start("127.0.0.1", 9002);
+
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
