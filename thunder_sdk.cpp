@@ -14,6 +14,7 @@
 #include "sdk_messages.h"
 #include "tc_opus_codec/opus_codec.h"
 #include "webrtc_client.h"
+#include "cast_receiver.h"
 
 namespace tc
 {
@@ -112,6 +113,10 @@ namespace tc
         });
 
         ws_client_->Start();
+
+        // receiver
+        cast_receiver_ = CastReceiver::Make();
+        cast_receiver_->Start();
     }
 
     void ThunderSdk::Exit() {

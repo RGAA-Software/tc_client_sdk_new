@@ -21,6 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/tc_message)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/eventbus/src)
+include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/asio2/include)
 
 set(WEBRTC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../tc_webrtc_client/6167)
 include_directories(${WEBRTC_ROOT}/)
@@ -38,6 +39,7 @@ set(SDK_SRCS
     ws_client.cpp
     stream_helper.cpp
     webrtc_client.cpp
+    cast_receiver.cpp
 )
 
 set(GL_SRCS

@@ -21,6 +21,7 @@ namespace tc
     class MessageNotifier;
     class OpusAudioDecoder;
     class WebRtcClient;
+    class CastReceiver;
 
     // param
     class ThunderSdkParams {
@@ -81,6 +82,8 @@ namespace tc
         bool debug_audio_decoder_ = false;
 
         std::shared_ptr<WebRtcClient> webrtc_client_ = nullptr;
+
+        std::shared_ptr<CastReceiver> cast_receiver_ = nullptr;
 
     };
 
