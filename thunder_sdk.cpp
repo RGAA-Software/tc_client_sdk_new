@@ -13,8 +13,10 @@
 #include "tc_message.pb.h"
 #include "sdk_messages.h"
 #include "tc_opus_codec/opus_codec.h"
-#include "webrtc_client.h"
 #include "cast_receiver.h"
+#ifdef WIN32
+#include "webrtc_client.h"
+#endif
 
 namespace tc
 {
@@ -47,8 +49,10 @@ namespace tc
 
     void ThunderSdk::Start() {
         // webrtc
+#ifdef WIN32
         webrtc_client_ = WebRtcClient::Make();
         webrtc_client_->Start("127.0.0.1", 9002);
+#endif
 
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
@@ -121,6 +125,9 @@ namespace tc
 
     void ThunderSdk::Exit() {
         exit_ = true;
+        if (cast_receiver_) {
+            cast_receiver_->Exit();
+        }
 
         if (ws_client_) {
             ws_client_->Exit();

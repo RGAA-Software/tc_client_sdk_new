@@ -1,6 +1,8 @@
 #ifndef _WEBRTC_CLIENT_H_
 #define _WEBRTC_CLIENT_H_
 
+#ifdef WIN32
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -54,5 +56,7 @@ namespace tc
 	};
 
 }
+
+#endif // win32
 
 #endif

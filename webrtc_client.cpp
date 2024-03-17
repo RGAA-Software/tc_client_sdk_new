@@ -5,8 +5,9 @@
 #endif
 
 #include "tc_common/log.h"
-
 #include <sstream>
+
+#ifdef WIN32
 
 namespace tc
 {
@@ -88,3 +89,5 @@ namespace tc
 	}
 
 }
+
+#endif //win32

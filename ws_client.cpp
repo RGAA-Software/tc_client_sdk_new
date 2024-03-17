@@ -120,7 +120,6 @@ namespace tc
                 audio_frame_cbk_(audio_frame);
             }
         }
-
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
