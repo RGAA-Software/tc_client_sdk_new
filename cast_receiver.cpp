@@ -20,7 +20,7 @@ namespace tc
         recv_thread_ = std::thread([=, this]() {
             std::string_view host = "0.0.0.0";
             std::string_view port = "8030";
-
+#if 0
             udp_cast_ = std::make_shared<asio2::udp_cast>();
             udp_cast_->bind_recv([&](asio::ip::udp::endpoint &endpoint, std::string_view data) {
                 LOGI("recv : {} {} {} {} {}",
@@ -42,13 +42,16 @@ namespace tc
             udp_cast_->start(host, port);
             LOGI("---------------------start--------------------");
             //udp_cast_->wait_stop();
+#endif
         });
     }
 
     void CastReceiver::Exit() {
+#if 0
         if (udp_cast_) {
             udp_cast_->stop();
         }
+#endif
         if (recv_thread_.joinable()) {
             recv_thread_.join();
         }

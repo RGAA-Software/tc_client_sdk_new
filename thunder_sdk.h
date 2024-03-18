@@ -39,6 +39,8 @@ namespace tc
     using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&)>;
     using OnAudioFrameDecodedCallback = std::function<void(const std::shared_ptr<Data>&, int samples, int channels, int bits)>;
 
+    using OnCursorInfoSyncCallback = std::function<void(const tc::CursorInfoSync&)>;
+
     class ThunderSdk {
     public:
 
@@ -53,6 +55,10 @@ namespace tc
 
         void RegisterOnVideoFrameDecodedCallback(OnVideoFrameDecodedCallback&& cbk) { this->video_frame_cbk_ = std::move(cbk); }
         void RegisterOnAudioFrameDecodedCallback(OnAudioFrameDecodedCallback&& cbk) { this->audio_frame_cbk_ = std::move(cbk); }
+
+        void RegisterOnCursorInfoSyncCallback(OnCursorInfoSyncCallback&& cbk) {
+            cursor_info_sync_callback_ = std::move(cbk);
+        }
 
         // to do 需要在这里专门添加一个线程 用来发送消息吗？ 还是直接发
         void PostBinaryMessage(const std::string& msg);
@@ -73,6 +79,8 @@ namespace tc
         // callbacks
         OnVideoFrameDecodedCallback video_frame_cbk_;
         OnAudioFrameDecodedCallback audio_frame_cbk_;
+
+        OnCursorInfoSyncCallback cursor_info_sync_callback_;
 
         bool first_frame_ = false;
         DecoderRenderType drt_;

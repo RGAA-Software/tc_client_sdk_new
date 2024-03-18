@@ -119,6 +119,11 @@ namespace tc
             if (audio_frame_cbk_) {
                 audio_frame_cbk_(audio_frame);
             }
+        } else if (net_msg->type() == tc::kCursorInfoSync) {
+            const auto& cursor_info = net_msg->cursor_info_sync();
+            if(cursor_info_sync_cbk_) {
+                cursor_info_sync_cbk_(cursor_info);
+            }
         }
     }
 
@@ -149,5 +154,9 @@ namespace tc
 
     void WSClient::SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk) {
         audio_frame_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk) {
+        cursor_info_sync_cbk_ = std::move(cbk);
     }
 }

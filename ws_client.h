@@ -26,6 +26,7 @@ namespace tc
 
     using OnVideoFrameMsgCallback = std::function<void(const VideoFrame& frame)>;
     using OnAudioFrameMsgCallback = std::function<void(const AudioFrame& frame)>;
+    using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
 
     class Data;
     class Thread;
@@ -47,7 +48,7 @@ namespace tc
 
         void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
         void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
-
+        void SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk);
     private:
         void OnOpen(client* c, websocketpp::connection_hdl hdl);
         void OnClose(client* c, websocketpp::connection_hdl hdl);
@@ -62,6 +63,7 @@ namespace tc
 
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
+        OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
 
         bool stop_connecting_ = false;
         std::shared_ptr<Thread> ws_thread_ = nullptr;

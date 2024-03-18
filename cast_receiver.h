@@ -5,7 +5,7 @@
 #ifndef TC_CLIENT_PC_CAST_RECEIVER_H
 #define TC_CLIENT_PC_CAST_RECEIVER_H
 
-#include <asio2/udp/udp_cast.hpp>
+//#include <asio2/udp/udp_cast.hpp>
 #include <thread>
 #include <memory>
 
@@ -25,7 +25,7 @@ namespace tc
     private:
 
         std::thread recv_thread_;
-        std::shared_ptr<asio2::udp_cast> udp_cast_ = nullptr;
+        //std::shared_ptr<asio2::udp_cast> udp_cast_ = nullptr;
     };
 
 }

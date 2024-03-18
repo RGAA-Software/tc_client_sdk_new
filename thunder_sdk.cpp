@@ -116,6 +116,12 @@ namespace tc
             }
         });
 
+        ws_client_->SetOnCursorInfoSyncMsgCallback([=](const CursorInfoSync& cursor_info) {
+            if(cursor_info_sync_callback_) {
+                cursor_info_sync_callback_(cursor_info);
+            }
+        });
+
         ws_client_->Start();
 
         // receiver
