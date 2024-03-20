@@ -195,9 +195,10 @@ namespace tc
             auto height = av_frame->height;
 
             auto x1 = av_frame->linesize[0];
-            auto x2 = av_frame->linesize[1];
-            auto x3 = av_frame->linesize[2];
-            width = x1;
+            //auto x2 = av_frame->linesize[1];
+            //auto x3 = av_frame->linesize[2];
+            //width = x1;
+            //LOGI("frame width: {}, x1: {}", av_frame->width, x1);
 
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
                 frame_width_ = width; //std::max(frame_width_, width);
@@ -209,19 +210,19 @@ namespace tc
                 }
                 char *buffer = decoded_image_->Data();
                 for (int i = 0; i < frame_height_; i++) {
-                    memcpy(buffer + frame_width_ * i, av_frame->data[0] + width * i, frame_width_);
+                    memcpy(buffer + frame_width_ * i, av_frame->data[0] + x1 * i, frame_width_);
                 }
 
                 int y_offset = frame_width_ * frame_height_;
                 for (int j = 0; j < frame_height_ / 2; j++) {
                     memcpy(buffer + y_offset + (frame_width_ / 2 * j),
-                           av_frame->data[1] + width / 2 * j, frame_width_ / 2);
+                           av_frame->data[1] + x1 / 2 * j, frame_width_ / 2);
                 }
 
                 int yu_offset = y_offset + (frame_width_ / 2) * (frame_height_ / 2);
                 for (int k = 0; k < frame_height_ / 2; k++) {
                     memcpy(buffer + yu_offset + (frame_width_ / 2 * k),
-                           av_frame->data[2] + width / 2 * k, frame_width_ / 2);
+                           av_frame->data[2] + x1 / 2 * k, frame_width_ / 2);
                 }
             }
 
