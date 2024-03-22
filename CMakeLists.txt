@@ -18,7 +18,7 @@ else()
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/)
-include_directories(${CMAKE_SOURCE_DIR}/tc_message)
+include_directories(${CMAKE_SOURCE_DIR}/tc_message_new)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/eventbus/src)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/asio2/include)
@@ -54,7 +54,7 @@ set(GL_SRCS
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
 target_link_libraries(tc_sdk PRIVATE websocketpp::websocketpp ${FFMPEG_LIBRARIES} Opus::opus glm::glm)
 target_link_libraries(tc_sdk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
-target_link_libraries(tc_sdk PRIVATE tc_opus_codec tc_message)
+target_link_libraries(tc_sdk PRIVATE tc_opus_codec_new tc_message)
 
 message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
 

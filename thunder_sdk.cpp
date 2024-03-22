@@ -4,15 +4,15 @@
 
 #include "thunder_sdk.h"
 
-#include "tc_common/log.h"
-#include "tc_common/file.h"
-#include "tc_common/message_notifier.h"
-#include "tc_client_sdk/gl/raw_image.h"
+#include "tc_common_new/log.h"
+#include "tc_common_new/file.h"
+#include "tc_common_new/message_notifier.h"
+#include "tc_client_sdk_new/gl/raw_image.h"
 #include "ws_client.h"
 #include "video_decoder_factory.h"
 #include "tc_message.pb.h"
 #include "sdk_messages.h"
-#include "tc_opus_codec/opus_codec.h"
+#include "tc_opus_codec_new/opus_codec.h"
 #include "cast_receiver.h"
 #ifdef WIN32
 #include "webrtc_client.h"

@@ -5,10 +5,10 @@
 #include "ws_client.h"
 
 #include <utility>
-#include "tc_common/log.h"
-#include "tc_common/data.h"
-#include "tc_common/thread.h"
-#include "tc_common/file.h"
+#include "tc_common_new/log.h"
+#include "tc_common_new/data.h"
+#include "tc_common_new/thread.h"
+#include "tc_common_new/file.h"
 
 namespace tc
 {

@@ -4,11 +4,11 @@
 
 #include "ffmpeg_video_decoder.h"
 
-#include "tc_common/data.h"
+#include "tc_common_new/data.h"
 #include "tc_message.pb.h"
-#include "tc_common/log.h"
-#include "tc_client_sdk/gl/raw_image.h"
-#include "tc_common/time_ext.h"
+#include "tc_common_new/log.h"
+#include "tc_client_sdk_new/gl/raw_image.h"
+#include "tc_common_new/time_ext.h"
 #if 000
 #include <libyuv.h>
 #endif

@@ -4,7 +4,7 @@
 
 #include "video_decoder.h"
 
-#include "tc_common/data.h"
+#include "tc_common_new/data.h"
 
 namespace tc
 {
