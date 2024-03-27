@@ -25,7 +25,9 @@ namespace tc
 	}
 
 	RawImage::RawImage(char* data, int size, int width, int height, int ch, RawImageFormat format) {
-		img_buf = (char*)malloc(size);
+        if (size > 0) {
+            img_buf = (char *) malloc(size);
+        }
 		if (img_buf && data) {
 			memcpy(img_buf, data, size);
 		}

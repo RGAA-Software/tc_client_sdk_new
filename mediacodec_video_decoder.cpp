@@ -196,6 +196,11 @@ namespace tc
 //                else {
 //                    cbk(nullptr);
 //                }
+
+                // only callback frame info
+                auto image = RawImage::Make(nullptr, 0, width, height, -1, RawImageFormat::kNV12);
+                cbk(image);
+
                 AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, true);
 
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
