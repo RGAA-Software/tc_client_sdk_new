@@ -28,6 +28,7 @@ namespace tc
     void WSClient::Start() {
         auto conn_task = [=, this]() {
             while (!stop_connecting_) {
+                LOGI("before make ws client");
                 client_ = std::make_shared<client>();
                 LOGI("URL: {}", url_.c_str());
 
@@ -58,11 +59,16 @@ namespace tc
                     client_->run();
 
                     if (!stop_connecting_) {
-                        std::this_thread::sleep_for(std::chrono::seconds(2));
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        LOGI("run failed, after sleep 1s");
                     }
-                } catch (websocketpp::exception const & e) {
+                    if (stop_connecting_) {
+                        LOGI("break the ws loop");
+                        break;
+                    }
+                } catch (std::exception const & e) {
                     LOGE("Websocket connect failed: {}, will retry.", e.what());
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
+                    std::this_thread::sleep_for(std::chrono::seconds(2));
                 }
             }
         };
@@ -72,12 +78,19 @@ namespace tc
 
     void WSClient::Exit() {
         stop_connecting_ = true;
-        if (client_) {
-            client_->stop();
-        }
+
+        LOGI("joinable: {}", ws_thread_->IsJoinable());
         if (ws_thread_ && ws_thread_->IsJoinable()) {
+            LOGI("We'll join here.");
             ws_thread_->Join();
         }
+
+        if (client_) {
+            client_->stop();
+            client_.reset();
+        }
+
+        LOGI("WS has exited...");
     }
 
     void WSClient::OnOpen(client* c, websocketpp::connection_hdl hdl) {

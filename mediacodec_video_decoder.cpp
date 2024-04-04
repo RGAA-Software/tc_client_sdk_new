@@ -223,11 +223,13 @@ namespace tc
     void MediacodecVideoDecoder::Release() {
         std::lock_guard<std::mutex> guard(decode_mtx_);
         VideoDecoder::Release();
+        LOGI("will stop media codec");
         if (media_codec_) {
             AMediaCodec_stop(media_codec_);
             AMediaCodec_delete(media_codec_);
         }
 
+        LOGI("will delete media format");
         if (media_format_) {
             AMediaFormat_delete(media_format_);
         }

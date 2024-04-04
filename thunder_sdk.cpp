@@ -130,18 +130,23 @@ namespace tc
     }
 
     void ThunderSdk::Exit() {
+        LOGI("ThunderSdk start exiting.");
         exit_ = true;
         if (cast_receiver_) {
             cast_receiver_->Exit();
         }
 
+        LOGI("will exit ws client.");
         if (ws_client_) {
             ws_client_->Exit();
         }
 
+        LOGI("will exit video decoder.");
         if (video_decoder_) {
             video_decoder_->Release();
         }
+
+        LOGI("after ThunderSdk exiting");
     }
 
     void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image) {

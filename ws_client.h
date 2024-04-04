@@ -9,6 +9,7 @@
 #include <websocketpp/client.hpp>
 
 #include "tc_message.pb.h"
+#include <atomic>
 
 typedef websocketpp::client<websocketpp::config::asio_client> client;
 
@@ -65,7 +66,7 @@ namespace tc
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
 
-        bool stop_connecting_ = false;
+        std::atomic_bool stop_connecting_ = false;
         std::shared_ptr<Thread> ws_thread_ = nullptr;
         std::string url_;
 
