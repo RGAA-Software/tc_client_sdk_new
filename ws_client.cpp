@@ -78,16 +78,14 @@ namespace tc
 
     void WSClient::Exit() {
         stop_connecting_ = true;
+        if (client_ && !client_->stopped()) {
+            client_->stop();
+        }
 
         LOGI("joinable: {}", ws_thread_->IsJoinable());
         if (ws_thread_ && ws_thread_->IsJoinable()) {
             LOGI("We'll join here.");
             ws_thread_->Join();
-        }
-
-        if (client_) {
-            client_->stop();
-            client_.reset();
         }
 
         LOGI("WS has exited...");
@@ -110,6 +108,9 @@ namespace tc
 
     void WSClient::OnMessage(client* c, websocketpp::connection_hdl hdl, message_ptr msg) {
         //LOGI("OnMessage: {}, size: {}", (int)msg->get_opcode(), msg->get_payload().size());
+        if (stop_connecting_.load()) {
+            return;
+        }
         this->ParseMessage(msg->get_payload());
     }
 
@@ -141,14 +142,22 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
-        if (client_ && target_server_.lock()) {
-            client_->send(target_server_, msg, binary);
+        try {
+            if (client_ && target_server_.lock()) {
+                client_->send(target_server_, msg, binary);
+            }
+        } catch(std::exception& e) {
+            LOGE("PostBinaryMessage(string) failed: {}", e.what());
         }
     }
 
     void WSClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {
-        if (client_ && target_server_.lock()) {
-            client_->send(target_server_, msg->CStr(), msg->Size(), binary);
+        try {
+            if (client_ && target_server_.lock()) {
+                client_->send(target_server_, msg->CStr(), msg->Size(), binary);
+            }
+        } catch(std::exception& e) {
+            LOGE("PostBinaryMessage(data) failed: {}", e.what());
         }
     }
 
