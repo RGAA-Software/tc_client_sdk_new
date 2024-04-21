@@ -7,6 +7,7 @@
 #include "tc_common_new/log.h"
 #include "tc_common_new/file.h"
 #include "tc_common_new/message_notifier.h"
+#include "tc_common_new/thread.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "ws_client.h"
 #include "video_decoder_factory.h"
@@ -14,6 +15,9 @@
 #include "sdk_messages.h"
 #include "tc_opus_codec_new/opus_codec.h"
 #include "cast_receiver.h"
+#include "app_timer.h"
+#include "statistics.h"
+
 #ifdef WIN32
 #include "webrtc_client.h"
 #endif
@@ -53,6 +57,13 @@ namespace tc
         webrtc_client_ = WebRtcClient::Make();
         webrtc_client_->Start("127.0.0.1", 9002);
 #endif
+        statistics_ = Statistics::Instance();
+
+        // threads
+        net_thread_ = Thread::Make("net", 128);
+        net_thread_->Poll();
+        bg_thread_ = Thread::Make("bg", 128);
+        bg_thread_->Poll();
 
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
@@ -96,7 +107,7 @@ namespace tc
             }
         });
 
-        ws_client_->SetOnAudioFrameMsgCallback([=](const AudioFrame& frame) {
+        ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
             if (exit_) {
                 return;
             }
@@ -116,7 +127,7 @@ namespace tc
             }
         });
 
-        ws_client_->SetOnCursorInfoSyncMsgCallback([=](const CursorInfoSync& cursor_info) {
+        ws_client_->SetOnCursorInfoSyncMsgCallback([=, this](const CursorInfoSync& cursor_info) {
             if(cursor_info_sync_callback_) {
                 cursor_info_sync_callback_(cursor_info);
             }
@@ -125,8 +136,14 @@ namespace tc
         ws_client_->Start();
 
         // receiver
-        cast_receiver_ = CastReceiver::Make();
-        cast_receiver_->Start();
+        // cast_receiver_ = CastReceiver::Make();
+        // cast_receiver_->Start();
+
+        app_timer_ = std::make_shared<AppTimer>(msg_notifier_);
+        app_timer_->StartTimers();
+
+        RegisterEventListeners();
+
     }
 
     void ThunderSdk::Exit() {
@@ -134,6 +151,10 @@ namespace tc
         exit_ = true;
         if (cast_receiver_) {
             cast_receiver_->Exit();
+        }
+
+        if (app_timer_) {
+            app_timer_->Exit();
         }
 
         LOGI("will exit ws client.");
@@ -159,6 +180,24 @@ namespace tc
         if(ws_client_) {
             ws_client_->PostBinaryMessage(msg);
         }
+    }
+
+    void ThunderSdk::RegisterEventListeners() {
+        msg_listener_ = msg_notifier_->CreateListener();
+        msg_listener_->Listen<MsgTimer100>([=, this](const auto& msg) {
+            this->PostNetTask([=, this]() {
+                auto msg = statistics_->AsProtoMessage();
+                this->PostBinaryMessage(msg);
+            });
+        });
+    }
+
+    void ThunderSdk::PostNetTask(std::function<void()>&& task) {
+        net_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    }
+
+    void ThunderSdk::PostTask(std::function<void()>&& task) {
+        bg_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 
 }

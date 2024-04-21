@@ -14,6 +14,7 @@
 #endif
 #include <iostream>
 #include <thread>
+#include "statistics.h"
 
 namespace tc
 {
@@ -241,6 +242,7 @@ namespace tc
                 }
                 else {
                     auto end = TimeExt::GetCurrentTimestamp();
+                    Statistics::Instance()->AppendDecodeDuration(end-beg);
                     //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     cbk(decoded_image_);
                 }

@@ -25,6 +25,18 @@ namespace tc
         uint64_t frame_idx_;
         std::shared_ptr<RawImage> raw_image_ = nullptr;
     };
+
+    //
+    class MsgTimer1000 {
+    };
+
+    //
+    class MsgTimer2000 {
+    };
+
+    //
+    class MsgTimer100 {
+    };
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H

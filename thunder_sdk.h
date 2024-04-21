@@ -19,9 +19,12 @@ namespace tc
     class VideoDecoder;
     class RawImage;
     class MessageNotifier;
+    class MessageListener;
     class OpusAudioDecoder;
     class WebRtcClient;
     class CastReceiver;
+    class AppTimer;
+    class Statistics;
 
     // param
     class ThunderSdkParams {
@@ -57,10 +60,13 @@ namespace tc
         void RegisterOnCursorInfoSyncCallback(OnCursorInfoSyncCallback&& cbk) { cursor_info_sync_callback_ = std::move(cbk); }
 
         void PostBinaryMessage(const std::string& msg);
+        void PostNetTask(std::function<void()>&& task);
+        void PostTask(std::function<void()>&& task);
 
     private:
 
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image);
+        void RegisterEventListeners();
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
@@ -85,8 +91,12 @@ namespace tc
         bool debug_audio_decoder_ = false;
 
         std::shared_ptr<WebRtcClient> webrtc_client_ = nullptr;
-
         std::shared_ptr<CastReceiver> cast_receiver_ = nullptr;
+        std::shared_ptr<AppTimer> app_timer_ = nullptr;
+        std::shared_ptr<MessageListener> msg_listener_ = nullptr;
+        Statistics* statistics_ = nullptr;
+        std::shared_ptr<Thread> net_thread_ = nullptr;
+        std::shared_ptr<Thread> bg_thread_ = nullptr;
 
     };
 

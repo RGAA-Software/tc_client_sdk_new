@@ -41,6 +41,8 @@ set(SDK_SRCS
     stream_helper.cpp
     webrtc_client.cpp
     cast_receiver.cpp
+    app_timer.cpp
+    statistics.cpp
 )
 
 set(GL_SRCS
