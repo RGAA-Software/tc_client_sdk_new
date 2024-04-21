@@ -17,6 +17,11 @@ else()
     link_directories(${VCPKG_ROOT}/packages/ffmpeg_x64-windows-static/lib)
 endif()
 
+if(MSVC)
+    add_compile_options($<IF:$<CONFIG:Debug>,/MTd,/MT>)
+    add_compile_options("/bigobj")
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/tc_message_new)
 include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/)
