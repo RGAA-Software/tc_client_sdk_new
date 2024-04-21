@@ -5,22 +5,9 @@
 #ifndef TC_CLIENT_PC_WS_CLIENT_H
 #define TC_CLIENT_PC_WS_CLIENT_H
 
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include <websocketpp/client.hpp>
-
 #include "tc_message.pb.h"
 #include <atomic>
-
-typedef websocketpp::client<websocketpp::config::asio_client> client;
-
-using websocketpp::lib::placeholders::_1;
-using websocketpp::lib::placeholders::_2;
-using websocketpp::lib::bind;
-using websocketpp::frame::opcode::value::binary;
-using websocketpp::frame::opcode::value::text;
-
-// pull out the type of messages sent by our config
-typedef websocketpp::config::asio_client::message_type::ptr message_ptr;
+#include <asio2/websocket/ws_client.hpp>
 
 namespace tc
 {
@@ -35,9 +22,9 @@ namespace tc
     class WSClient {
     public:
 
-        static std::shared_ptr<WSClient> Make(const std::string& url);
+        static std::shared_ptr<WSClient> Make(const std::string& ip, int port, const std::string& path);
 
-        explicit WSClient(std::string url);
+        explicit WSClient(const std::string& ip, int port, const std::string& path);
         ~WSClient();
 
         void Start();
@@ -45,31 +32,23 @@ namespace tc
 
         void PostBinaryMessage(const std::string& msg);
         void PostBinaryMessage(const std::shared_ptr<Data>& msg);
-        void PostTextMessage(const std::string& msg);
 
         void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
         void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
         void SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk);
     private:
-        void OnOpen(client* c, websocketpp::connection_hdl hdl);
-        void OnClose(client* c, websocketpp::connection_hdl hdl);
-        void OnFailed(client* c, websocketpp::connection_hdl hdl);
-        void OnMessage(client* c, websocketpp::connection_hdl hdl, message_ptr msg);
 
-        void ParseMessage(const std::string& msg);
+        void ParseMessage(std::string_view msg);
 
     private:
-        std::shared_ptr<client> client_ = nullptr;
-        websocketpp::connection_hdl target_server_;
-
+        std::shared_ptr<asio2::ws_client> client_ = nullptr;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
 
-        std::atomic_bool stop_connecting_ = false;
-        std::shared_ptr<Thread> ws_thread_ = nullptr;
-        std::string url_;
-
+        std::string ip_{};
+        int port_{};
+        std::string path_{};
     };
 
 }

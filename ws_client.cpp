@@ -13,110 +13,61 @@
 namespace tc
 {
 
-    std::shared_ptr<WSClient> WSClient::Make(const std::string& url) {
-        return std::make_shared<WSClient>(url);
+    std::shared_ptr<WSClient> WSClient::Make(const std::string& ip, int port, const std::string& path) {
+        return std::make_shared<WSClient>(ip, port, path);
     }
 
-    WSClient::WSClient(std::string url) : url_(std::move(url)) {
-
+    WSClient::WSClient(const std::string& ip, int port, const std::string& path) {
+        this->ip_ = ip;
+        this->port_ = port;
+        this->path_ = path;
     }
 
-    WSClient::~WSClient() {
-
-    }
+    WSClient::~WSClient() = default;
 
     void WSClient::Start() {
-        auto conn_task = [=, this]() {
-            while (!stop_connecting_) {
-                LOGI("before make ws client");
-                client_ = std::make_shared<client>();
-                LOGI("URL: {}", url_.c_str());
+        client_ = std::make_shared<asio2::ws_client>();
+        client_->set_auto_reconnect(true);
+        client_->set_timeout(std::chrono::milliseconds(2000));
 
-                try {
-                    // Set logging to be pretty verbose (everything except message payloads)
-                    client_->set_access_channels(websocketpp::log::alevel::all);
-                    client_->clear_access_channels(websocketpp::log::alevel::frame_payload);
+        client_->bind_init([&]() {
+            client_->ws_stream().binary(true);
+            client_->ws_stream().set_option(
+                    websocket::stream_base::decorator([](websocket::request_type &req) {
+                        req.set(http::field::authorization, "websocket-client-authorization");}
+                    )
+            );
 
-                    client_->init_asio();
-                    client_->set_open_handler(std::bind(&WSClient::OnOpen, this, client_.get(), ::_1));
-                    client_->set_close_handler(std::bind(&WSClient::OnClose, this, client_.get(), ::_1));
-                    client_->set_fail_handler(std::bind(&WSClient::OnFailed, this, client_.get(), ::_1));
-                    client_->set_message_handler(std::bind(&WSClient::OnMessage, this, client_.get(), ::_1, ::_2));
-
-                    websocketpp::lib::error_code ec;
-                    client::connection_ptr con = client_->get_connection(url_, ec);
-                    if (ec) {
-                        LOGW("could not create connection because: %s", ec.message().c_str());
-                    }
-
-                    // Note that connect here only requests a connection. No network messages are
-                    // exchanged until the event loop starts running in the next line.
-                    client_->connect(con);
-
-                    // Start the ASIO io_service run loop
-                    // this will cause a single connection to be made to the server. c.run()
-                    // will exit when this connection is closed.
-                    client_->run();
-
-                    if (!stop_connecting_) {
-                        std::this_thread::sleep_for(std::chrono::seconds(1));
-                        LOGI("run failed, after sleep 1s");
-                    }
-                    if (stop_connecting_) {
-                        LOGI("break the ws loop");
-                        break;
-                    }
-                } catch (std::exception const & e) {
-                    LOGE("Websocket connect failed: {}, will retry.", e.what());
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
-                }
+        }).bind_connect([&]() {
+            if (asio2::get_last_error()) {
+                LOGI("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+            } else {
+                LOGI("connect success : {} {} ", client_->local_address().c_str(), client_->local_port());
             }
-        };
+        }).bind_upgrade([&]() {
+            if (asio2::get_last_error()) {
+                LOGE("upgrade failure : {}, {}", asio2::last_error_val(), asio2::last_error_msg());
+            }
+        }).bind_recv([&](std::string_view data) {
+            this->ParseMessage(data);
+        });
 
-        ws_thread_ = std::make_shared<Thread>(conn_task, "ws_client", false);
+        // the /ws is the websocket upgraged target
+        if (!client_->start(this->ip_, this->port_, this->path_)) {
+            LOGE("connect websocket server failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+        }
     }
 
     void WSClient::Exit() {
-        stop_connecting_ = true;
-        if (client_ && !client_->stopped()) {
+        if (client_) {
             client_->stop();
         }
-
-        LOGI("joinable: {}", ws_thread_->IsJoinable());
-        if (ws_thread_ && ws_thread_->IsJoinable()) {
-            LOGI("We'll join here.");
-            ws_thread_->Join();
-        }
-
         LOGI("WS has exited...");
     }
 
-    void WSClient::OnOpen(client* c, websocketpp::connection_hdl hdl) {
-        target_server_ = hdl;
-        LOGI("OnOpen");
-    }
-
-    void WSClient::OnClose(client* c, websocketpp::connection_hdl hdl) {
-        target_server_.reset();
-        LOGI("OnClose");
-    }
-
-    void WSClient::OnFailed(client* c, websocketpp::connection_hdl hdl) {
-        target_server_.reset();
-        LOGI("OnFailed");
-    }
-
-    void WSClient::OnMessage(client* c, websocketpp::connection_hdl hdl, message_ptr msg) {
-        //LOGI("OnMessage: {}, size: {}", (int)msg->get_opcode(), msg->get_payload().size());
-        if (stop_connecting_.load()) {
-            return;
-        }
-        this->ParseMessage(msg->get_payload());
-    }
-
-    void WSClient::ParseMessage(const std::string& msg) {
+    void WSClient::ParseMessage(std::string_view msg) {
         auto net_msg = std::make_shared<tc::Message>();
-        bool ok = net_msg->ParseFromString(msg);
+        bool ok = net_msg->ParseFromArray(msg.data(), msg.size());
         if (!ok) {
             LOGE("Sdk ParseMessage failed.");
             return;
@@ -143,8 +94,8 @@ namespace tc
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
         try {
-            if (client_ && target_server_.lock()) {
-                client_->send(target_server_, msg, binary);
+            if (client_ && client_->is_started()) {
+                client_->async_send(msg);
             }
         } catch(std::exception& e) {
             LOGE("PostBinaryMessage(string) failed: {}", e.what());
@@ -153,20 +104,11 @@ namespace tc
 
     void WSClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {
         try {
-            if (client_ && target_server_.lock()) {
-                client_->send(target_server_, msg->CStr(), msg->Size(), binary);
+            if (client_ && client_->is_started()) {
+                client_->async_send(msg->AsString());
             }
         } catch(std::exception& e) {
             LOGE("PostBinaryMessage(data) failed: {}", e.what());
-        }
-    }
-
-    void WSClient::PostTextMessage(const std::string& msg) {
-        if (msg.empty()) {
-            return;
-        }
-        if (client_ && target_server_.lock()) {
-            client_->send(target_server_, msg, text);
         }
     }
 

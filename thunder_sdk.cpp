@@ -67,7 +67,7 @@ namespace tc
         bg_thread_->Poll();
 
         // websocket client
-        ws_client_ = WSClient::Make(sdk_params_.MakeReqPath());
+        ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
             if (exit_) {
                 return;
@@ -162,11 +162,12 @@ namespace tc
             cast_receiver_->Exit();
         }
 
+        LOGI("Will exit app timer.");
         if (app_timer_) {
             app_timer_->Exit();
         }
 
-        LOGI("will exit ws client.");
+        LOGI("Will exit ws client.");
         if (ws_client_) {
             ws_client_->Exit();
         }
@@ -174,6 +175,15 @@ namespace tc
         LOGI("will exit video decoder.");
         if (video_decoder_) {
             video_decoder_->Release();
+        }
+
+        LOGI("Will exit net thread.");
+        if (net_thread_) {
+            net_thread_->Exit();
+        }
+        LOGI("Will exit bg thread.");
+        if (bg_thread_) {
+            bg_thread_->Exit();
         }
 
         LOGI("after ThunderSdk exiting");
