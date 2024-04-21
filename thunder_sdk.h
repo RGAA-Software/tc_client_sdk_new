@@ -98,6 +98,8 @@ namespace tc
         std::shared_ptr<Thread> net_thread_ = nullptr;
         std::shared_ptr<Thread> bg_thread_ = nullptr;
 
+        uint64_t last_received_video_ = 0;
+
     };
 
 }

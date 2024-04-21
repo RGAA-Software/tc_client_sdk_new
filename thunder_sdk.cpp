@@ -8,6 +8,7 @@
 #include "tc_common_new/file.h"
 #include "tc_common_new/message_notifier.h"
 #include "tc_common_new/thread.h"
+#include "tc_common_new/time_ext.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "ws_client.h"
 #include "video_decoder_factory.h"
@@ -84,6 +85,14 @@ namespace tc
                 }
                 LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
             }
+
+            auto current_time = TimeExt::GetCurrentTimestamp();
+            if (last_received_video_ == 0) {
+                last_received_video_ = current_time;
+            }
+            auto diff = current_time - last_received_video_;
+            last_received_video_ = current_time;
+            LOGI("video msg received diff: {}", diff);
 
             auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {
                 if (exit_) {
