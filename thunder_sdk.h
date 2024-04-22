@@ -60,8 +60,9 @@ namespace tc
         void RegisterOnCursorInfoSyncCallback(OnCursorInfoSyncCallback&& cbk) { cursor_info_sync_callback_ = std::move(cbk); }
 
         void PostBinaryMessage(const std::string& msg);
-        void PostNetTask(std::function<void()>&& task);
-        void PostTask(std::function<void()>&& task);
+        void PostVideoTask(std::function<void()>&& task);
+        void PostAudioTask(std::function<void()>&& task);
+        void PostBgTask(std::function<void()>&& task);
 
     private:
 
@@ -95,7 +96,8 @@ namespace tc
         std::shared_ptr<AppTimer> app_timer_ = nullptr;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
         Statistics* statistics_ = nullptr;
-        std::shared_ptr<Thread> net_thread_ = nullptr;
+        std::shared_ptr<Thread> video_thread_ = nullptr;
+        std::shared_ptr<Thread> audio_thread_ = nullptr;
         std::shared_ptr<Thread> bg_thread_ = nullptr;
 
         uint64_t last_received_video_ = 0;

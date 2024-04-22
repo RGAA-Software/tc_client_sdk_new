@@ -61,65 +61,69 @@ namespace tc
         statistics_ = Statistics::Instance();
 
         // threads
-        net_thread_ = Thread::Make("net", 128);
-        net_thread_->Poll();
-        bg_thread_ = Thread::Make("bg", 128);
+        video_thread_ = Thread::Make("video", 8);
+        video_thread_->Poll();
+        audio_thread_ = Thread::Make("audio", 8);
+        audio_thread_->Poll();
+        bg_thread_ = Thread::Make("bg", 32);
         bg_thread_->Poll();
 
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
-            if (exit_) {
-                return;
-            }
-            // video decoder
-            if (!video_decoder_) {
-                video_decoder_ = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
-            }
-            bool ready = video_decoder_->Ready();
-            if (!ready) {
-                auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_);
-                if (result != 0) {
-                    LOGI("Video decoder init failed!");
-                    return;
-                }
-                LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
-            }
-
-            auto current_time = TimeExt::GetCurrentTimestamp();
-            if (last_received_video_ == 0) {
-                last_received_video_ = current_time;
-            }
-            auto diff = current_time - last_received_video_;
-            last_received_video_ = current_time;
-            LOGI("video msg received diff: {}", diff);
-            statistics_->AppendVideoRecvGap(diff);
-            statistics_->fps_video_recv_->Tick();
-
-            auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {
+            this->PostVideoTask([=, this]() {
                 if (exit_) {
                     return;
                 }
-                if (!raw_image) {
-                    return;
+                // video decoder
+                if (!video_decoder_) {
+                    video_decoder_ = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
                 }
-                //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
-                if (video_frame_cbk_) {
-                    video_frame_cbk_(raw_image);
+                bool ready = video_decoder_->Ready();
+                if (!ready) {
+                    auto result = video_decoder_->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_);
+                    if (result != 0) {
+                        LOGI("Video decoder init failed!");
+                        return;
+                    }
+                    LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
                 }
 
-                if (!first_frame_) {
-                    first_frame_ = true;
-                    SendFirstFrameMessage(raw_image);
+                auto current_time = TimeExt::GetCurrentTimestamp();
+                if (last_received_video_ == 0) {
+                    last_received_video_ = current_time;
+                }
+                auto diff = current_time - last_received_video_;
+                last_received_video_ = current_time;
+                LOGI("video msg received diff: {}", diff);
+                statistics_->AppendVideoRecvGap(diff);
+                statistics_->fps_video_recv_->Tick();
+
+                auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {
+                    if (exit_) {
+                        return;
+                    }
+                    if (!raw_image) {
+                        return;
+                    }
+                    //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
+                    if (video_frame_cbk_) {
+                        video_frame_cbk_(raw_image);
+                    }
+
+                    if (!first_frame_) {
+                        first_frame_ = true;
+                        SendFirstFrameMessage(raw_image);
+                    }
+                });
+                if (ret != 0) {
+                    LOGE("decode error: {}", ret);
                 }
             });
-            if (ret != 0) {
-                LOGE("decode error: {}", ret);
-            }
         });
 
         ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
-            this->PostTask([=, this]() {
+            this->PostAudioTask([=, this]() {
                 if (exit_) {
                     return;
                 }
@@ -184,11 +188,15 @@ namespace tc
             video_decoder_->Release();
         }
 
-        LOGI("Will exit net thread.");
-        if (net_thread_) {
-            net_thread_->Exit();
+        LOGI("Will exit video thread.");
+        if (video_thread_) {
+            video_thread_->Exit();
         }
-        LOGI("Will exit bg thread.");
+        LOGI("Will exit audio thread.");
+        if (audio_thread_) {
+            audio_thread_->Exit();
+        }
+        LOGI("Will exit bg thread");
         if (bg_thread_) {
             bg_thread_->Exit();
         }
@@ -211,21 +219,23 @@ namespace tc
     void ThunderSdk::RegisterEventListeners() {
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<MsgTimer100>([=, this](const auto& msg) {
-            this->PostNetTask([=, this]() {
-                auto msg = statistics_->AsProtoMessage();
-                this->PostBinaryMessage(msg);
-            });
+            auto m = statistics_->AsProtoMessage();
+            this->PostBinaryMessage(m);
         });
         msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
             this->statistics_->Dump();
         });
     }
 
-    void ThunderSdk::PostNetTask(std::function<void()>&& task) {
-        net_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    void ThunderSdk::PostVideoTask(std::function<void()>&& task) {
+        video_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 
-    void ThunderSdk::PostTask(std::function<void()>&& task) {
+    void ThunderSdk::PostAudioTask(std::function<void()>&& task) {
+        audio_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    }
+
+    void ThunderSdk::PostBgTask(std::function<void()>&& task) {
         bg_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 

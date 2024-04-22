@@ -8,6 +8,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
+#include <atomic>
 #include "tc_common_new/fps_stat.h"
 
 namespace tc
@@ -27,6 +28,8 @@ namespace tc
 
         void AppendDecodeDuration(uint32_t time);
         void AppendVideoRecvGap(uint32_t time);
+        void AppendMediaDataSize(int size);
+
         std::string AsProtoMessage();
 
         void Dump();
@@ -35,6 +38,8 @@ namespace tc
         std::vector<uint32_t> decode_durations_;
         std::vector<uint32_t> video_recv_gaps_;
         std::shared_ptr<FpsStat> fps_video_recv_ = nullptr;
+        std::shared_ptr<FpsStat> fps_render_ = nullptr;
+        std::atomic_int64_t recv_media_data_ = 0;
     };
 
 }
