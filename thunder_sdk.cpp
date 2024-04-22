@@ -92,7 +92,7 @@ namespace tc
             }
             auto diff = current_time - last_received_video_;
             last_received_video_ = current_time;
-            //LOGI("video msg received diff: {}", diff);
+            LOGI("video msg received diff: {}", diff);
             statistics_->AppendVideoRecvGap(diff);
             statistics_->fps_video_recv_->Tick();
 
@@ -119,23 +119,28 @@ namespace tc
         });
 
         ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
-            if (exit_) {
-                return;
-            }
-            if (!audio_decoder_) {
-                audio_decoder_ = std::make_shared<OpusAudioDecoder>(frame.samples(), frame.channels());
-            }
-            std::vector<unsigned char> buffer(frame.data().begin(), frame.data().end());
-            auto pcm_data = audio_decoder_->Decode(buffer, frame.frame_size(), false);
-            if (audio_frame_cbk_) {
-                auto data = Data::Make((char*)pcm_data.data(), pcm_data.size()*2);
-                audio_frame_cbk_(data, frame.samples(), frame.channels(), frame.bits());
-            }
-            //LOGI("opus data size: {}, frame size: {}, samples: {}, channel: {}, PCM data size in char : {}", frame.data().size(), frame.frame_size(), frame.samples(), frame.channels(), pcm_data.size()*2);
-            if (debug_audio_decoder_) {
-                static FilePtr pcm_audio = File::OpenForWriteB("1.test.pcm");
-                pcm_audio->Append((char *) pcm_data.data(), pcm_data.size()*2);
-            }
+            this->PostTask([=, this]() {
+                if (exit_) {
+                    return;
+                }
+                auto beg = TimeExt::GetCurrentTimestamp();
+                if (!audio_decoder_) {
+                    audio_decoder_ = std::make_shared<OpusAudioDecoder>(frame.samples(), frame.channels());
+                }
+                std::vector<unsigned char> buffer(frame.data().begin(), frame.data().end());
+                auto pcm_data = audio_decoder_->Decode(buffer, frame.frame_size(), false);
+                if (audio_frame_cbk_) {
+                    auto data = Data::Make((char*)pcm_data.data(), pcm_data.size()*2);
+                    audio_frame_cbk_(data, frame.samples(), frame.channels(), frame.bits());
+                }
+                //LOGI("opus data size: {}, frame size: {}, samples: {}, channel: {}, PCM data size in char : {}", frame.data().size(), frame.frame_size(), frame.samples(), frame.channels(), pcm_data.size()*2);
+                if (debug_audio_decoder_) {
+                    static FilePtr pcm_audio = File::OpenForWriteB("1.test.pcm");
+                    pcm_audio->Append((char *) pcm_data.data(), pcm_data.size()*2);
+                }
+                auto end = TimeExt::GetCurrentTimestamp();
+                LOGI("decode audio : {}", end-beg);
+            });
         });
 
         ws_client_->SetOnCursorInfoSyncMsgCallback([=, this](const CursorInfoSync& cursor_info) {
