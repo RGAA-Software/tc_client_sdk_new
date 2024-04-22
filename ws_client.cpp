@@ -39,6 +39,7 @@ namespace tc
             );
 
         }).bind_connect([&]() {
+            client_->socket().set_option(asio::ip::tcp::no_delay(true));
             if (asio2::get_last_error()) {
                 LOGI("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
             } else {
