@@ -71,10 +71,8 @@ namespace tc
         // websocket client
         ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
+            if (exit_) { return; }
             this->PostVideoTask([=, this]() {
-                if (exit_) {
-                    return;
-                }
                 // video decoder
                 if (!video_decoder_) {
                     video_decoder_ = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
@@ -123,10 +121,8 @@ namespace tc
         });
 
         ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
+            if (exit_) { return; }
             this->PostAudioTask([=, this]() {
-                if (exit_) {
-                    return;
-                }
                 auto beg = TimeExt::GetCurrentTimestamp();
                 if (!audio_decoder_) {
                     audio_decoder_ = std::make_shared<OpusAudioDecoder>(frame.samples(), frame.channels());
