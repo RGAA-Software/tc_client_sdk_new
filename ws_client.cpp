@@ -95,19 +95,19 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
-        if (queued_msg_count_ > kMaxClientQueuedMessage) {
-            LOGW("queued so many message, discard this message in WSClient");
-            return;
-        }
-        queued_msg_count_++;
-        try {
-            if (client_ && client_->is_started()) {
+        if (client_ && client_->is_started()) {
+            if (queued_msg_count_ > kMaxClientQueuedMessage) {
+                LOGW("queued so many message, discard this message in WSClient");
+                return;
+            }
+            queued_msg_count_++;
+            try {
                 client_->async_send(msg, [=, this]() {
                     this->queued_msg_count_--;
                 });
+            } catch (std::exception &e) {
+                LOGE("PostBinaryMessage(string) failed: {}", e.what());
             }
-        } catch(std::exception& e) {
-            LOGE("PostBinaryMessage(string) failed: {}", e.what());
         }
     }
 
