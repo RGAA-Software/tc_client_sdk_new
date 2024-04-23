@@ -38,6 +38,9 @@ namespace tc
         auto cst = msg.mutable_client_statistics();
         cst->mutable_decode_durations()->Add(decode_durations_.begin(), decode_durations_.end());
         cst->mutable_video_recv_gaps()->Add(video_recv_gaps_.begin(), video_recv_gaps_.end());
+        cst->set_fps_video_recv(fps_video_recv_->value());
+        cst->set_fps_render(fps_render_->value());
+        cst->set_recv_media_data(recv_media_data_);
         return msg.SerializeAsString();
     }
 

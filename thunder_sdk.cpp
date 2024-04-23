@@ -96,6 +96,7 @@ namespace tc
                 LOGI("video msg received diff: {}", diff);
                 statistics_->AppendVideoRecvGap(diff);
                 statistics_->fps_video_recv_->Tick();
+                statistics_->AppendMediaDataSize(frame.data().size());
 
                 auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {
                     if (exit_) {
