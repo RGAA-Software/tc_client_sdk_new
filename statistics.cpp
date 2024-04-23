@@ -32,21 +32,27 @@ namespace tc
         recv_media_data_ += size;
     }
 
+    void Statistics::TickFps() {
+        fps_video_recv_value_ = fps_video_recv_->value();
+        fps_render_value_ = fps_render_->value();
+    }
+
     std::string Statistics::AsProtoMessage() {
         tc::Message msg;
         msg.set_type(tc::MessageType::kClientStatistics);
         auto cst = msg.mutable_client_statistics();
         cst->mutable_decode_durations()->Add(decode_durations_.begin(), decode_durations_.end());
         cst->mutable_video_recv_gaps()->Add(video_recv_gaps_.begin(), video_recv_gaps_.end());
-        cst->set_fps_video_recv(fps_video_recv_->value());
-        cst->set_fps_render(fps_render_->value());
+        cst->set_fps_video_recv(fps_video_recv_value_);
+        cst->set_fps_render(fps_render_value_);
         cst->set_recv_media_data(recv_media_data_);
         return msg.SerializeAsString();
     }
 
     void Statistics::Dump() {
         LOGI("-------------------------Statistics Begin-------------------------");
-        LOGI("Video recv fps: {}", fps_video_recv_->value());
+        LOGI("Video recv fps: {}", fps_video_recv_value_);
+        LOGI("Frame render fps: {}", fps_render_value_);
         LOGI("-------------------------Statistics End---------------------------");
     }
 

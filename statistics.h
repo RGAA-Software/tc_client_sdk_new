@@ -30,6 +30,7 @@ namespace tc
         void AppendVideoRecvGap(uint32_t time);
         void AppendMediaDataSize(int size);
 
+        void TickFps();
         std::string AsProtoMessage();
 
         void Dump();
@@ -38,7 +39,9 @@ namespace tc
         std::vector<uint32_t> decode_durations_;
         std::vector<uint32_t> video_recv_gaps_;
         std::shared_ptr<FpsStat> fps_video_recv_ = nullptr;
+        int fps_video_recv_value_ = 0;
         std::shared_ptr<FpsStat> fps_render_ = nullptr;
+        int fps_render_value_ = 0;
         std::atomic_int64_t recv_media_data_ = 0;
     };
 
