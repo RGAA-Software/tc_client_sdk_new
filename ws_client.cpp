@@ -13,6 +13,8 @@
 namespace tc
 {
 
+    const int kMaxClientQueuedMessage = 4096;
+
     std::shared_ptr<WSClient> WSClient::Make(const std::string& ip, int port, const std::string& path) {
         return std::make_shared<WSClient>(ip, port, path);
     }
@@ -39,11 +41,8 @@ namespace tc
             );
 
         }).bind_connect([&]() {
-            //client_->socket().set_option(asio::ip::tcp::no_delay(false));
-            //client_->socket().set_option(asio::socket_base::receive_buffer_size(1024*1024));
-
             if (asio2::get_last_error()) {
-                LOGI("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+                LOGE("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
             } else {
                 LOGI("connect success : {} {} ", client_->local_address().c_str(), client_->local_port());
             }
@@ -96,9 +95,16 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
+        if (queued_msg_count_ > kMaxClientQueuedMessage) {
+            LOGW("queued so many message, discard this message in WSClient");
+            return;
+        }
+        queued_msg_count_++;
         try {
             if (client_ && client_->is_started()) {
-                client_->async_send(msg);
+                client_->async_send(msg, [=, this]() {
+                    this->queued_msg_count_--;
+                });
             }
         } catch(std::exception& e) {
             LOGE("PostBinaryMessage(string) failed: {}", e.what());
@@ -106,13 +112,7 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {
-        try {
-            if (client_ && client_->is_started()) {
-                client_->async_send(msg->AsString());
-            }
-        } catch(std::exception& e) {
-            LOGE("PostBinaryMessage(data) failed: {}", e.what());
-        }
+        this->PostBinaryMessage(msg->AsString());
     }
 
     void WSClient::SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk) {

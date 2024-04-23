@@ -49,6 +49,9 @@ namespace tc
         std::string ip_{};
         int port_{};
         std::string path_{};
+
+        std::atomic_int queued_msg_count_ = 0;
+
     };
 
 }
