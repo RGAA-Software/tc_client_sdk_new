@@ -40,6 +40,8 @@ namespace tc
         std::shared_ptr<FpsStat> fps_video_recv_ = nullptr;
         std::shared_ptr<FpsStat> fps_render_ = nullptr;
         std::atomic_int64_t recv_media_data_ = 0;
+        int render_width_ = 0;
+        int render_height_ = 0;
     };
 
 }

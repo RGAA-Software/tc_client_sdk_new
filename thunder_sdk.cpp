@@ -97,7 +97,8 @@ namespace tc
                 statistics_->AppendVideoRecvGap(diff);
                 statistics_->fps_video_recv_->Tick();
                 statistics_->AppendMediaDataSize(frame.data().size());
-
+                statistics_->render_width_ = frame.frame_width();
+                statistics_->render_height_ = frame.frame_height();
                 auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {
                     if (exit_) {
                         return;

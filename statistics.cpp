@@ -41,6 +41,8 @@ namespace tc
         cst->set_fps_video_recv(fps_video_recv_->value());
         cst->set_fps_render(fps_render_->value());
         cst->set_recv_media_data(recv_media_data_);
+        cst->set_render_width(render_width_);
+        cst->set_render_height(render_height_);
         return msg.SerializeAsString();
     }
 
