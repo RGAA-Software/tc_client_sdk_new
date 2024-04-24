@@ -220,6 +220,9 @@ namespace tc
             auto m = statistics_->AsProtoMessage();
             this->PostBinaryMessage(m);
         });
+        msg_listener_->Listen<MsgTimer1000>([=, this](const auto& msg) {
+            statistics_->TickFps();
+        });
         msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
             this->statistics_->Dump();
         });
