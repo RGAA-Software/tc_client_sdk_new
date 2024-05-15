@@ -7,7 +7,10 @@
 
 #include "tc_message.pb.h"
 #include <atomic>
-#include <asio2/websocket/ws_client.hpp>
+
+namespace asio2 {
+    class ws_client;
+}
 
 namespace tc
 {
@@ -15,6 +18,8 @@ namespace tc
     using OnVideoFrameMsgCallback = std::function<void(const VideoFrame& frame)>;
     using OnAudioFrameMsgCallback = std::function<void(const AudioFrame& frame)>;
     using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
+    using OnAudioSpectrumCallback = std::function<void(const tc::ServerAudioSpectrum&)>;
+    using OnConnectedCallback = std::function<void()>;
 
     class Data;
     class Thread;
@@ -36,6 +41,9 @@ namespace tc
         void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
         void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
         void SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk);
+        void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) { audio_spectrum_cbk_ = std::move(cbk); }
+        void SetOnConnectCallback(OnConnectedCallback&& cbk);
+
     private:
 
         void ParseMessage(std::string_view msg);
@@ -45,6 +53,8 @@ namespace tc
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
+        OnAudioSpectrumCallback audio_spectrum_cbk_;
+        OnConnectedCallback conn_cbk_;
 
         std::string ip_{};
         int port_{};

@@ -10,12 +10,12 @@
 
 #include "tc_message.pb.h"
 #include "decoder_render_type.h"
+#include "ws_client.h"
 
 namespace tc
 {
     class Data;
     class Thread;
-    class WSClient;
     class VideoDecoder;
     class RawImage;
     class MessageNotifier;
@@ -42,7 +42,6 @@ namespace tc
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&)>;
     using OnAudioFrameDecodedCallback = std::function<void(const std::shared_ptr<Data>&, int samples, int channels, int bits)>;
-    using OnCursorInfoSyncCallback = std::function<void(const tc::CursorInfoSync&)>;
 
     class ThunderSdk {
     public:
@@ -56,9 +55,10 @@ namespace tc
         void Start();
         void Exit();
 
-        void RegisterOnVideoFrameDecodedCallback(OnVideoFrameDecodedCallback&& cbk) { this->video_frame_cbk_ = std::move(cbk); }
-        void RegisterOnAudioFrameDecodedCallback(OnAudioFrameDecodedCallback&& cbk) { this->audio_frame_cbk_ = std::move(cbk); }
-        void RegisterOnCursorInfoSyncCallback(OnCursorInfoSyncCallback&& cbk) { cursor_info_sync_callback_ = std::move(cbk); }
+        void SetOnVideoFrameDecodedCallback(OnVideoFrameDecodedCallback&& cbk) { this->video_frame_cbk_ = std::move(cbk); }
+        void SetOnAudioFrameDecodedCallback(OnAudioFrameDecodedCallback&& cbk) { this->audio_frame_cbk_ = std::move(cbk); }
+        void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk);
+        void SetOnCursorInfoCallback(OnCursorInfoSyncMsgCallback&& cbk);
 
         void PostBinaryMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);
@@ -69,6 +69,7 @@ namespace tc
 
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image);
         void RegisterEventListeners();
+        void SendHelloMessage();
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
@@ -82,8 +83,7 @@ namespace tc
         // callbacks
         OnVideoFrameDecodedCallback video_frame_cbk_;
         OnAudioFrameDecodedCallback audio_frame_cbk_;
-
-        OnCursorInfoSyncCallback cursor_info_sync_callback_;
+        OnAudioSpectrumCallback audio_spectrum_cbk_;
 
         bool first_frame_ = false;
         DecoderRenderType drt_;

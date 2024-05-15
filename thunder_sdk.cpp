@@ -49,6 +49,9 @@ namespace tc
         sdk_params_ = params;
         drt_ = drt;
         render_surface_ = surface;
+
+        ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
+
         return true;
     }
 
@@ -69,7 +72,11 @@ namespace tc
         bg_thread_->Poll();
 
         // websocket client
-        ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
+        // ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
+        ws_client_->SetOnConnectCallback([=, this]() {
+            this->SendHelloMessage();
+        });
+
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
             if (exit_) { return; }
             this->PostVideoTask([=, this]() {
@@ -145,12 +152,6 @@ namespace tc
             });
         });
 
-        ws_client_->SetOnCursorInfoSyncMsgCallback([=, this](const CursorInfoSync& cursor_info) {
-            if(cursor_info_sync_callback_) {
-                cursor_info_sync_callback_(cursor_info);
-            }
-        });
-
         ws_client_->Start();
 
         // receiver
@@ -162,6 +163,67 @@ namespace tc
 
         RegisterEventListeners();
 
+    }
+
+    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image) {
+        MsgFirstFrameDecoded msg;
+        msg.raw_image_ = image;
+        msg_notifier_->SendAppMessage(msg);
+    }
+
+    void ThunderSdk::PostBinaryMessage(const std::string& msg) {
+        if(ws_client_) {
+            ws_client_->PostBinaryMessage(msg);
+        }
+    }
+
+    void ThunderSdk::RegisterEventListeners() {
+        msg_listener_ = msg_notifier_->CreateListener();
+        msg_listener_->Listen<MsgTimer100>([=, this](const auto& msg) {
+            auto m = statistics_->AsProtoMessage();
+            this->PostBinaryMessage(m);
+        });
+        msg_listener_->Listen<MsgTimer1000>([=, this](const auto& msg) {
+            statistics_->TickFps();
+        });
+        msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
+            this->statistics_->Dump();
+        });
+    }
+
+    void ThunderSdk::SendHelloMessage() {
+        if (!ws_client_) {
+            return;
+        }
+        tc::Message msg;
+        msg.set_type(tc::MessageType::kHello);
+        auto hello = msg.mutable_hello();
+        hello->set_only_audio(sdk_params_.only_audio_);
+        ws_client_->PostBinaryMessage(msg.SerializeAsString());
+    }
+
+    void ThunderSdk::PostVideoTask(std::function<void()>&& task) {
+        video_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    }
+
+    void ThunderSdk::PostAudioTask(std::function<void()>&& task) {
+        audio_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    }
+
+    void ThunderSdk::PostBgTask(std::function<void()>&& task) {
+        bg_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    }
+
+    void ThunderSdk::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
+        if (ws_client_) {
+            ws_client_->SetOnAudioSpectrumCallback(std::move(cbk));
+        }
+    }
+
+    void ThunderSdk::SetOnCursorInfoCallback(tc::OnCursorInfoSyncMsgCallback&& cbk) {
+        if (ws_client_) {
+            ws_client_->SetOnCursorInfoSyncMsgCallback(std::move(cbk));
+        }
     }
 
     void ThunderSdk::Exit() {
@@ -201,43 +263,4 @@ namespace tc
 
         LOGI("after ThunderSdk exiting");
     }
-
-    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image) {
-        MsgFirstFrameDecoded msg;
-        msg.raw_image_ = image;
-        msg_notifier_->SendAppMessage(msg);
-    }
-
-    void ThunderSdk::PostBinaryMessage(const std::string& msg) {
-        if(ws_client_) {
-            ws_client_->PostBinaryMessage(msg);
-        }
-    }
-
-    void ThunderSdk::RegisterEventListeners() {
-        msg_listener_ = msg_notifier_->CreateListener();
-        msg_listener_->Listen<MsgTimer100>([=, this](const auto& msg) {
-            auto m = statistics_->AsProtoMessage();
-            this->PostBinaryMessage(m);
-        });
-        msg_listener_->Listen<MsgTimer1000>([=, this](const auto& msg) {
-            statistics_->TickFps();
-        });
-        msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
-            this->statistics_->Dump();
-        });
-    }
-
-    void ThunderSdk::PostVideoTask(std::function<void()>&& task) {
-        video_thread_->Post(SimpleThreadTask::Make(std::move(task)));
-    }
-
-    void ThunderSdk::PostAudioTask(std::function<void()>&& task) {
-        audio_thread_->Post(SimpleThreadTask::Make(std::move(task)));
-    }
-
-    void ThunderSdk::PostBgTask(std::function<void()>&& task) {
-        bg_thread_->Post(SimpleThreadTask::Make(std::move(task)));
-    }
-
 }

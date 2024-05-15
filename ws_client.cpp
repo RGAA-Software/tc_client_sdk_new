@@ -10,6 +10,8 @@
 #include "tc_common_new/thread.h"
 #include "tc_common_new/file.h"
 
+#include <asio2/websocket/ws_client.hpp>
+
 namespace tc
 {
 
@@ -45,6 +47,9 @@ namespace tc
                 LOGE("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
             } else {
                 LOGI("connect success : {} {} ", client_->local_address().c_str(), client_->local_port());
+                if (conn_cbk_) {
+                    conn_cbk_();
+                }
             }
         }).bind_upgrade([&]() {
             if (asio2::get_last_error()) {
@@ -91,6 +96,11 @@ namespace tc
             if(cursor_info_sync_cbk_) {
                 cursor_info_sync_cbk_(cursor_info);
             }
+        } else if (net_msg->type() == tc::kServerAudioSpectrum) {
+            const auto& spectrum = net_msg->server_audio_spectrum();
+            if (audio_spectrum_cbk_) {
+                audio_spectrum_cbk_(spectrum);
+            }
         }
     }
 
@@ -125,5 +135,9 @@ namespace tc
 
     void WSClient::SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk) {
         cursor_info_sync_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnConnectCallback(OnConnectedCallback&& cbk) {
+        conn_cbk_ = std::move(cbk);
     }
 }
