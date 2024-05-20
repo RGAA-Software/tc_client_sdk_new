@@ -153,6 +153,7 @@ namespace tc
         });
 
         ws_client_->SetOnAudioSpectrumCallback([=, this](const tc::ServerAudioSpectrum& spectrum) {
+            if (exit_) { return; }
             this->PostAudioSpectrumTask([=, this]() {
                 if (audio_spectrum_cbk_) {
                     audio_spectrum_cbk_(spectrum);
@@ -267,6 +268,6 @@ namespace tc
             audio_spectrum_thread_->Exit();
         }
 
-        LOGI("after ThunderSdk exiting");
+        LOGI("ThunderSdk exited");
     }
 }
