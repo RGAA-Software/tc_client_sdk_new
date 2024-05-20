@@ -64,12 +64,12 @@ namespace tc
         statistics_ = Statistics::Instance();
 
         // threads
-        video_thread_ = Thread::Make("video", 8);
+        video_thread_ = Thread::Make("video", 16);
         video_thread_->Poll();
-        audio_thread_ = Thread::Make("audio", 8);
+        audio_thread_ = Thread::Make("audio", 16);
         audio_thread_->Poll();
-        bg_thread_ = Thread::Make("bg", 32);
-        bg_thread_->Poll();
+        audio_spectrum_thread_ = Thread::Make("bg", 32);
+        audio_spectrum_thread_->Poll();
 
         // websocket client
         // ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
@@ -152,6 +152,14 @@ namespace tc
             });
         });
 
+        ws_client_->SetOnAudioSpectrumCallback([=, this](const tc::ServerAudioSpectrum& spectrum) {
+            this->PostAudioSpectrumTask([=, this]() {
+                if (audio_spectrum_cbk_) {
+                    audio_spectrum_cbk_(spectrum);
+                }
+            });
+        });
+
         ws_client_->Start();
 
         // receiver
@@ -210,14 +218,12 @@ namespace tc
         audio_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 
-    void ThunderSdk::PostBgTask(std::function<void()>&& task) {
-        bg_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    void ThunderSdk::PostAudioSpectrumTask(std::function<void()>&& task) {
+        audio_spectrum_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 
     void ThunderSdk::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
-        if (ws_client_) {
-            ws_client_->SetOnAudioSpectrumCallback(std::move(cbk));
-        }
+        audio_spectrum_cbk_ = std::move(cbk);
     }
 
     void ThunderSdk::SetOnCursorInfoCallback(tc::OnCursorInfoSyncMsgCallback&& cbk) {
@@ -256,9 +262,9 @@ namespace tc
         if (audio_thread_) {
             audio_thread_->Exit();
         }
-        LOGI("Will exit bg thread");
-        if (bg_thread_) {
-            bg_thread_->Exit();
+        LOGI("Will exit audio_spectrum_thread thread");
+        if (audio_spectrum_thread_) {
+            audio_spectrum_thread_->Exit();
         }
 
         LOGI("after ThunderSdk exiting");

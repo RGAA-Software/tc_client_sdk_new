@@ -63,7 +63,7 @@ namespace tc
         void PostBinaryMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);
         void PostAudioTask(std::function<void()>&& task);
-        void PostBgTask(std::function<void()>&& task);
+        void PostAudioSpectrumTask(std::function<void()>&& task);
 
     private:
 
@@ -99,7 +99,7 @@ namespace tc
         Statistics* statistics_ = nullptr;
         std::shared_ptr<Thread> video_thread_ = nullptr;
         std::shared_ptr<Thread> audio_thread_ = nullptr;
-        std::shared_ptr<Thread> bg_thread_ = nullptr;
+        std::shared_ptr<Thread> audio_spectrum_thread_ = nullptr;
 
         uint64_t last_received_video_ = 0;
 
