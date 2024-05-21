@@ -37,6 +37,7 @@ namespace tc
         std::string ip_;
         int port_;
         std::string req_path_;
+        ClientType client_type_;
     };
 
     // callbacks

@@ -208,6 +208,7 @@ namespace tc
         msg.set_type(tc::MessageType::kHello);
         auto hello = msg.mutable_hello();
         hello->set_only_audio(sdk_params_.only_audio_);
+        hello->set_client_type(sdk_params_.client_type_);
         ws_client_->PostBinaryMessage(msg.SerializeAsString());
     }
 
