@@ -57,7 +57,7 @@ namespace tc
 
     void ThunderSdk::Start() {
         // webrtc
-#ifdef WIN32
+#if 0
         webrtc_client_ = WebRtcClient::Make();
         webrtc_client_->Start("127.0.0.1", 9002);
 #endif
@@ -148,7 +148,7 @@ namespace tc
                     pcm_audio->Append((char *) pcm_data.data(), pcm_data.size()*2);
                 }
                 auto end = TimeExt::GetCurrentTimestamp();
-                LOGI("decode audio : {}", end-beg);
+                //LOGI("decode audio : {}", end-beg);
             });
         });
 
