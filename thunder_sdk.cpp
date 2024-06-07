@@ -100,7 +100,7 @@ namespace tc
                 }
                 auto diff = current_time - last_received_video_;
                 last_received_video_ = current_time;
-                LOGI("video msg received diff: {}", diff);
+                //LOGI("video msg received diff: {}", diff);
                 statistics_->AppendVideoRecvGap(diff);
                 statistics_->fps_video_recv_->Tick();
                 statistics_->AppendMediaDataSize(frame.data().size());
@@ -196,7 +196,7 @@ namespace tc
             statistics_->TickFps();
         });
         msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
-            this->statistics_->Dump();
+            //this->statistics_->Dump();
         });
     }
 
