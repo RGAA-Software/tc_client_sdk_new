@@ -33,7 +33,8 @@ namespace tc
 
     public:
         bool ssl_ = false;
-        bool only_audio_ = false;
+        bool enable_audio_ = false;
+        bool enable_video_ = false;
         bool enable_controller_ = false;
         std::string ip_;
         int port_;

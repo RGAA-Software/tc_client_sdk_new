@@ -207,7 +207,8 @@ namespace tc
         tc::Message msg;
         msg.set_type(tc::MessageType::kHello);
         auto hello = msg.mutable_hello();
-        hello->set_only_audio(sdk_params_.only_audio_);
+        hello->set_enable_audio(sdk_params_.enable_audio_);
+        hello->set_enable_video(sdk_params_.enable_video_);
         hello->set_client_type(sdk_params_.client_type_);
         hello->set_enable_controller(sdk_params_.enable_controller_);
         ws_client_->PostBinaryMessage(msg.SerializeAsString());
