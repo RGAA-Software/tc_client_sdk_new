@@ -108,6 +108,16 @@ namespace tc
                 statistics_->AppendMediaDataSize(frame.data().size());
                 statistics_->render_width_ = frame.frame_width();
                 statistics_->render_height_ = frame.frame_height();
+
+                CaptureMonitorInfo cap_mon_info {
+                    .mon_idx_ = frame.mon_idx(),
+                    .mon_name_ = frame.mon_name(),
+                    .mon_left_ = frame.mon_left(),
+                    .mon_top_ = frame.mon_top(),
+                    .mon_right_ = frame.mon_right(),
+                    .mon_bottom_ = frame.mon_bottom(),
+                };
+
                 auto ret = video_decoder_->Decode(frame.data(), [=, this](const auto& raw_image) {
                     if (exit_) {
                         return;
@@ -117,12 +127,12 @@ namespace tc
                     }
                     //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
                     if (video_frame_cbk_) {
-                        video_frame_cbk_(raw_image);
+                        video_frame_cbk_(raw_image, cap_mon_info);
                     }
 
                     if (!first_frame_) {
                         first_frame_ = true;
-                        SendFirstFrameMessage(raw_image);
+                        SendFirstFrameMessage(raw_image, cap_mon_info);
                     }
                 });
                 if (ret != 0) {
@@ -176,9 +186,10 @@ namespace tc
 
     }
 
-    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image) {
+    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info) {
         MsgFirstFrameDecoded msg;
         msg.raw_image_ = image;
+        msg.mon_info_ = info;
         msg_notifier_->SendAppMessage(msg);
     }
 

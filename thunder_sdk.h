@@ -11,6 +11,7 @@
 #include "tc_message.pb.h"
 #include "decoder_render_type.h"
 #include "ws_client.h"
+#include "sdk_messages.h"
 
 namespace tc
 {
@@ -43,7 +44,7 @@ namespace tc
     };
 
     // callbacks
-    using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&)>;
+    using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&, const CaptureMonitorInfo&)>;
     using OnAudioFrameDecodedCallback = std::function<void(const std::shared_ptr<Data>&, int samples, int channels, int bits)>;
 
     class ThunderSdk {
@@ -70,7 +71,7 @@ namespace tc
 
     private:
 
-        void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image);
+        void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info);
         void RegisterEventListeners();
         void SendHelloMessage();
 

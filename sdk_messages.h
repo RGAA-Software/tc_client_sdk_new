@@ -13,10 +13,22 @@ namespace tc
 
     class RawImage;
 
+    // monitor info
+    class CaptureMonitorInfo {
+    public:
+        int mon_idx_;
+        std::string mon_name_;
+        int mon_left_;
+        int mon_top_;
+        int mon_right_;
+        int mon_bottom_;
+    };
+
     //
     class MsgFirstFrameDecoded {
     public:
         std::shared_ptr<RawImage> raw_image_ = nullptr;
+        CaptureMonitorInfo mon_info_;
     };
 
     //
@@ -24,6 +36,7 @@ namespace tc
     public:
         uint64_t frame_idx_;
         std::shared_ptr<RawImage> raw_image_ = nullptr;
+        CaptureMonitorInfo mon_info_;
     };
 
     //
