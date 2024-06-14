@@ -79,8 +79,6 @@ namespace tc
 
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
             if (exit_) { return; }
-            LOGI("video frame from monitor: {}, name: {}, left: {}, top: {}, right: {}, bottom: {}",
-                 frame.mon_idx(), frame.mon_name(), frame.mon_left(), frame.mon_top(), frame.mon_right(), frame.mon_bottom());
             this->PostVideoTask([=, this]() {
                 // video decoder
                 if (!video_decoder_) {
