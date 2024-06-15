@@ -22,6 +22,15 @@ namespace tc
         int mon_top_;
         int mon_right_;
         int mon_bottom_;
+
+    public:
+        int Width() const {
+            return mon_right_ - mon_left_;
+        }
+
+        int Height() const {
+            return mon_bottom_ - mon_top_;
+        }
     };
 
     //
