@@ -67,6 +67,7 @@ namespace tc
 
     void WSClient::Exit() {
         if (client_) {
+            LOGI("Queued message count: {}", queued_msg_count_.load());
             client_->stop();
         }
         LOGI("WS has exited...");
@@ -85,8 +86,7 @@ namespace tc
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }
-        }
-        else if (net_msg->type() == tc::kAudioFrame) {
+        } else if (net_msg->type() == tc::kAudioFrame) {
             const auto& audio_frame = net_msg->audio_frame();
             if (audio_frame_cbk_) {
                 audio_frame_cbk_(audio_frame);
