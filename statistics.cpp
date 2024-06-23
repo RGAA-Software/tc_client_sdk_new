@@ -55,6 +55,7 @@ namespace tc
         LOGI("-------------------------Statistics Begin-------------------------");
         LOGI("Video recv fps: {}", fps_video_recv_value_);
         LOGI("Frame render fps: {}", fps_render_value_);
+        LOGI("Received data size: {} MB", recv_media_data_/1024/1024);
         LOGI("-------------------------Statistics End---------------------------");
     }
 

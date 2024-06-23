@@ -207,7 +207,7 @@ namespace tc
             statistics_->TickFps();
         });
         msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
-            //this->statistics_->Dump();
+            this->statistics_->Dump();
         });
     }
 
