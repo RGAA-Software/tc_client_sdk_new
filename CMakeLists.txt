@@ -1,6 +1,6 @@
-find_package(websocketpp REQUIRED)
+#find_package(websocketpp REQUIRED)
 find_package(protobuf CONFIG REQUIRED)
-find_package(Opus CONFIG REQUIRED)
+#find_package(Opus CONFIG REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(libyuv CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
@@ -59,7 +59,7 @@ set(GL_SRCS
 )
 
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
-target_link_libraries(tc_sdk PRIVATE websocketpp::websocketpp ${FFMPEG_LIBRARIES} Opus::opus glm::glm)
+target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES} Opus::opus glm::glm)#websocketpp::websocketpp
 target_link_libraries(tc_sdk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
 target_link_libraries(tc_sdk PRIVATE tc_opus_codec_new tc_message)
 

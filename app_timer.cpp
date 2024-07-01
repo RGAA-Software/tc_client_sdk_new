@@ -3,7 +3,6 @@
 //
 
 #include "app_timer.h"
-#include "tc_common_new/timer.h"
 #include "tc_common_new/message_notifier.h"
 #include "sdk_messages.h"
 #include "tc_common_new/log.h"
