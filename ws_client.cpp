@@ -60,7 +60,7 @@ namespace tc
         });
 
         // the /ws is the websocket upgraged target
-        if (!client_->start(this->ip_, this->port_, this->path_)) {
+        if (!client_->async_start(this->ip_, this->port_, this->path_)) {
             LOGE("connect websocket server failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
         }
     }
