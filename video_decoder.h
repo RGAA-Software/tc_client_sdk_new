@@ -1,5 +1,5 @@
 //
-// Created by hy on 2024/1/26.
+// Created by RGAA on 2024/1/26.
 //
 
 #ifndef TC_CLIENT_ANDROID_VIDEO_DECODER_H
