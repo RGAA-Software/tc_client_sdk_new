@@ -1,8 +1,8 @@
 #find_package(websocketpp REQUIRED)
 find_package(protobuf CONFIG REQUIRED)
 #find_package(Opus CONFIG REQUIRED)
-find_package(FFMPEG REQUIRED)
-find_package(libyuv CONFIG REQUIRED)
+#find_package(FFMPEG REQUIRED)
+#find_package(libyuv CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 if(ANDROID)
@@ -14,7 +14,7 @@ else()
     find_package(Qt6 REQUIRED COMPONENTS Widgets Core OpenGL OpenGLWidgets Multimedia)
 
     #C:\source\vcpkg\packages\ffmpeg_x64-windows-static\lib
-    link_directories(${VCPKG_ROOT}/packages/ffmpeg_x64-windows-static/lib)
+    #link_directories(${VCPKG_ROOT}/packages/ffmpeg_x64-windows-static/lib)
 endif()
 
 if(MSVC)
@@ -59,19 +59,17 @@ set(GL_SRCS
 )
 
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
-target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES} Opus::opus glm::glm)#websocketpp::websocketpp
+target_link_libraries(tc_sdk PRIVATE Opus::opus glm::glm)#websocketpp::websocketpp
 target_link_libraries(tc_sdk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
 target_link_libraries(tc_sdk PRIVATE tc_opus_codec_new tc_message)
 
 message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
 
 if (ANDROID)
+    target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES})
 else ()
     target_link_libraries(tc_sdk PRIVATE
-            Qt6::Widgets
-            Qt6::Core
-            Qt6::OpenGL
-            Qt6::OpenGLWidgets
-            Qt6::Multimedia
+            Qt6::Widgets Qt6::Core Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Multimedia
+            avcodec.lib avutil.lib avformat.lib swresample.lib swscale.lib avfilter.lib
     )
 endif ()
