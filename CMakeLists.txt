@@ -11,7 +11,7 @@ else()
     set(CMAKE_AUTOUIC ON)
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
-    find_package(Qt6 REQUIRED COMPONENTS Widgets Core OpenGL OpenGLWidgets Multimedia)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets Core OpenGL OpenGLWidgets)
 
     #C:\source\vcpkg\packages\ffmpeg_x64-windows-static\lib
     #link_directories(${VCPKG_ROOT}/packages/ffmpeg_x64-windows-static/lib)
@@ -68,8 +68,11 @@ message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
 if (ANDROID)
     target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES})
 else ()
+    set(FFMPEG_LIB_PATH ${CMAKE_SOURCE_DIR}/deps/tc_3rdparty/ffmpeg/lib/x64)
+    link_directories(${FFMPEG_LIB_PATH})
     target_link_libraries(tc_sdk PRIVATE
-            Qt6::Widgets Qt6::Core Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Multimedia
-            avcodec.lib avutil.lib avformat.lib swresample.lib swscale.lib avfilter.lib
+            Qt6::Widgets Qt6::Core Qt6::OpenGL Qt6::OpenGLWidgets
+            ${FFMPEG_LIB_PATH}/avcodec.lib ${FFMPEG_LIB_PATH}/avutil.lib ${FFMPEG_LIB_PATH}/avformat.lib
+            ${FFMPEG_LIB_PATH}/swresample.lib ${FFMPEG_LIB_PATH}/swscale.lib ${FFMPEG_LIB_PATH}/avfilter.lib
     )
 endif ()
