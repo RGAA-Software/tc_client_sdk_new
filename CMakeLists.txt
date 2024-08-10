@@ -1,20 +1,16 @@
 #find_package(websocketpp REQUIRED)
-find_package(protobuf CONFIG REQUIRED)
 #find_package(Opus CONFIG REQUIRED)
-#find_package(FFMPEG REQUIRED)
 #find_package(libyuv CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(protobuf CONFIG REQUIRED)
 
 if(ANDROID)
-
+    find_package(FFMPEG REQUIRED)
 else()
     set(CMAKE_AUTOUIC ON)
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
     find_package(Qt6 REQUIRED COMPONENTS Widgets Core OpenGL OpenGLWidgets)
-
-    #C:\source\vcpkg\packages\ffmpeg_x64-windows-static\lib
-    #link_directories(${VCPKG_ROOT}/packages/ffmpeg_x64-windows-static/lib)
 endif()
 
 if(MSVC)
