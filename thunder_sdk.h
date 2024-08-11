@@ -63,6 +63,7 @@ namespace tc
         void SetOnAudioFrameDecodedCallback(OnAudioFrameDecodedCallback&& cbk) { this->audio_frame_cbk_ = std::move(cbk); }
         void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk);
         void SetOnCursorInfoCallback(OnCursorInfoSyncMsgCallback&& cbk);
+        void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
 
         void PostBinaryMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);

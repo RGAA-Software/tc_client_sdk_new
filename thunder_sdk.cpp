@@ -247,6 +247,12 @@ namespace tc
         }
     }
 
+    void ThunderSdk::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
+        if (ws_client_) {
+            ws_client_->SetOnHeartBeatCallback(std::move(cbk));
+        }
+    }
+
     void ThunderSdk::Exit() {
         LOGI("ThunderSdk start exiting.");
         exit_ = true;

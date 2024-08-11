@@ -11,6 +11,7 @@
 #include "tc_common_new/file.h"
 
 #include <asio2/websocket/ws_client.hpp>
+#include <asio2/asio2.hpp>
 
 namespace tc
 {
@@ -25,6 +26,8 @@ namespace tc
         this->ip_ = ip;
         this->port_ = port;
         this->path_ = path;
+        this->send_thread_ = Thread::Make("ws_send", 128);
+        this->send_thread_->Poll();
     }
 
     WSClient::~WSClient() = default;
@@ -33,6 +36,11 @@ namespace tc
         client_ = std::make_shared<asio2::ws_client>();
         client_->set_auto_reconnect(true);
         client_->set_timeout(std::chrono::milliseconds(2000));
+
+        timer_ = std::make_shared<asio2::timer>();
+        timer_->start_timer("ws-heartbeat", std::chrono::seconds(2), [=, this]() {
+            this->HeartBeat();
+        });
 
         client_->bind_init([&]() {
             client_->ws_stream().binary(true);
@@ -101,6 +109,18 @@ namespace tc
             if (audio_spectrum_cbk_) {
                 audio_spectrum_cbk_(spectrum);
             }
+        } else if (net_msg->type() == tc::kOnHeartBeat) {
+            const auto& hb = net_msg->on_heartbeat();
+            LOGI("OnHeartBeat: {}", hb.index());
+            LOGI("OnHeartBeat caps: {}", hb.caps_lock_pressed());
+            LOGI("OnHeartBeat num: {}", hb.num_lock_pressed());
+            LOGI("OnHeartBeat alt: {}", hb.alt_pressed());
+            LOGI("OnHeartBeat control: {}", hb.control_pressed());
+            LOGI("OnHeartBeat shift: {}", hb.shift_pressed());
+            LOGI("OnHeartBeat win: {}", hb.win_pressed());
+            if (hb_cbk_) {
+                hb_cbk_(hb);
+            }
         }
     }
 
@@ -139,5 +159,23 @@ namespace tc
 
     void WSClient::SetOnConnectCallback(OnConnectedCallback&& cbk) {
         conn_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
+        audio_spectrum_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
+        hb_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::HeartBeat() {
+        auto msg = std::make_shared<Message>();
+        msg->set_type(tc::kHeartBeat);
+        auto hb = msg->mutable_heartbeat();
+        hb->set_index(hb_idx_++);
+        auto proto_msg = msg->SerializeAsString();
+        LOGI("Send HeartBeat!!!");
+        this->PostBinaryMessage(proto_msg);
     }
 }

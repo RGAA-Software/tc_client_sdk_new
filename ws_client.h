@@ -10,6 +10,7 @@
 
 namespace asio2 {
     class ws_client;
+    class timer;
 }
 
 namespace tc
@@ -20,6 +21,7 @@ namespace tc
     using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
     using OnAudioSpectrumCallback = std::function<void(const tc::ServerAudioSpectrum&)>;
     using OnConnectedCallback = std::function<void()>;
+    using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat)>;
 
     class Data;
     class Thread;
@@ -41,26 +43,31 @@ namespace tc
         void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
         void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
         void SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk);
-        void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) { audio_spectrum_cbk_ = std::move(cbk); }
+        void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk);
         void SetOnConnectCallback(OnConnectedCallback&& cbk);
+        void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
 
     private:
-
         void ParseMessage(std::string_view msg);
+        void HeartBeat();
 
     private:
         std::shared_ptr<asio2::ws_client> client_ = nullptr;
+        std::shared_ptr<asio2::timer> timer_ = nullptr;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
         OnAudioSpectrumCallback audio_spectrum_cbk_;
         OnConnectedCallback conn_cbk_;
+        OnHeartBeatInfoCallback hb_cbk_;
 
         std::string ip_{};
         int port_{};
         std::string path_{};
 
         std::atomic_int queued_msg_count_ = 0;
+        uint64_t hb_idx_ = 0;
+        std::shared_ptr<Thread> send_thread_ = nullptr;
 
     };
 
