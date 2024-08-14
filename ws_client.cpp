@@ -74,6 +74,7 @@ namespace tc
     }
 
     void WSClient::Exit() {
+        timer_->stop_all_timers();
         send_thread_->Exit();
         if (client_) {
             LOGI("Queued message count: {}", queued_msg_count_.load());
@@ -119,20 +120,24 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
+        if (!send_thread_) {
+            return;
+        }
         send_thread_->Post([=, this]() {
-            if (client_ && client_->is_started()) {
-                if (queued_msg_count_ > kMaxClientQueuedMessage) {
-                    LOGW("queued so many message, discard this message in WSClient");
-                    return;
-                }
-                queued_msg_count_++;
-                try {
-                    client_->async_send(msg, [=, this]() {
-                        this->queued_msg_count_--;
-                    });
-                } catch (std::exception &e) {
-                    LOGE("PostBinaryMessage(string) failed: {}", e.what());
-                }
+            if (!client_ || !client_->is_started()) {
+               return;
+            }
+            if (queued_msg_count_ > kMaxClientQueuedMessage) {
+                LOGW("queued so many message, discard this message in WSClient");
+                return;
+            }
+            queued_msg_count_++;
+            try {
+                client_->async_send(msg, [=, this]() {
+                    this->queued_msg_count_--;
+                });
+            } catch (std::exception &e) {
+                LOGE("PostBinaryMessage(string) failed: {}", e.what());
             }
         });
     }
