@@ -176,7 +176,6 @@ namespace tc
         auto hb = msg->mutable_heartbeat();
         hb->set_index(hb_idx_++);
         auto proto_msg = msg->SerializeAsString();
-        LOGI("Send HeartBeat!!!");
         this->PostBinaryMessage(proto_msg);
     }
 }
