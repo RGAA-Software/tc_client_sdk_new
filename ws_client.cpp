@@ -116,6 +116,11 @@ namespace tc
             if (hb_cbk_) {
                 hb_cbk_(hb);
             }
+        } else if (net_msg->type() == tc::kClipboardInfo) {
+            const auto& clipboard_info = net_msg->clipboard_info();
+            if (clipboard_cbk_) {
+                clipboard_cbk_(clipboard_info);
+            }
         }
     }
 
@@ -168,6 +173,10 @@ namespace tc
 
     void WSClient::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
         hb_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
+        clipboard_cbk_ = std::move(cbk);
     }
 
     void WSClient::HeartBeat() {

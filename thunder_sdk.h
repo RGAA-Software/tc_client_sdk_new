@@ -64,6 +64,7 @@ namespace tc
         void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk);
         void SetOnCursorInfoCallback(OnCursorInfoSyncMsgCallback&& cbk);
         void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
+        void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
 
         void PostBinaryMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);

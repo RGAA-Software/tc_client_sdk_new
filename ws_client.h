@@ -21,7 +21,8 @@ namespace tc
     using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
     using OnAudioSpectrumCallback = std::function<void(const tc::ServerAudioSpectrum&)>;
     using OnConnectedCallback = std::function<void()>;
-    using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat)>;
+    using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat&)>;
+    using OnClipboardInfoCallback = std::function<void(const tc::ClipboardInfo&)>;
 
     class Data;
     class Thread;
@@ -46,6 +47,7 @@ namespace tc
         void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk);
         void SetOnConnectCallback(OnConnectedCallback&& cbk);
         void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
+        void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
 
     private:
         void ParseMessage(std::string_view msg);
@@ -60,6 +62,7 @@ namespace tc
         OnAudioSpectrumCallback audio_spectrum_cbk_;
         OnConnectedCallback conn_cbk_;
         OnHeartBeatInfoCallback hb_cbk_;
+        OnClipboardInfoCallback clipboard_cbk_;
 
         std::string ip_{};
         int port_{};

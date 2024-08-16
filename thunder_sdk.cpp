@@ -253,6 +253,12 @@ namespace tc
         }
     }
 
+    void ThunderSdk::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
+        if (ws_client_) {
+            ws_client_->SetOnClipboardCallback(std::move(cbk));
+        }
+    }
+
     void ThunderSdk::Exit() {
         LOGI("ThunderSdk start exiting.");
         exit_ = true;
