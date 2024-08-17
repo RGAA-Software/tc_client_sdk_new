@@ -26,8 +26,6 @@ namespace tc
         this->ip_ = ip;
         this->port_ = port;
         this->path_ = path;
-        this->send_thread_ = Thread::Make("ws_send", 128);
-        this->send_thread_->Poll();
     }
 
     WSClient::~WSClient() = default;
@@ -36,9 +34,7 @@ namespace tc
         client_ = std::make_shared<asio2::ws_client>();
         client_->set_auto_reconnect(true);
         client_->set_timeout(std::chrono::milliseconds(2000));
-
-        timer_ = std::make_shared<asio2::timer>();
-        timer_->start_timer("ws-heartbeat", std::chrono::seconds(1), [=, this]() {
+        client_->start_timer("ws-heartbeat", std::chrono::seconds(1), [=, this]() {
             this->HeartBeat();
         });
 
@@ -74,8 +70,6 @@ namespace tc
     }
 
     void WSClient::Exit() {
-        timer_->stop_all_timers();
-        send_thread_->Exit();
         if (client_) {
             LOGI("Queued message count: {}", queued_msg_count_.load());
             client_->stop();
@@ -125,26 +119,21 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
-        if (!send_thread_) {
+        if (!client_ || !client_->is_started()) {
             return;
         }
-        send_thread_->Post([=, this]() {
-            if (!client_ || !client_->is_started()) {
-               return;
-            }
-            if (queued_msg_count_ > kMaxClientQueuedMessage) {
-                LOGW("queued so many message, discard this message in WSClient");
-                return;
-            }
-            queued_msg_count_++;
-            try {
-                client_->async_send(msg, [=, this]() {
-                    this->queued_msg_count_--;
-                });
-            } catch (std::exception &e) {
-                LOGE("PostBinaryMessage(string) failed: {}", e.what());
-            }
-        });
+        if (queued_msg_count_ > kMaxClientQueuedMessage) {
+            LOGW("queued so many message, discard this message in WSClient");
+            return;
+        }
+        queued_msg_count_++;
+        try {
+            client_->async_send(msg, [=, this]() {
+                this->queued_msg_count_--;
+            });
+        } catch (std::exception &e) {
+            LOGE("PostBinaryMessage(string) failed: {}", e.what());
+        }
     }
 
     void WSClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {

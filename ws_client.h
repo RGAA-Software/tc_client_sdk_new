@@ -55,7 +55,6 @@ namespace tc
 
     private:
         std::shared_ptr<asio2::ws_client> client_ = nullptr;
-        std::shared_ptr<asio2::timer> timer_ = nullptr;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
@@ -70,7 +69,6 @@ namespace tc
 
         std::atomic_int queued_msg_count_ = 0;
         uint64_t hb_idx_ = 0;
-        std::shared_ptr<Thread> send_thread_ = nullptr;
 
     };
 
