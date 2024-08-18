@@ -115,6 +115,11 @@ namespace tc
             if (clipboard_cbk_) {
                 clipboard_cbk_(clipboard_info);
             }
+        } else if (net_msg->type() == tc::kServerConfiguration) {
+            const auto& config = net_msg->config();
+            if (config_cbk_) {
+                config_cbk_(config);
+            }
         }
     }
 
@@ -166,6 +171,10 @@ namespace tc
 
     void WSClient::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
         clipboard_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnServerConfigurationCallback(tc::OnConfigCallback&& cbk) {
+        config_cbk_ = std::move(cbk);
     }
 
     void WSClient::HeartBeat() {

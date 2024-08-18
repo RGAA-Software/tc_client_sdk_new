@@ -259,6 +259,12 @@ namespace tc
         }
     }
 
+    void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
+        if (ws_client_) {
+            ws_client_->SetOnServerConfigurationCallback(std::move(cbk));
+        }
+    }
+
     void ThunderSdk::Exit() {
         LOGI("ThunderSdk start exiting.");
         exit_ = true;

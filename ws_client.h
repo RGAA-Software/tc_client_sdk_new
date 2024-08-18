@@ -23,6 +23,7 @@ namespace tc
     using OnConnectedCallback = std::function<void()>;
     using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat&)>;
     using OnClipboardInfoCallback = std::function<void(const tc::ClipboardInfo&)>;
+    using OnConfigCallback = std::function<void(const tc::ServerConfiguration&)>;
 
     class Data;
     class Thread;
@@ -48,6 +49,7 @@ namespace tc
         void SetOnConnectCallback(OnConnectedCallback&& cbk);
         void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
         void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
+        void SetOnServerConfigurationCallback(OnConfigCallback&& cbk);
 
     private:
         void ParseMessage(std::string_view msg);
@@ -62,6 +64,7 @@ namespace tc
         OnConnectedCallback conn_cbk_;
         OnHeartBeatInfoCallback hb_cbk_;
         OnClipboardInfoCallback clipboard_cbk_;
+        OnConfigCallback config_cbk_;
 
         std::string ip_{};
         int port_{};
