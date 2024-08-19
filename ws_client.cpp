@@ -120,6 +120,11 @@ namespace tc
             if (config_cbk_) {
                 config_cbk_(config);
             }
+        } else if (net_msg->type() == tc::kMonitorSwitched) {
+            const auto& monitor_switched = net_msg->monitor_switched();
+            if (monitor_switched_cbk_) {
+                monitor_switched_cbk_(monitor_switched);
+            }
         }
     }
 
@@ -175,6 +180,10 @@ namespace tc
 
     void WSClient::SetOnServerConfigurationCallback(tc::OnConfigCallback&& cbk) {
         config_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk) {
+        monitor_switched_cbk_ = std::move(cbk);
     }
 
     void WSClient::HeartBeat() {

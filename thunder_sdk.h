@@ -66,6 +66,7 @@ namespace tc
         void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
         void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
         void SetOnServerConfigurationCallback(OnConfigCallback&& cbk);
+        void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
 
         void PostBinaryMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);

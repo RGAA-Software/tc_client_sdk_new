@@ -265,6 +265,12 @@ namespace tc
         }
     }
 
+    void ThunderSdk::SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk) {
+        if (ws_client_) {
+            ws_client_->SetOnMonitorSwitchedCallback(std::move(cbk));
+        }
+    }
+
     void ThunderSdk::Exit() {
         LOGI("ThunderSdk start exiting.");
         exit_ = true;
