@@ -24,11 +24,11 @@ namespace tc
         int mon_bottom_;
 
     public:
-        int Width() const {
+        [[nodiscard]] int Width() const {
             return mon_right_ - mon_left_;
         }
 
-        int Height() const {
+        [[nodiscard]] int Height() const {
             return mon_bottom_ - mon_top_;
         }
     };
