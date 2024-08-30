@@ -59,6 +59,16 @@ namespace tc
     //
     class MsgTimer100 {
     };
+
+    // websocket connected to server
+    class MsgWsConnected {
+    public:
+    };
+
+    // websocket disconnected
+    class MsgWsDisconnected {
+    public:
+    };
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H

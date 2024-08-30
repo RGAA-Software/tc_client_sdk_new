@@ -75,6 +75,11 @@ namespace tc
         // ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
         ws_client_->SetOnConnectCallback([=, this]() {
             this->SendHelloMessage();
+            msg_notifier_->SendAppMessage(MsgWsConnected{});
+        });
+
+        ws_client_->SetOnDisconnectedCallback([=, this]() {
+            msg_notifier_->SendAppMessage(MsgWsDisconnected{});
         });
 
         ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {

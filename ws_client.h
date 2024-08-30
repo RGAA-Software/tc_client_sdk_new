@@ -21,6 +21,7 @@ namespace tc
     using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
     using OnAudioSpectrumCallback = std::function<void(const tc::ServerAudioSpectrum&)>;
     using OnConnectedCallback = std::function<void()>;
+    using OnDisconnectedCallback = std::function<void()>;
     using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat&)>;
     using OnClipboardInfoCallback = std::function<void(const tc::ClipboardInfo&)>;
     using OnConfigCallback = std::function<void(const tc::ServerConfiguration&)>;
@@ -48,6 +49,7 @@ namespace tc
         void SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk);
         void SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk);
         void SetOnConnectCallback(OnConnectedCallback&& cbk);
+        void SetOnDisconnectedCallback(OnDisconnectedCallback&& cbk);
         void SetOnHeartBeatCallback(OnHeartBeatInfoCallback&& cbk);
         void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
         void SetOnServerConfigurationCallback(OnConfigCallback&& cbk);
@@ -64,6 +66,7 @@ namespace tc
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
         OnAudioSpectrumCallback audio_spectrum_cbk_;
         OnConnectedCallback conn_cbk_;
+        OnDisconnectedCallback dis_conn_cbk_;
         OnHeartBeatInfoCallback hb_cbk_;
         OnClipboardInfoCallback clipboard_cbk_;
         OnConfigCallback config_cbk_;

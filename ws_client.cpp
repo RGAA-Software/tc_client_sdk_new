@@ -38,7 +38,7 @@ namespace tc
             this->HeartBeat();
         });
 
-        client_->bind_init([&]() {
+        client_->bind_init([=]() {
             client_->ws_stream().binary(true);
             client_->ws_stream().set_option(
                     websocket::stream_base::decorator([](websocket::request_type &req) {
@@ -46,20 +46,26 @@ namespace tc
                     )
             );
 
-        }).bind_connect([&]() {
+        }).bind_connect([=]() {
             if (asio2::get_last_error()) {
                 LOGE("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
             } else {
                 LOGI("connect success : {} {} ", client_->local_address().c_str(), client_->local_port());
-                if (conn_cbk_) {
-                    conn_cbk_();
-                }
+                client_->post_queued_event([=, this]() {
+                    if (conn_cbk_) {
+                        conn_cbk_();
+                    }
+                });
             }
-        }).bind_upgrade([&]() {
+        }).bind_disconnect([this]() {
+            if (dis_conn_cbk_) {
+                dis_conn_cbk_();
+            }
+        }).bind_upgrade([]() {
             if (asio2::get_last_error()) {
                 LOGE("upgrade failure : {}, {}", asio2::last_error_val(), asio2::last_error_msg());
             }
-        }).bind_recv([&](std::string_view data) {
+        }).bind_recv([=, this](std::string_view data) {
             this->ParseMessage(data);
         });
 
@@ -164,6 +170,10 @@ namespace tc
 
     void WSClient::SetOnConnectCallback(OnConnectedCallback&& cbk) {
         conn_cbk_ = std::move(cbk);
+    }
+
+    void WSClient::SetOnDisconnectedCallback(OnDisconnectedCallback&& cbk) {
+        dis_conn_cbk_ = std::move(cbk);
     }
 
     void WSClient::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
