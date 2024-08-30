@@ -9,6 +9,8 @@
 #include "tc_common_new/data.h"
 #include "tc_common_new/thread.h"
 #include "tc_common_new/file.h"
+#include "tc_common_new/message_notifier.h"
+#include "sdk_messages.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -18,11 +20,12 @@ namespace tc
 
     const int kMaxClientQueuedMessage = 4096;
 
-    std::shared_ptr<WSClient> WSClient::Make(const std::string& ip, int port, const std::string& path) {
-        return std::make_shared<WSClient>(ip, port, path);
+    std::shared_ptr<WSClient> WSClient::Make(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path) {
+        return std::make_shared<WSClient>(notifier, ip, port, path);
     }
 
-    WSClient::WSClient(const std::string& ip, int port, const std::string& path) {
+    WSClient::WSClient(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path) {
+        this->msg_notifier_ = notifier;
         this->ip_ = ip;
         this->port_ = port;
         this->path_ = path;
@@ -131,6 +134,12 @@ namespace tc
             if (monitor_switched_cbk_) {
                 monitor_switched_cbk_(monitor_switched);
             }
+        } else if (net_msg->type() == tc::kChangeMonitorResolutionResult) {
+            auto sub = net_msg->change_monitor_resolution_result();
+            msg_notifier_->SendAppMessage(MsgChangeMonitorResolutionResult {
+                .monitor_name_ = sub.monitor_name(),
+                .result = sub.result(),
+            });
         }
     }
 

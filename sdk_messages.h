@@ -69,6 +69,13 @@ namespace tc
     class MsgWsDisconnected {
     public:
     };
+
+    // change monitor resolution
+    class MsgChangeMonitorResolutionResult {
+    public:
+        std::string monitor_name_;
+        bool result = false;
+    };
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H

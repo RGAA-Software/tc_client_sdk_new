@@ -50,7 +50,7 @@ namespace tc
         drt_ = drt;
         render_surface_ = surface;
 
-        ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
+        ws_client_ = WSClient::Make(msg_notifier_, sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
 
         return true;
     }

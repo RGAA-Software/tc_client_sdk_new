@@ -29,13 +29,14 @@ namespace tc
 
     class Data;
     class Thread;
+    class MessageNotifier;
 
     class WSClient {
     public:
 
-        static std::shared_ptr<WSClient> Make(const std::string& ip, int port, const std::string& path);
+        static std::shared_ptr<WSClient> Make(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path);
 
-        explicit WSClient(const std::string& ip, int port, const std::string& path);
+        explicit WSClient(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path);
         ~WSClient();
 
         void Start();
@@ -78,6 +79,8 @@ namespace tc
 
         std::atomic_int queued_msg_count_ = 0;
         uint64_t hb_idx_ = 0;
+
+        std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
 
     };
 
