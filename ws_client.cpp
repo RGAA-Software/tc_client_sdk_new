@@ -41,7 +41,7 @@ namespace tc
             this->HeartBeat();
         });
 
-        client_->bind_init([=]() {
+        client_->bind_init([=, this]() {
             client_->ws_stream().binary(true);
             client_->set_no_delay(true);
             client_->ws_stream().set_option(
@@ -50,7 +50,7 @@ namespace tc
                     )
             );
 
-        }).bind_connect([=]() {
+        }).bind_connect([=, this]() {
             if (asio2::get_last_error()) {
                 LOGE("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
             } else {
