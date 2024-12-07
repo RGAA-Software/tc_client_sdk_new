@@ -11,6 +11,7 @@
 #include "tc_common_new/file.h"
 #include "tc_common_new/message_notifier.h"
 #include "sdk_messages.h"
+#include "udp_connection.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -77,6 +78,10 @@ namespace tc
         if (!client_->async_start(this->ip_, this->port_, this->path_)) {
             LOGE("connect websocket server failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
         }
+
+        /// test
+        udp_conn_ = std::make_shared<UdpConnection>("127.0.0.1", 20400);
+        udp_conn_->Start();
     }
 
     void WSClient::Exit() {

@@ -44,6 +44,8 @@ set(SDK_SRCS
     cast_receiver.cpp
     app_timer.cpp
     statistics.cpp
+    connection.cpp
+    udp_connection.cpp
 )
 
 set(GL_SRCS

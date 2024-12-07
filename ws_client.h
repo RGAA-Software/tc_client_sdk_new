@@ -30,6 +30,7 @@ namespace tc
     class Data;
     class Thread;
     class MessageNotifier;
+    class UdpConnection;
 
     class WSClient {
     public:
@@ -81,7 +82,7 @@ namespace tc
         uint64_t hb_idx_ = 0;
 
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
-
+        std::shared_ptr<UdpConnection> udp_conn_ = nullptr;
     };
 
 }
