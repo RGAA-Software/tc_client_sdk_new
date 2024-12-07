@@ -106,7 +106,7 @@ namespace tc
             LOGE("Source codec context is NULL.");
             return -1;
         }
-        codec_context->thread_count = std::min(16, (int)std::thread::hardware_concurrency());
+        codec_context->thread_count = std::min(8, (int)std::thread::hardware_concurrency());
         codec_context->thread_type = FF_THREAD_SLICE;
 
         if (avcodec_open2(codec_context, codec, NULL) < 0) {
