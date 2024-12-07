@@ -78,6 +78,7 @@ namespace tc
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info);
         void RegisterEventListeners();
         void SendHelloMessage();
+        void RequestIFrame();
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
