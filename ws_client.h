@@ -30,7 +30,8 @@ namespace tc
     class Data;
     class Thread;
     class MessageNotifier;
-    class UdpConnection;
+    class MessageListener;
+    class Connection;
 
     class WSClient {
     public:
@@ -58,11 +59,11 @@ namespace tc
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
 
     private:
-        void ParseMessage(std::string_view msg);
+        void ParseMessage(std::string&& msg);
         void HeartBeat();
 
     private:
-        std::shared_ptr<asio2::ws_client> client_ = nullptr;
+        std::shared_ptr<Connection> conn_ = nullptr;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
@@ -82,7 +83,7 @@ namespace tc
         uint64_t hb_idx_ = 0;
 
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
-        std::shared_ptr<UdpConnection> udp_conn_ = nullptr;
+        std::shared_ptr<MessageListener> msg_listener_ = nullptr;
     };
 
 }

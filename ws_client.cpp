@@ -12,6 +12,7 @@
 #include "tc_common_new/message_notifier.h"
 #include "sdk_messages.h"
 #include "udp_connection.h"
+#include "ws_connection.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -30,69 +31,91 @@ namespace tc
         this->ip_ = ip;
         this->port_ = port;
         this->path_ = path;
+
+        msg_listener_ = msg_notifier_->CreateListener();
+        msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
+            this->HeartBeat();
+        });
     }
 
     WSClient::~WSClient() = default;
 
     void WSClient::Start() {
-        client_ = std::make_shared<asio2::ws_client>();
-        client_->set_auto_reconnect(true);
-        client_->set_timeout(std::chrono::milliseconds(2000));
-        client_->start_timer("ws-heartbeat", std::chrono::seconds(1), [=, this]() {
-            this->HeartBeat();
+        conn_ = std::make_shared<WsConnection>(ip_, port_, path_);
+        //conn_ = std::make_shared<UdpConnection>("127.0.0.1", 20400);
+        conn_->RegisterOnConnectedCallback([=, this]() {
+            if (conn_cbk_) {
+                conn_cbk_();
+            }
         });
 
-        client_->bind_init([=, this]() {
-            client_->ws_stream().binary(true);
-            client_->set_no_delay(true);
-            client_->ws_stream().set_option(
-                    websocket::stream_base::decorator([](websocket::request_type &req) {
-                        req.set(http::field::authorization, "websocket-client-authorization");}
-                    )
-            );
-
-        }).bind_connect([=, this]() {
-            if (asio2::get_last_error()) {
-                LOGE("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
-            } else {
-                LOGI("connect success : {} {} ", client_->local_address().c_str(), client_->local_port());
-                client_->post_queued_event([=, this]() {
-                    if (conn_cbk_) {
-                        conn_cbk_();
-                    }
-                });
-            }
-        }).bind_disconnect([this]() {
+        conn_->RegisterOnDisConnectedCallback([=, this]() {
             if (dis_conn_cbk_) {
                 dis_conn_cbk_();
             }
-        }).bind_upgrade([]() {
-            if (asio2::get_last_error()) {
-                LOGE("upgrade failure : {}, {}", asio2::last_error_val(), asio2::last_error_msg());
-            }
-        }).bind_recv([=, this](std::string_view data) {
-            this->ParseMessage(data);
         });
 
-        // the /ws is the websocket upgraged target
-        if (!client_->async_start(this->ip_, this->port_, this->path_)) {
-            LOGE("connect websocket server failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
-        }
+        conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
+            this->ParseMessage(std::move(data));
+        });
 
-        /// test
-        udp_conn_ = std::make_shared<UdpConnection>("127.0.0.1", 20400);
-        udp_conn_->Start();
+        conn_->Start();
+//
+//        client_ = std::make_shared<asio2::ws_client>();
+//        client_->set_auto_reconnect(true);
+//        client_->set_timeout(std::chrono::milliseconds(2000));
+//        client_->start_timer("ws-heartbeat", std::chrono::seconds(1), [=, this]() {
+//            this->HeartBeat();
+//        });
+//
+//        client_->bind_init([=, this]() {
+//            client_->ws_stream().binary(true);
+//            client_->set_no_delay(true);
+//            client_->ws_stream().set_option(
+//                    websocket::stream_base::decorator([](websocket::request_type &req) {
+//                        req.set(http::field::authorization, "websocket-client-authorization");}
+//                    )
+//            );
+//
+//        }).bind_connect([=, this]() {
+//            if (asio2::get_last_error()) {
+//                LOGE("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+//            } else {
+//                LOGI("connect success : {} {} ", client_->local_address().c_str(), client_->local_port());
+//                client_->post_queued_event([=, this]() {
+//                    if (conn_cbk_) {
+//                        conn_cbk_();
+//                    }
+//                });
+//            }
+//        }).bind_disconnect([this]() {
+//            if (dis_conn_cbk_) {
+//                dis_conn_cbk_();
+//            }
+//        }).bind_upgrade([]() {
+//            if (asio2::get_last_error()) {
+//                LOGE("upgrade failure : {}, {}", asio2::last_error_val(), asio2::last_error_msg());
+//            }
+//        }).bind_recv([=, this](std::string_view data) {
+//            this->ParseMessage(data);
+//        });
+//
+//        // the /ws is the websocket upgraged target
+//        if (!client_->async_start(this->ip_, this->port_, this->path_)) {
+//            LOGE("connect websocket server failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+//        }
+
     }
 
     void WSClient::Exit() {
-        if (client_) {
+        if (conn_) {
             LOGI("Queued message count: {}", queued_msg_count_.load());
-            client_->stop();
+            conn_->Stop();
         }
         LOGI("WS has exited...");
     }
 
-    void WSClient::ParseMessage(std::string_view msg) {
+    void WSClient::ParseMessage(std::string&& msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParseFromArray(msg.data(), msg.size());
         if (!ok) {
@@ -102,9 +125,14 @@ namespace tc
 
         if (net_msg->type() == tc::kVideoFrame) {
             const auto& video_frame = net_msg->video_frame();
+            LOGI("video frame index: {}, {}x{}, key: {}", video_frame.frame_index(),
+                 video_frame.frame_width(), video_frame.frame_height(), video_frame.key());
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }
+//            static std::ofstream file("1234.h264", std::ios::binary);
+//            file.write(video_frame.data().c_str(), video_frame.data().size());
+
         } else if (net_msg->type() == tc::kAudioFrame) {
             const auto& audio_frame = net_msg->audio_frame();
             if (audio_frame_cbk_) {
@@ -150,21 +178,24 @@ namespace tc
     }
 
     void WSClient::PostBinaryMessage(const std::string& msg) {
-        if (!client_ || !client_->is_started()) {
-            return;
+        if (conn_) {
+            conn_->PostBinaryMessage(msg);
         }
-        if (queued_msg_count_ > kMaxClientQueuedMessage) {
-            LOGW("queued so many message, discard this message in WSClient");
-            return;
-        }
-        queued_msg_count_++;
-        try {
-            client_->async_send(msg, [=, this]() {
-                this->queued_msg_count_--;
-            });
-        } catch (std::exception &e) {
-            LOGE("PostBinaryMessage(string) failed: {}", e.what());
-        }
+//        if (!client_ || !client_->is_started()) {
+//            return;
+//        }
+//        if (queued_msg_count_ > kMaxClientQueuedMessage) {
+//            LOGW("queued so many message, discard this message in WSClient");
+//            return;
+//        }
+//        queued_msg_count_++;
+//        try {
+//            client_->async_send(msg, [=, this]() {
+//                this->queued_msg_count_--;
+//            });
+//        } catch (std::exception &e) {
+//            LOGE("PostBinaryMessage(string) failed: {}", e.what());
+//        }
     }
 
     void WSClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {

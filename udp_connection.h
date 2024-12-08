@@ -21,6 +21,7 @@ namespace tc
         UdpConnection(const std::string& host, int port);
         void Start() override;
         void Stop() override;
+        void PostBinaryMessage(const std::string& msg) override;
 
     private:
         std::string host_;

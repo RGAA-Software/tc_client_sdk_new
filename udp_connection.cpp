@@ -10,6 +10,12 @@
 namespace tc
 {
 
+    struct UdpMessagePack {
+        uint32_t magic_ = 0;
+        uint32_t length_ = 0;
+        // data below...
+    };
+
     UdpConnection::UdpConnection(const std::string &host, int port) {
         this->host_ = host;
         this->port_ = port;
@@ -22,33 +28,29 @@ namespace tc
 
         udp_client_->bind_connect([&]() {
             if (asio2::get_last_error())
-                LOGI("connect failure : {} {}",
-                       asio2::last_error_val(), asio2::last_error_msg().c_str());
-            else
-                LOGI("connect success : {} {}",
-                       udp_client_->local_address().c_str(), udp_client_->local_port());
-
-            // has no error, it means connect success, we can send data at here
-            if (!asio2::get_last_error()) {
-                udp_client_->async_send("1<abcdefghijklmnopqrstovuxyz0123456789>");
+                LOGI("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+            else {
+                LOGI("connect success : {} {}", udp_client_->local_address().c_str(), udp_client_->local_port());
+                udp_client_->post_queued_event([this]() {
+                    if (conn_cbk_) {
+                        conn_cbk_();
+                    }
+                });
             }
 
-        }).bind_disconnect([]() {
-            LOGI("disconnect : {} {}",
-                   asio2::last_error_val(), asio2::last_error_msg().c_str());
+        }).bind_disconnect([this]() {
+            LOGI("disconnect : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+            if (dis_conn_cbk_) {
+                dis_conn_cbk_();
+            }
 
         }).bind_recv([&](std::string_view data) {
-            LOGI("recv : {}bytes", data.size());
-
-            std::string s;
-            s += '<';
-            int len = 33 + std::rand() % (126 - 33);
-            for (int i = 0; i < len; i++) {
-                s += (char) ((std::rand() % 26) + 'a');
+            if (msg_cbk_) {
+                std::string cpy_data(data.data(), data.size());
+                //auto pack = (UdpMessagePack*)data.data();
+                //LOGI("data size: {} bytes, magic: 0x{:x}, length: 0x{:x}", data.size(), pack->magic_, pack->length_);
+                msg_cbk_(std::move(cpy_data));
             }
-            s += '>';
-
-            udp_client_->async_send(std::move(s));
 
         }).bind_handshake([&]() {
             if (asio2::get_last_error())
@@ -68,7 +70,16 @@ namespace tc
     }
 
     void UdpConnection::Stop() {
+        if (udp_client_ && udp_client_->is_started()) {
+            udp_client_->stop_all_timers();
+            udp_client_->stop();
+        }
+    }
 
+    void UdpConnection::PostBinaryMessage(const std::string& msg) {
+        if (udp_client_ && udp_client_->is_started()) {
+            udp_client_->async_send(msg);
+        }
     }
 
 }
