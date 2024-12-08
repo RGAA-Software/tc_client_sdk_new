@@ -33,13 +33,21 @@ namespace tc
     class MessageListener;
     class Connection;
 
-    class WSClient {
+    class NetClient {
     public:
 
-        static std::shared_ptr<WSClient> Make(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path);
+        static std::shared_ptr<NetClient> Make(const std::shared_ptr<MessageNotifier>& notifier,
+                                               const std::string& ip,
+                                               int port,
+                                               const std::string& path,
+                                               const ClientConnType& conn_type);
 
-        explicit WSClient(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path);
-        ~WSClient();
+        explicit NetClient(const std::shared_ptr<MessageNotifier>& notifier,
+                           const std::string& ip,
+                           int port,
+                           const std::string& path,
+                           const ClientConnType& conn_type);
+        ~NetClient();
 
         void Start();
         void Exit();
@@ -78,6 +86,7 @@ namespace tc
         std::string ip_{};
         int port_{};
         std::string path_{};
+        ClientConnType conn_type_;
 
         std::atomic_int queued_msg_count_ = 0;
         uint64_t hb_idx_ = 0;

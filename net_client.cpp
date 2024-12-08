@@ -2,7 +2,7 @@
 // Created by RGAA on 2023-12-27.
 //
 
-#include "ws_client.h"
+#include "net_client.h"
 
 #include <utility>
 #include "tc_common_new/log.h"
@@ -20,17 +20,24 @@
 namespace tc
 {
 
-    const int kMaxClientQueuedMessage = 4096;
-
-    std::shared_ptr<WSClient> WSClient::Make(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path) {
-        return std::make_shared<WSClient>(notifier, ip, port, path);
+    std::shared_ptr<NetClient> NetClient::Make(const std::shared_ptr<MessageNotifier>& notifier,
+                                               const std::string& ip,
+                                               int port,
+                                               const std::string& path,
+                                               const ClientConnType& conn_type) {
+        return std::make_shared<NetClient>(notifier, ip, port, path, conn_type);
     }
 
-    WSClient::WSClient(const std::shared_ptr<MessageNotifier>& notifier, const std::string& ip, int port, const std::string& path) {
+    NetClient::NetClient(const std::shared_ptr<MessageNotifier>& notifier,
+                         const std::string& ip,
+                         int port,
+                         const std::string& path,
+                         const ClientConnType& conn_type) {
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
         this->port_ = port;
         this->path_ = path;
+        this->conn_type_ = conn_type;
 
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
@@ -38,11 +45,22 @@ namespace tc
         });
     }
 
-    WSClient::~WSClient() = default;
+    NetClient::~NetClient() = default;
 
-    void WSClient::Start() {
-        conn_ = std::make_shared<WsConnection>(ip_, port_, path_);
-        //conn_ = std::make_shared<UdpConnection>("127.0.0.1", 20400);
+    void NetClient::Start() {
+        if (conn_type_ == ClientConnType::kWebsocket) {
+            LOGI("Will connect by Websocket");
+            conn_ = std::make_shared<WsConnection>(ip_, port_, path_);
+        }
+        else if (conn_type_ == ClientConnType::kUdpKcp) {
+            LOGI("Will connect by UDP");
+            conn_ = std::make_shared<UdpConnection>("127.0.0.1", 20400);
+        }
+        else {
+            LOGE("Start failed! Don't know the connection type: {}", (int)conn_type_);
+            return;
+        }
+
         conn_->RegisterOnConnectedCallback([=, this]() {
             if (conn_cbk_) {
                 conn_cbk_();
@@ -107,7 +125,7 @@ namespace tc
 
     }
 
-    void WSClient::Exit() {
+    void NetClient::Exit() {
         if (conn_) {
             LOGI("Queued message count: {}", queued_msg_count_.load());
             conn_->Stop();
@@ -115,7 +133,7 @@ namespace tc
         LOGI("WS has exited...");
     }
 
-    void WSClient::ParseMessage(std::string&& msg) {
+    void NetClient::ParseMessage(std::string&& msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParseFromArray(msg.data(), msg.size());
         if (!ok) {
@@ -125,13 +143,13 @@ namespace tc
 
         if (net_msg->type() == tc::kVideoFrame) {
             const auto& video_frame = net_msg->video_frame();
-            LOGI("video frame index: {}, {}x{}, key: {}", video_frame.frame_index(),
-                 video_frame.frame_width(), video_frame.frame_height(), video_frame.key());
+            if (video_frame.key()) {
+                LOGI("video frame index: {}, {}x{}, key: {}", video_frame.frame_index(),
+                     video_frame.frame_width(), video_frame.frame_height(), video_frame.key());
+            }
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
             }
-//            static std::ofstream file("1234.h264", std::ios::binary);
-//            file.write(video_frame.data().c_str(), video_frame.data().size());
 
         } else if (net_msg->type() == tc::kAudioFrame) {
             const auto& audio_frame = net_msg->audio_frame();
@@ -177,72 +195,57 @@ namespace tc
         }
     }
 
-    void WSClient::PostBinaryMessage(const std::string& msg) {
+    void NetClient::PostBinaryMessage(const std::string& msg) {
         if (conn_) {
             conn_->PostBinaryMessage(msg);
         }
-//        if (!client_ || !client_->is_started()) {
-//            return;
-//        }
-//        if (queued_msg_count_ > kMaxClientQueuedMessage) {
-//            LOGW("queued so many message, discard this message in WSClient");
-//            return;
-//        }
-//        queued_msg_count_++;
-//        try {
-//            client_->async_send(msg, [=, this]() {
-//                this->queued_msg_count_--;
-//            });
-//        } catch (std::exception &e) {
-//            LOGE("PostBinaryMessage(string) failed: {}", e.what());
-//        }
     }
 
-    void WSClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {
+    void NetClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {
         this->PostBinaryMessage(msg->AsString());
     }
 
-    void WSClient::SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk) {
+    void NetClient::SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk) {
         video_frame_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk) {
+    void NetClient::SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk) {
         audio_frame_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk) {
+    void NetClient::SetOnCursorInfoSyncMsgCallback(OnCursorInfoSyncMsgCallback&& cbk) {
         cursor_info_sync_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnConnectCallback(OnConnectedCallback&& cbk) {
+    void NetClient::SetOnConnectCallback(OnConnectedCallback&& cbk) {
         conn_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnDisconnectedCallback(OnDisconnectedCallback&& cbk) {
+    void NetClient::SetOnDisconnectedCallback(OnDisconnectedCallback&& cbk) {
         dis_conn_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
+    void NetClient::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
         audio_spectrum_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
+    void NetClient::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
         hb_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
+    void NetClient::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
         clipboard_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnServerConfigurationCallback(tc::OnConfigCallback&& cbk) {
+    void NetClient::SetOnServerConfigurationCallback(tc::OnConfigCallback&& cbk) {
         config_cbk_ = std::move(cbk);
     }
 
-    void WSClient::SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk) {
+    void NetClient::SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk) {
         monitor_switched_cbk_ = std::move(cbk);
     }
 
-    void WSClient::HeartBeat() {
+    void NetClient::HeartBeat() {
         auto msg = std::make_shared<Message>();
         msg->set_type(tc::kHeartBeat);
         auto hb = msg->mutable_heartbeat();

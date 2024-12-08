@@ -10,7 +10,7 @@
 
 #include "tc_message.pb.h"
 #include "decoder_render_type.h"
-#include "ws_client.h"
+#include "net_client.h"
 #include "sdk_messages.h"
 
 namespace tc
@@ -41,6 +41,7 @@ namespace tc
         int port_;
         std::string req_path_;
         ClientType client_type_;
+        ClientConnType conn_type_;
     };
 
     // callbacks
@@ -83,7 +84,7 @@ namespace tc
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
         ThunderSdkParams sdk_params_;
-        std::shared_ptr<WSClient> ws_client_ = nullptr;
+        std::shared_ptr<NetClient> net_client_ = nullptr;
         std::shared_ptr<VideoDecoder> video_decoder_ = nullptr;
 
         // for android

@@ -7,9 +7,12 @@
 
 #include <string>
 #include <functional>
+#include <atomic>
 
 namespace tc
 {
+
+    const int kMaxClientQueuedMessage = 4096;
 
     using OnConnectedCallback = std::function<void()>;
     using OnDisConnectedCallback = std::function<void()>;
@@ -40,7 +43,7 @@ namespace tc
         OnConnectedCallback conn_cbk_;
         OnDisConnectedCallback dis_conn_cbk_;
         OnMessageCallback msg_cbk_;
-
+        std::atomic_int queued_msg_count_ = 0;
     };
 
 }

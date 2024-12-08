@@ -38,7 +38,7 @@ set(SDK_SRCS
     video_decoder.cpp
     ffmpeg_video_decoder.cpp
     mediacodec_video_decoder.cpp
-    ws_client.cpp
+        net_client.cpp
     stream_helper.cpp
     webrtc_client.cpp
     cast_receiver.cpp

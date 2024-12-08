@@ -78,7 +78,14 @@ namespace tc
 
     void UdpConnection::PostBinaryMessage(const std::string& msg) {
         if (udp_client_ && udp_client_->is_started()) {
-            udp_client_->async_send(msg);
+            if (queued_msg_count_ > kMaxClientQueuedMessage) {
+                LOGW("You've queued too many messages!");
+                return;
+            }
+            queued_msg_count_++;
+            udp_client_->async_send(msg, [this]() {
+                queued_msg_count_--;
+            });
         }
     }
 

@@ -10,7 +10,7 @@
 #include "tc_common_new/thread.h"
 #include "tc_common_new/time_ext.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
-#include "ws_client.h"
+#include "net_client.h"
 #include "video_decoder_factory.h"
 #include "tc_message.pb.h"
 #include "sdk_messages.h"
@@ -50,8 +50,11 @@ namespace tc
         drt_ = drt;
         render_surface_ = surface;
 
-        ws_client_ = WSClient::Make(msg_notifier_, sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
-
+        net_client_ = NetClient::Make(msg_notifier_,
+                                      sdk_params_.ip_,
+                                      sdk_params_.port_,
+                                      sdk_params_.req_path_,
+                                      sdk_params_.conn_type_);
         return true;
     }
 
@@ -72,17 +75,17 @@ namespace tc
         audio_spectrum_thread_->Poll();
 
         // websocket client
-        // ws_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
-        ws_client_->SetOnConnectCallback([=, this]() {
+        // net_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
+        net_client_->SetOnConnectCallback([=, this]() {
             this->SendHelloMessage();
             msg_notifier_->SendAppMessage(MsgWsConnected{});
         });
 
-        ws_client_->SetOnDisconnectedCallback([=, this]() {
+        net_client_->SetOnDisconnectedCallback([=, this]() {
             msg_notifier_->SendAppMessage(MsgWsDisconnected{});
         });
 
-        ws_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
+        net_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
             if (exit_) { return; }
             this->PostVideoTask([=, this]() {
                 // video decoder
@@ -145,7 +148,7 @@ namespace tc
             });
         });
 
-        ws_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
+        net_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
             if (exit_) { return; }
             this->PostAudioTask([=, this]() {
                 auto beg = TimeExt::GetCurrentTimestamp();
@@ -168,7 +171,7 @@ namespace tc
             });
         });
 
-        ws_client_->SetOnAudioSpectrumCallback([=, this](const tc::ServerAudioSpectrum& spectrum) {
+        net_client_->SetOnAudioSpectrumCallback([=, this](const tc::ServerAudioSpectrum& spectrum) {
             if (exit_) { return; }
             this->PostAudioSpectrumTask([=, this]() {
                 if (audio_spectrum_cbk_) {
@@ -177,7 +180,7 @@ namespace tc
             });
         });
 
-        ws_client_->Start();
+        net_client_->Start();
 
         // receiver
         // cast_receiver_ = CastReceiver::Make();
@@ -198,8 +201,8 @@ namespace tc
     }
 
     void ThunderSdk::PostBinaryMessage(const std::string& msg) {
-        if(ws_client_) {
-            ws_client_->PostBinaryMessage(msg);
+        if(net_client_) {
+            net_client_->PostBinaryMessage(msg);
         }
     }
 
@@ -218,7 +221,7 @@ namespace tc
     }
 
     void ThunderSdk::SendHelloMessage() {
-        if (!ws_client_) {
+        if (!net_client_) {
             return;
         }
         tc::Message msg;
@@ -228,17 +231,17 @@ namespace tc
         hello->set_enable_video(sdk_params_.enable_video_);
         hello->set_client_type(sdk_params_.client_type_);
         hello->set_enable_controller(sdk_params_.enable_controller_);
-        ws_client_->PostBinaryMessage(msg.SerializeAsString());
+        net_client_->PostBinaryMessage(msg.SerializeAsString());
     }
 
     void ThunderSdk::RequestIFrame() {
-        if (!ws_client_) {
+        if (!net_client_) {
             return;
         }
         tc::Message msg;
         auto ack = msg.mutable_ack();
         ack->set_type(MessageType::kInsertKeyFrame);
-        ws_client_->PostBinaryMessage(msg.SerializeAsString());
+        net_client_->PostBinaryMessage(msg.SerializeAsString());
     }
 
     void ThunderSdk::PostVideoTask(std::function<void()>&& task) {
@@ -258,32 +261,32 @@ namespace tc
     }
 
     void ThunderSdk::SetOnCursorInfoCallback(tc::OnCursorInfoSyncMsgCallback&& cbk) {
-        if (ws_client_) {
-            ws_client_->SetOnCursorInfoSyncMsgCallback(std::move(cbk));
+        if (net_client_) {
+            net_client_->SetOnCursorInfoSyncMsgCallback(std::move(cbk));
         }
     }
 
     void ThunderSdk::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
-        if (ws_client_) {
-            ws_client_->SetOnHeartBeatCallback(std::move(cbk));
+        if (net_client_) {
+            net_client_->SetOnHeartBeatCallback(std::move(cbk));
         }
     }
 
     void ThunderSdk::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
-        if (ws_client_) {
-            ws_client_->SetOnClipboardCallback(std::move(cbk));
+        if (net_client_) {
+            net_client_->SetOnClipboardCallback(std::move(cbk));
         }
     }
 
     void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
-        if (ws_client_) {
-            ws_client_->SetOnServerConfigurationCallback(std::move(cbk));
+        if (net_client_) {
+            net_client_->SetOnServerConfigurationCallback(std::move(cbk));
         }
     }
 
     void ThunderSdk::SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk) {
-        if (ws_client_) {
-            ws_client_->SetOnMonitorSwitchedCallback(std::move(cbk));
+        if (net_client_) {
+            net_client_->SetOnMonitorSwitchedCallback(std::move(cbk));
         }
     }
 
@@ -300,8 +303,8 @@ namespace tc
         }
 
         LOGI("Will exit ws client.");
-        if (ws_client_) {
-            ws_client_->Exit();
+        if (net_client_) {
+            net_client_->Exit();
         }
 
         LOGI("will exit video decoder.");
