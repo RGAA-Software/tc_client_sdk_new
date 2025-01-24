@@ -19,10 +19,6 @@
 #include "app_timer.h"
 #include "statistics.h"
 
-#ifdef WIN32
-#include "webrtc_client.h"
-#endif
-
 namespace tc
 {
 
