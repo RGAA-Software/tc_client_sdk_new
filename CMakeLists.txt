@@ -2,7 +2,7 @@
 #find_package(Opus CONFIG REQUIRED)
 #find_package(libyuv CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(protobuf CONFIG REQUIRED)
+#find_package(Protobuf CONFIG REQUIRED)
 
 if(ANDROID)
     find_package(FFMPEG REQUIRED)
@@ -58,7 +58,7 @@ set(GL_SRCS
 
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
 target_link_libraries(tc_sdk PRIVATE Opus::opus glm::glm)#websocketpp::websocketpp
-target_link_libraries(tc_sdk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
+target_link_libraries(tc_sdk PRIVATE libprotobuf)
 target_link_libraries(tc_sdk PRIVATE tc_opus_codec_new tc_message)
 
 message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
