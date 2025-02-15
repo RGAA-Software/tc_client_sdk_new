@@ -58,7 +58,6 @@ set(GL_SRCS
 
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
 target_link_libraries(tc_sdk PRIVATE Opus::opus glm::glm)#websocketpp::websocketpp
-target_link_libraries(tc_sdk PRIVATE libprotobuf)
 target_link_libraries(tc_sdk PRIVATE tc_opus_codec_new tc_message)
 
 message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
@@ -66,6 +65,8 @@ message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
 if (ANDROID)
     target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES})
 else ()
+    target_link_libraries(tc_sdk PRIVATE libprotobuf)
+
     set(FFMPEG_LIB_PATH ${CMAKE_SOURCE_DIR}/deps/tc_3rdparty/ffmpeg/lib/x64)
     link_directories(${FFMPEG_LIB_PATH})
     target_link_libraries(tc_sdk PRIVATE
