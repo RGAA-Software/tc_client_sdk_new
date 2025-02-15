@@ -40,13 +40,17 @@ namespace tc
                                                const std::string& ip,
                                                int port,
                                                const std::string& path,
-                                               const ClientConnType& conn_type);
+                                               const ClientConnType& conn_type,
+                                               const std::string& device_id,
+                                               const std::string& stream_id);
 
         explicit NetClient(const std::shared_ptr<MessageNotifier>& notifier,
                            const std::string& ip,
                            int port,
                            const std::string& path,
-                           const ClientConnType& conn_type);
+                           const ClientConnType& conn_type,
+                           const std::string& device_id,
+                           const std::string& stream_id);
         ~NetClient();
 
         void Start();
@@ -87,6 +91,8 @@ namespace tc
         int port_{};
         std::string path_{};
         ClientConnType conn_type_;
+        std::string device_id_;
+        std::string stream_id_;
 
         std::atomic_int queued_msg_count_ = 0;
         uint64_t hb_idx_ = 0;

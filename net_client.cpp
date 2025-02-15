@@ -24,20 +24,26 @@ namespace tc
                                                const std::string& ip,
                                                int port,
                                                const std::string& path,
-                                               const ClientConnType& conn_type) {
-        return std::make_shared<NetClient>(notifier, ip, port, path, conn_type);
+                                               const ClientConnType& conn_type,
+                                               const std::string& device_id,
+                                               const std::string& stream_id) {
+        return std::make_shared<NetClient>(notifier, ip, port, path, conn_type, device_id, stream_id);
     }
 
     NetClient::NetClient(const std::shared_ptr<MessageNotifier>& notifier,
                          const std::string& ip,
                          int port,
                          const std::string& path,
-                         const ClientConnType& conn_type) {
+                         const ClientConnType& conn_type,
+                         const std::string& device_id,
+                         const std::string& stream_id) {
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
         this->port_ = port;
         this->path_ = path;
         this->conn_type_ = conn_type;
+        this->device_id_ = device_id;
+        this->stream_id_ = stream_id;
 
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
@@ -248,6 +254,8 @@ namespace tc
     void NetClient::HeartBeat() {
         auto msg = std::make_shared<Message>();
         msg->set_type(tc::kHeartBeat);
+        msg->set_device_id(device_id_);
+        msg->set_stream_id(stream_id_);
         auto hb = msg->mutable_heartbeat();
         hb->set_index(hb_idx_++);
         auto proto_msg = msg->SerializeAsString();

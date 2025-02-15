@@ -50,7 +50,9 @@ namespace tc
                                       sdk_params_.ip_,
                                       sdk_params_.port_,
                                       sdk_params_.req_path_,
-                                      sdk_params_.conn_type_);
+                                      sdk_params_.conn_type_,
+                                      sdk_params_.device_id_,
+                                      sdk_params_.stream_id_);
         return true;
     }
 
@@ -205,7 +207,7 @@ namespace tc
     void ThunderSdk::RegisterEventListeners() {
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<MsgTimer100>([=, this](const auto& msg) {
-            auto m = statistics_->AsProtoMessage();
+            auto m = statistics_->AsProtoMessage(sdk_params_.device_id_, sdk_params_.stream_id_);
             this->PostBinaryMessage(m);
         });
         msg_listener_->Listen<MsgTimer1000>([=, this](const auto& msg) {
@@ -222,6 +224,8 @@ namespace tc
         }
         tc::Message msg;
         msg.set_type(tc::MessageType::kHello);
+        msg.set_device_id(sdk_params_.device_id_);
+        msg.set_stream_id(sdk_params_.stream_id_);
         auto hello = msg.mutable_hello();
         hello->set_enable_audio(sdk_params_.enable_audio_);
         hello->set_enable_video(sdk_params_.enable_video_);
@@ -235,6 +239,9 @@ namespace tc
             return;
         }
         tc::Message msg;
+        msg.set_type(MessageType::kInsertKeyFrame);
+        msg.set_device_id(sdk_params_.device_id_);
+        msg.set_stream_id(sdk_params_.stream_id_);
         auto ack = msg.mutable_ack();
         ack->set_type(MessageType::kInsertKeyFrame);
         net_client_->PostBinaryMessage(msg.SerializeAsString());

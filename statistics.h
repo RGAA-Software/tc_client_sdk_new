@@ -31,7 +31,7 @@ namespace tc
         void AppendMediaDataSize(int size);
 
         void TickFps();
-        std::string AsProtoMessage();
+        std::string AsProtoMessage(const std::string& device_id, const std::string& stream_id);
 
         void Dump();
 

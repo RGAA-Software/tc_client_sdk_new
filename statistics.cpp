@@ -37,9 +37,11 @@ namespace tc
         fps_render_value_ = fps_render_->value();
     }
 
-    std::string Statistics::AsProtoMessage() {
+    std::string Statistics::AsProtoMessage(const std::string& device_id, const std::string& stream_id) {
         tc::Message msg;
         msg.set_type(tc::MessageType::kClientStatistics);
+        msg.set_device_id(device_id);
+        msg.set_stream_id(stream_id);
         auto cst = msg.mutable_client_statistics();
         cst->mutable_decode_durations()->Add(decode_durations_.begin(), decode_durations_.end());
         cst->mutable_video_recv_gaps()->Add(video_recv_gaps_.begin(), video_recv_gaps_.end());

@@ -42,6 +42,8 @@ namespace tc
         std::string req_path_;
         ClientType client_type_;
         ClientConnType conn_type_;
+        std::string device_id_;
+        std::string stream_id_;
     };
 
     // callbacks
