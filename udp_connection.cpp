@@ -28,9 +28,9 @@ namespace tc
 
         udp_client_->bind_connect([&]() {
             if (asio2::get_last_error())
-                LOGI("connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
+                LOGI("udp connect failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
             else {
-                LOGI("connect success : {} {}", udp_client_->local_address().c_str(), udp_client_->local_port());
+                LOGI("udp connect success : {} {}", udp_client_->local_address().c_str(), udp_client_->local_port());
                 udp_client_->post_queued_event([this]() {
                     if (conn_cbk_) {
                         conn_cbk_();

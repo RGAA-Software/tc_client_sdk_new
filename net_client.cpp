@@ -60,7 +60,7 @@ namespace tc
         }
         else if (conn_type_ == ClientConnType::kUdpKcp) {
             LOGI("Will connect by UDP");
-            conn_ = std::make_shared<UdpConnection>("127.0.0.1", 20400);
+            conn_ = std::make_shared<UdpConnection>(ip_, port_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)conn_type_);
