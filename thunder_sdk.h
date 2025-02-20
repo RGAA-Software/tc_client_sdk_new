@@ -76,6 +76,8 @@ namespace tc
         void PostAudioTask(std::function<void()>&& task);
         void PostAudioSpectrumTask(std::function<void()>&& task);
 
+        int GetProgressSteps();
+
     private:
 
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info);

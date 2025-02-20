@@ -81,7 +81,7 @@ namespace tc
     };
 
     // progress direct connection begin
-    class MsgDirectPing {
+    class MsgDirectWsPing {
     public:
 
     };

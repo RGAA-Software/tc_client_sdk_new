@@ -306,6 +306,19 @@ namespace tc
         }
     }
 
+    int ThunderSdk::GetProgressSteps() {
+        if (sdk_params_.conn_type_ == ClientConnType::kWebsocket) {
+            return 4;
+        }
+        else if (sdk_params_.conn_type_ == ClientConnType::kUdpKcp) {
+            return 3;
+        }
+        else if (sdk_params_.conn_type_ == ClientConnType::kWebRtc) {
+            return 3;
+        }
+        return 0;
+    }
+
     void ThunderSdk::Exit() {
         LOGI("ThunderSdk start exiting.");
         exit_ = true;
