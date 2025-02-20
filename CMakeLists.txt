@@ -46,6 +46,7 @@ set(SDK_SRCS
     connection.cpp
     udp_connection.cpp
     ws_connection.cpp
+    sdk_errors.cpp
 )
 
 set(GL_SRCS

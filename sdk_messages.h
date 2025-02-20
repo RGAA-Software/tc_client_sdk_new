@@ -8,6 +8,8 @@
 #include <string>
 #include <memory>
 
+#include "sdk_errors.h"
+
 namespace tc
 {
 
@@ -70,6 +72,42 @@ namespace tc
         std::string monitor_name_;
         bool result = false;
     };
+
+    // errors
+    class MsgSdkError {
+    public:
+        SdkErrorCode code_;
+        std::string msg_;
+    };
+
+    // progress direct connection begin
+    class MsgDirectPing {
+    public:
+
+    };
+
+    class MsgDirectWsConnected {
+    public:
+
+    };
+
+    class MsgDirectWsConnectFailed {
+    public:
+
+    };
+
+    class MsgDirectConfigInfoCallback {
+    public:
+
+    };
+
+    class MsgDirectFirstVideoFrameCallback {
+    public:
+
+    };
+    // progress direct connection end
+
+
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H
