@@ -41,7 +41,8 @@ namespace tc
         int port_;
         std::string req_path_;
         ClientType client_type_;
-        ClientConnType conn_type_;
+        ClientConnectType conn_type_;
+        ClientNetworkType nt_type_;
         std::string device_id_;
         std::string stream_id_;
     };

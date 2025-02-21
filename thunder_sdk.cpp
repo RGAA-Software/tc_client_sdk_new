@@ -51,6 +51,7 @@ namespace tc
                                       sdk_params_.port_,
                                       sdk_params_.req_path_,
                                       sdk_params_.conn_type_,
+                                      sdk_params_.nt_type_,
                                       sdk_params_.device_id_,
                                       sdk_params_.stream_id_);
         return true;
@@ -307,13 +308,13 @@ namespace tc
     }
 
     int ThunderSdk::GetProgressSteps() {
-        if (sdk_params_.conn_type_ == ClientConnType::kWebsocket) {
+        if (sdk_params_.conn_type_ == ClientNetworkType::kWebsocket) {
             return 4;
         }
-        else if (sdk_params_.conn_type_ == ClientConnType::kUdpKcp) {
+        else if (sdk_params_.conn_type_ == ClientNetworkType::kUdpKcp) {
             return 3;
         }
-        else if (sdk_params_.conn_type_ == ClientConnType::kWebRtc) {
+        else if (sdk_params_.conn_type_ == ClientNetworkType::kWebRtc) {
             return 3;
         }
         return 0;

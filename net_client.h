@@ -40,7 +40,8 @@ namespace tc
                                                const std::string& ip,
                                                int port,
                                                const std::string& path,
-                                               const ClientConnType& conn_type,
+                                               const ClientConnectType& conn_type,
+                                               const ClientNetworkType& nt_type,
                                                const std::string& device_id,
                                                const std::string& stream_id);
 
@@ -48,7 +49,8 @@ namespace tc
                            const std::string& ip,
                            int port,
                            const std::string& path,
-                           const ClientConnType& conn_type,
+                           const ClientConnectType& conn_type,
+                           const ClientNetworkType& nt_type,
                            const std::string& device_id,
                            const std::string& stream_id);
         ~NetClient();
@@ -90,7 +92,8 @@ namespace tc
         std::string ip_{};
         int port_{};
         std::string path_{};
-        ClientConnType conn_type_;
+        ClientConnectType conn_type_;
+        ClientNetworkType network_type_;
         std::string device_id_;
         std::string stream_id_;
 
