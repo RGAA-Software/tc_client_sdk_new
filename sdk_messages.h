@@ -30,13 +30,6 @@ namespace tc
     };
 
     //
-    class MsgFirstFrameDecoded {
-    public:
-        std::shared_ptr<RawImage> raw_image_ = nullptr;
-        CaptureMonitorInfo mon_info_;
-    };
-
-    //
     class MsgFrameDecoded {
     public:
         uint64_t frame_idx_;
@@ -56,16 +49,6 @@ namespace tc
     class MsgTimer100 {
     };
 
-    // websocket connected to server
-    class MsgWsConnected {
-    public:
-    };
-
-    // websocket disconnected
-    class MsgWsDisconnected {
-    public:
-    };
-
     // change monitor resolution
     class MsgChangeMonitorResolutionResult {
     public:
@@ -80,32 +63,33 @@ namespace tc
         std::string msg_;
     };
 
-    // progress direct connection begin
-    class MsgDirectWsPing {
+    // progress connection begin
+    class MsgNetworkPrePing {
     public:
 
     };
 
-    class MsgDirectWsConnected {
+    class MsgNetworkConnected {
     public:
 
     };
 
-    class MsgDirectWsConnectFailed {
+    class MsgNetworkDisConnected {
     public:
 
     };
 
-    class MsgDirectConfigInfoCallback {
+    class MsgFirstConfigInfoCallback {
     public:
 
     };
 
-    class MsgDirectFirstVideoFrameCallback {
+    class MsgFirstVideoFrameDecoded {
     public:
-
+        std::shared_ptr<RawImage> raw_image_ = nullptr;
+        CaptureMonitorInfo mon_info_;
     };
-    // progress direct connection end
+    // progress connection end
 
 
 }

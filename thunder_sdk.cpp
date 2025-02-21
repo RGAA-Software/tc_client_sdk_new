@@ -73,15 +73,15 @@ namespace tc
         audio_spectrum_thread_ = Thread::Make("bg", 32);
         audio_spectrum_thread_->Poll();
 
-        // websocket client
-        // net_client_ = WSClient::Make(sdk_params_.ip_, sdk_params_.port_, sdk_params_.req_path_);
         net_client_->SetOnConnectCallback([=, this]() {
             this->SendHelloMessage();
-            msg_notifier_->SendAppMessage(MsgWsConnected{});
+            msg_notifier_->SendAppMessage(MsgNetworkConnected{});
         });
 
         net_client_->SetOnDisconnectedCallback([=, this]() {
-            msg_notifier_->SendAppMessage(MsgWsDisconnected{});
+            msg_notifier_->SendAppMessage(MsgNetworkDisConnected{});
+            has_config_msg_ = false;
+            has_video_frame_msg_ = false;
         });
 
         net_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
@@ -148,8 +148,8 @@ namespace tc
                         video_frame_cbk_(raw_image, cap_mon_info);
                     }
 
-                    if (!first_frame_) {
-                        first_frame_ = true;
+                    if (!has_video_frame_msg_) {
+                        has_video_frame_msg_ = true;
                         SendFirstFrameMessage(raw_image, cap_mon_info);
                     }
                 });
@@ -206,7 +206,7 @@ namespace tc
     }
 
     void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info) {
-        MsgFirstFrameDecoded msg;
+        MsgFirstVideoFrameDecoded msg;
         msg.raw_image_ = image;
         msg.mon_info_ = info;
         msg_notifier_->SendAppMessage(msg);
@@ -298,6 +298,11 @@ namespace tc
     void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
         if (net_client_) {
             net_client_->SetOnServerConfigurationCallback(std::move(cbk));
+
+            if (!has_config_msg_) {
+                has_config_msg_ = true;
+                msg_notifier_->SendAppMessage(MsgFirstConfigInfoCallback());
+            }
         }
     }
 
@@ -307,15 +312,20 @@ namespace tc
         }
     }
 
-    int ThunderSdk::GetProgressSteps() {
-        if (sdk_params_.conn_type_ == ClientNetworkType::kWebsocket) {
-            return 4;
+    int ThunderSdk::GetProgressSteps() const {
+        if (sdk_params_.conn_type_ == ClientConnectType::kDirect) {
+            if (sdk_params_.nt_type_ == ClientNetworkType::kWebsocket) {
+                return 3;
+            } else if (sdk_params_.nt_type_ == ClientNetworkType::kUdpKcp) {
+                return 3;
+            } else if (sdk_params_.nt_type_ == ClientNetworkType::kWebRtc) {
+                return 3;
+            }
         }
-        else if (sdk_params_.conn_type_ == ClientNetworkType::kUdpKcp) {
-            return 3;
-        }
-        else if (sdk_params_.conn_type_ == ClientNetworkType::kWebRtc) {
-            return 3;
+        else {
+            if (sdk_params_.nt_type_ == ClientNetworkType::kWebRtc) {
+                return 3;
+            }
         }
         return 0;
     }

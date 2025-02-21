@@ -77,7 +77,7 @@ namespace tc
         void PostAudioTask(std::function<void()>&& task);
         void PostAudioSpectrumTask(std::function<void()>&& task);
 
-        int GetProgressSteps();
+        int GetProgressSteps() const;
 
     private:
 
@@ -100,7 +100,6 @@ namespace tc
         OnAudioFrameDecodedCallback audio_frame_cbk_;
         OnAudioSpectrumCallback audio_spectrum_cbk_;
 
-        bool first_frame_ = false;
         DecoderRenderType drt_;
         bool exit_ = false;
 
@@ -117,6 +116,9 @@ namespace tc
         std::shared_ptr<Thread> audio_spectrum_thread_ = nullptr;
 
         uint64_t last_received_video_ = 0;
+
+        std::atomic_bool has_config_msg_ = false;
+        std::atomic_bool has_video_frame_msg_ = false;
 
     };
 
