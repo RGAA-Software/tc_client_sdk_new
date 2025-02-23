@@ -136,6 +136,13 @@ namespace tc
                     .frame_height_ = frame.frame_height(),
                 };
 
+                static auto last_frame_index = frame.frame_index();
+                auto frame_diff = frame.frame_index() - last_frame_index;
+                if (frame_diff > 1) {
+                    LOGI("Video frame came, index: {}, diff: {}", frame.frame_index(), frame_diff);
+                }
+                last_frame_index = frame.frame_index();
+
                 auto ret = video_decoder->Decode(frame.data(), [=, this](const auto& raw_image) {
                     if (exit_) {
                         return;

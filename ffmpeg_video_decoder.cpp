@@ -161,7 +161,6 @@ namespace tc
         if (!codec_context || !av_frame || stop_) {
             return -1;
         }
-
         std::lock_guard<std::mutex> guard(decode_mtx_);
 
         auto beg = TimeExt::GetCurrentTimestamp();
@@ -177,20 +176,24 @@ namespace tc
             LOGW("EAGAIN...");
             return ret;
         }
-        else if (ret < 0) {
+        else if (ret != 0) {
             LOGE("avcodec_send_packet err: {}", ret);
             return ret;
         }
 
-        while (ret == 0) {
+        bool has_received_frame = false;
+        auto last_result = 0;
+        while (true) {
             ret = avcodec_receive_frame(codec_context, av_frame);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-                //LOGE("avcodec_receive_frame again...");
+                last_result = has_received_frame ? 0 : ret;
                 break;
-            } else if (ret < 0) {
+            } else if (ret != 0) {
                 LOGI("avcodec_receive_frame error: {}", ret);
+                last_result = ret;
                 break;
             }
+            has_received_frame = true;
 
             auto width = av_frame->width;
             auto height = av_frame->height;
@@ -200,7 +203,6 @@ namespace tc
             //auto x3 = av_frame->linesize[2];
             //width = x1;
             //LOGI("frame width: {}, x1: {}", av_frame->width, x1);
-
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
                 frame_width_ = width; //std::max(frame_width_, width);
                 frame_height_ = height; //std::max(frame_height_, height);
@@ -252,7 +254,7 @@ namespace tc
             av_frame_unref(av_frame);
         }
         av_packet_unref(packet);
-        return 0;
+        return last_result;
     }
 
     void FFmpegVideoDecoder::Release() {
