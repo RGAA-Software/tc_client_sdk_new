@@ -17,7 +17,7 @@ namespace tc
 
     // monitor info
     // mon_right_ - mon_left_ != frame_width_ ; cuz awareness settings in Renderer
-    class CaptureMonitorInfo {
+    class SdkCaptureMonitorInfo {
     public:
         std::string mon_name_;
         int mon_left_;
@@ -30,64 +30,56 @@ namespace tc
     };
 
     //
-    class MsgFrameDecoded {
-    public:
-        uint64_t frame_idx_;
-        std::shared_ptr<RawImage> raw_image_ = nullptr;
-        CaptureMonitorInfo mon_info_;
+    class SdkMsgTimer1000 {
     };
 
     //
-    class MsgTimer1000 {
+    class SdkMsgTimer2000 {
     };
 
     //
-    class MsgTimer2000 {
-    };
-
-    //
-    class MsgTimer100 {
+    class SdkMsgTimer100 {
     };
 
     // change monitor resolution
-    class MsgChangeMonitorResolutionResult {
+    class SdkMsgChangeMonitorResolutionResult {
     public:
         std::string monitor_name_;
         bool result = false;
     };
 
     // errors
-    class MsgSdkError {
+    class SdkMsgError {
     public:
         SdkErrorCode code_;
         std::string msg_;
     };
 
     // progress connection begin
-    class MsgNetworkPrePing {
+    class SdkMsgNetworkPrePing {
     public:
 
     };
 
-    class MsgNetworkConnected {
+    class SdkMsgNetworkConnected {
     public:
 
     };
 
-    class MsgNetworkDisConnected {
+    class SdkMsgNetworkDisConnected {
     public:
 
     };
 
-    class MsgFirstConfigInfoCallback {
+    class SdkMsgFirstConfigInfoCallback {
     public:
 
     };
 
-    class MsgFirstVideoFrameDecoded {
+    class SdkMsgFirstVideoFrameDecoded {
     public:
         std::shared_ptr<RawImage> raw_image_ = nullptr;
-        CaptureMonitorInfo mon_info_;
+        SdkCaptureMonitorInfo mon_info_;
     };
     // progress connection end
 

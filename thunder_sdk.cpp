@@ -75,11 +75,11 @@ namespace tc
 
         net_client_->SetOnConnectCallback([=, this]() {
             this->SendHelloMessage();
-            msg_notifier_->SendAppMessage(MsgNetworkConnected{});
+            msg_notifier_->SendAppMessage(SdkMsgNetworkConnected{});
         });
 
         net_client_->SetOnDisconnectedCallback([=, this]() {
-            msg_notifier_->SendAppMessage(MsgNetworkDisConnected{});
+            msg_notifier_->SendAppMessage(SdkMsgNetworkDisConnected{});
             has_config_msg_ = false;
             has_video_frame_msg_ = false;
         });
@@ -126,7 +126,7 @@ namespace tc
                 statistics_->render_width_ = frame.frame_width();
                 statistics_->render_height_ = frame.frame_height();
 
-                CaptureMonitorInfo cap_mon_info {
+                SdkCaptureMonitorInfo cap_mon_info {
                     .mon_name_ = frame.mon_name(),
                     .mon_left_ = frame.mon_left(),
                     .mon_top_ = frame.mon_top(),
@@ -212,8 +212,8 @@ namespace tc
 
     }
 
-    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info) {
-        MsgFirstVideoFrameDecoded msg;
+    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const SdkCaptureMonitorInfo& info) {
+        SdkMsgFirstVideoFrameDecoded msg;
         msg.raw_image_ = image;
         msg.mon_info_ = info;
         msg_notifier_->SendAppMessage(msg);
@@ -227,14 +227,14 @@ namespace tc
 
     void ThunderSdk::RegisterEventListeners() {
         msg_listener_ = msg_notifier_->CreateListener();
-        msg_listener_->Listen<MsgTimer100>([=, this](const auto& msg) {
+        msg_listener_->Listen<SdkMsgTimer100>([=, this](const auto& msg) {
             auto m = statistics_->AsProtoMessage(sdk_params_.device_id_, sdk_params_.stream_id_);
             this->PostBinaryMessage(m);
         });
-        msg_listener_->Listen<MsgTimer1000>([=, this](const auto& msg) {
+        msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
             statistics_->TickFps();
         });
-        msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
+        msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
             //this->statistics_->Dump();
         });
     }
@@ -308,7 +308,7 @@ namespace tc
 
             if (!has_config_msg_) {
                 has_config_msg_ = true;
-                msg_notifier_->SendAppMessage(MsgFirstConfigInfoCallback());
+                msg_notifier_->SendAppMessage(SdkMsgFirstConfigInfoCallback());
             }
         }
     }

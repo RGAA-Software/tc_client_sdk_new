@@ -49,7 +49,7 @@ namespace tc
         this->stream_id_ = stream_id;
 
         msg_listener_ = msg_notifier_->CreateListener();
-        msg_listener_->Listen<MsgTimer2000>([=, this](const auto& msg) {
+        msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
             this->HeartBeat();
         });
     }
@@ -197,7 +197,7 @@ namespace tc
             }
         } else if (net_msg->type() == tc::kChangeMonitorResolutionResult) {
             auto sub = net_msg->change_monitor_resolution_result();
-            msg_notifier_->SendAppMessage(MsgChangeMonitorResolutionResult {
+            msg_notifier_->SendAppMessage(SdkMsgChangeMonitorResolutionResult {
                 .monitor_name_ = sub.monitor_name(),
                 .result = sub.result(),
             });
