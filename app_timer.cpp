@@ -40,11 +40,11 @@ namespace tc
 
     void AppTimer::NotifyTimeout(AppTimerDuration duration) {
         if (duration == AppTimerDuration::kTimerDuration1000) {
-            notifier_->SendAppMessage(MsgTimer1000{});
+            notifier_->SendAppMessage(SdkMsgTimer1000{});
         } else if (duration == AppTimerDuration::kTimerDuration2000) {
-            notifier_->SendAppMessage(MsgTimer2000{});
+            notifier_->SendAppMessage(SdkMsgTimer2000{});
         } else if (duration == AppTimerDuration::kTimerDuration100) {
-            notifier_->SendAppMessage(MsgTimer100{});
+            notifier_->SendAppMessage(SdkMsgTimer100{});
         }
     }
 

@@ -48,7 +48,7 @@ namespace tc
     };
 
     // callbacks
-    using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&, const CaptureMonitorInfo&)>;
+    using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&, const SdkCaptureMonitorInfo&)>;
     using OnAudioFrameDecodedCallback = std::function<void(const std::shared_ptr<Data>&, int samples, int channels, int bits)>;
 
     class ThunderSdk {
@@ -81,7 +81,7 @@ namespace tc
 
     private:
 
-        void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const CaptureMonitorInfo& info);
+        void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const SdkCaptureMonitorInfo& info);
         void RegisterEventListeners();
         void SendHelloMessage();
         void RequestIFrame();
