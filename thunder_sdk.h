@@ -71,6 +71,7 @@ namespace tc
         void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
         void SetOnServerConfigurationCallback(OnConfigCallback&& cbk);
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
+        void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
         void PostBinaryMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);
@@ -78,6 +79,7 @@ namespace tc
         void PostAudioSpectrumTask(std::function<void()>&& task);
 
         int GetProgressSteps() const;
+        ThunderSdkParams GetSdkParams();
 
     private:
 

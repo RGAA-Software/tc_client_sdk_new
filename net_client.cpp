@@ -150,6 +150,10 @@ namespace tc
             return;
         }
 
+        if (raw_msg_cbk_) {
+            raw_msg_cbk_(net_msg);
+        }
+
         if (net_msg->type() == tc::kVideoFrame) {
             const auto& video_frame = net_msg->video_frame();
             if (video_frame.key()) {
@@ -252,6 +256,10 @@ namespace tc
 
     void NetClient::SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk) {
         monitor_switched_cbk_ = std::move(cbk);
+    }
+
+    void NetClient::SetOnRawMessageCallback(tc::OnRawMessageCallback&& cbk) {
+        raw_msg_cbk_ = std::move(cbk);
     }
 
     void NetClient::HeartBeat() {
