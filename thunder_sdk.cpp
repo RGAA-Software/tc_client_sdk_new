@@ -319,6 +319,12 @@ namespace tc
         }
     }
 
+    void ThunderSdk::SetOnRawMessageCallback(OnRawMessageCallback&& cbk) {
+        if (net_client_) {
+            net_client_->SetOnRawMessageCallback(std::move(cbk));
+        }
+    }
+
     int ThunderSdk::GetProgressSteps() const {
         if (sdk_params_.conn_type_ == ClientConnectType::kDirect) {
             if (sdk_params_.nt_type_ == ClientNetworkType::kWebsocket) {
@@ -335,6 +341,10 @@ namespace tc
             }
         }
         return 0;
+    }
+
+    ThunderSdkParams ThunderSdk::GetSdkParams() {
+        return sdk_params_;
     }
 
     void ThunderSdk::Exit() {

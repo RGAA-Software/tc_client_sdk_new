@@ -26,6 +26,7 @@ namespace tc
     using OnClipboardInfoCallback = std::function<void(const tc::ClipboardInfo&)>;
     using OnConfigCallback = std::function<void(const tc::ServerConfiguration&)>;
     using OnMonitorSwitchedCallback = std::function<void(const tc::MonitorSwitched&)>;
+    using OnRawMessageCallback = std::function<void(const std::shared_ptr<tc::Message>&)>;
 
     class Data;
     class Thread;
@@ -71,6 +72,7 @@ namespace tc
         void SetOnClipboardCallback(OnClipboardInfoCallback&& cbk);
         void SetOnServerConfigurationCallback(OnConfigCallback&& cbk);
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
+        void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
     private:
         void ParseMessage(std::string&& msg);
@@ -88,6 +90,7 @@ namespace tc
         OnClipboardInfoCallback clipboard_cbk_;
         OnConfigCallback config_cbk_;
         OnMonitorSwitchedCallback monitor_switched_cbk_;
+        OnRawMessageCallback raw_msg_cbk_;
 
         std::string ip_{};
         int port_{};
