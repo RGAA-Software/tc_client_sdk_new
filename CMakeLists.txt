@@ -33,6 +33,8 @@ include_directories(${WEBRTC_ROOT}/include/third_party/jsoncpp/source/include/)
 include_directories(${WEBRTC_ROOT}/include/base)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(connection)
+
 set(SDK_SRCS
     thunder_sdk.cpp
     video_decoder.cpp
@@ -43,10 +45,9 @@ set(SDK_SRCS
     cast_receiver.cpp
     app_timer.cpp
     statistics.cpp
-    connection.cpp
-    udp_connection.cpp
-    ws_connection.cpp
     sdk_errors.cpp
+
+    ${CONN_SRCS}
 )
 
 set(GL_SRCS
@@ -66,7 +67,7 @@ message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
 if (ANDROID)
     target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES})
 else ()
-    target_link_libraries(tc_sdk PRIVATE libprotobuf)
+    target_link_libraries(tc_sdk PRIVATE libprotobuf tc_relay_client)
 
     set(FFMPEG_LIB_PATH ${CMAKE_SOURCE_DIR}/deps/tc_3rdparty/ffmpeg/lib/x64)
     link_directories(${FFMPEG_LIB_PATH})

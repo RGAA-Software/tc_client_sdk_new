@@ -1,0 +1,40 @@
+//
+// Created by RGAA on 1/03/2025.
+//
+
+#ifndef GAMMARAY_RELAY_CONNECTION_H
+#define GAMMARAY_RELAY_CONNECTION_H
+
+#include "connection.h"
+#include <memory>
+
+namespace asio2
+{
+    class udp_client;
+}
+
+namespace tc
+{
+
+    class RelayClientSdk;
+    class RelayNetClient;
+
+    class RelayConnection : public Connection {
+    public:
+        RelayConnection(const std::string& host, int port, const std::string& device_id, const std::string& remote_device_id);
+        void Start() override;
+        void Stop() override;
+        void PostBinaryMessage(const std::string& msg) override;
+
+    private:
+        std::string host_;
+        int port_{0};
+        std::string device_id_;
+        std::string remote_device_id_;
+        std::shared_ptr<RelayClientSdk> relay_sdk_ = nullptr;
+        std::shared_ptr<RelayNetClient> relay_net_client_ = nullptr;
+    };
+
+}
+
+#endif //GAMMARAY_RELAY_CONNECTION_H
