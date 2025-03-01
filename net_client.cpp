@@ -11,8 +11,9 @@
 #include "tc_common_new/file.h"
 #include "tc_common_new/message_notifier.h"
 #include "sdk_messages.h"
-#include "udp_connection.h"
-#include "ws_connection.h"
+#include "connection/udp_connection.h"
+#include "connection/ws_connection.h"
+#include "connection/relay_connection.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -64,6 +65,9 @@ namespace tc
         else if (network_type_ == ClientNetworkType::kUdpKcp) {
             LOGI("Will connect by UDP");
             conn_ = std::make_shared<UdpConnection>(ip_, port_);
+        }
+        else if (network_type_ == ClientNetworkType::kRelay) {
+            conn_ = std::make_shared<RelayConnection>(ip_, /*port_*/20481, "did_2202", "did_1011");
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
