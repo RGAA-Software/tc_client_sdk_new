@@ -23,16 +23,30 @@ namespace tc
         });
 
         relay_net_client_ = relay_sdk_->GetNetClient();
-        relay_sdk_->SetOnRelayProtoMessageCallback([](const std::shared_ptr<RelayMessage>& rl_msg) {
+
+        relay_sdk_->SetOnRelayProtoMessageCallback([=, this](const std::shared_ptr<RelayMessage>& rl_msg) {
             LOGI("relay message in :{}", (int)rl_msg->type());
+            if (rl_msg->type() == RelayMessageType::kRelayTargetMessage) {
+                auto sub = rl_msg->relay();
+                if (msg_cbk_) {
+                    auto payload = std::string(sub.payload());
+                    msg_cbk_(std::move(payload));
+                }
+            }
         });
 
-        relay_net_client_->SetOnRelayServerConnectedCallback([=, this]() {
+        relay_sdk_->SetOnRelayServerConnectedCallback([=, this]() {
             LOGI("Relay server connected.");
+            if (conn_cbk_) {
+                conn_cbk_();
+            }
         });
 
-        relay_net_client_->SetOnRelayServerDisConnectedCallback([=, this]() {
+        relay_sdk_->SetOnRelayServerDisConnectedCallback([=, this]() {
             LOGI("Relay server disconnected.");
+            if (dis_conn_cbk_) {
+                dis_conn_cbk_();
+            }
         });
     }
 
