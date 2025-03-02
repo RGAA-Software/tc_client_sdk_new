@@ -21,17 +21,6 @@
 namespace tc
 {
 
-    std::shared_ptr<NetClient> NetClient::Make(const std::shared_ptr<MessageNotifier>& notifier,
-                                               const std::string& ip,
-                                               int port,
-                                               const std::string& path,
-                                               const ClientConnectType& conn_type,
-                                               const ClientNetworkType& nt_type,
-                                               const std::string& device_id,
-                                               const std::string& stream_id) {
-        return std::make_shared<NetClient>(notifier, ip, port, path, conn_type, nt_type, device_id, stream_id);
-    }
-
     NetClient::NetClient(const std::shared_ptr<MessageNotifier>& notifier,
                          const std::string& ip,
                          int port,
@@ -39,6 +28,7 @@ namespace tc
                          const ClientConnectType& conn_type,
                          const ClientNetworkType& nt_type,
                          const std::string& device_id,
+                         const std::string& remote_device_id,
                          const std::string& stream_id) {
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
@@ -47,6 +37,7 @@ namespace tc
         this->conn_type_ = conn_type;
         this->network_type_ = nt_type;
         this->device_id_ = device_id;
+        this->remote_device_id_ = remote_device_id;
         this->stream_id_ = stream_id;
 
         msg_listener_ = msg_notifier_->CreateListener();
@@ -67,7 +58,7 @@ namespace tc
             conn_ = std::make_shared<UdpConnection>(ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            conn_ = std::make_shared<RelayConnection>(ip_, /*port_*/20481, "did_2202", "did_1011");
+            conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);

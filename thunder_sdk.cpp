@@ -46,13 +46,14 @@ namespace tc
         drt_ = drt;
         render_surface_ = surface;
 
-        net_client_ = NetClient::Make(msg_notifier_,
+        net_client_ = std::make_shared<NetClient>(msg_notifier_,
                                       sdk_params_.ip_,
                                       sdk_params_.port_,
                                       sdk_params_.req_path_,
                                       sdk_params_.conn_type_,
                                       sdk_params_.nt_type_,
                                       sdk_params_.device_id_,
+                                      sdk_params_.remote_device_id_,
                                       sdk_params_.stream_id_);
         return true;
     }

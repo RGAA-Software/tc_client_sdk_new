@@ -36,16 +36,6 @@ namespace tc
 
     class NetClient {
     public:
-
-        static std::shared_ptr<NetClient> Make(const std::shared_ptr<MessageNotifier>& notifier,
-                                               const std::string& ip,
-                                               int port,
-                                               const std::string& path,
-                                               const ClientConnectType& conn_type,
-                                               const ClientNetworkType& nt_type,
-                                               const std::string& device_id,
-                                               const std::string& stream_id);
-
         explicit NetClient(const std::shared_ptr<MessageNotifier>& notifier,
                            const std::string& ip,
                            int port,
@@ -53,6 +43,7 @@ namespace tc
                            const ClientConnectType& conn_type,
                            const ClientNetworkType& nt_type,
                            const std::string& device_id,
+                           const std::string& remote_device_id,
                            const std::string& stream_id);
         ~NetClient();
 
@@ -98,6 +89,7 @@ namespace tc
         ClientConnectType conn_type_;
         ClientNetworkType network_type_;
         std::string device_id_;
+        std::string remote_device_id_;
         std::string stream_id_;
 
         std::atomic_int queued_msg_count_ = 0;
