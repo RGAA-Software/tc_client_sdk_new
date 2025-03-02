@@ -44,6 +44,7 @@ namespace tc
         ClientConnectType conn_type_;
         ClientNetworkType nt_type_;
         std::string device_id_;
+        std::string remote_device_id_;
         std::string stream_id_;
     };
 

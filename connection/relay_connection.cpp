@@ -25,7 +25,6 @@ namespace tc
         relay_net_client_ = relay_sdk_->GetNetClient();
 
         relay_sdk_->SetOnRelayProtoMessageCallback([=, this](const std::shared_ptr<RelayMessage>& rl_msg) {
-            LOGI("relay message in :{}", (int)rl_msg->type());
             if (rl_msg->type() == RelayMessageType::kRelayTargetMessage) {
                 auto sub = rl_msg->relay();
                 if (msg_cbk_) {
