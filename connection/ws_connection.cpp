@@ -78,10 +78,6 @@ namespace tc
 
     void WsConnection::PostBinaryMessage(const std::string& msg) {
         if (client_ && client_->is_started()) {
-            if (queued_msg_count_ > kMaxClientQueuedMessage) {
-                LOGW("You've queued too many messages!");
-                return;
-            }
             queued_msg_count_++;
             client_->async_send(msg, [this]() {
                 queued_msg_count_--;

@@ -12,8 +12,6 @@
 namespace tc
 {
 
-    const int kMaxClientQueuedMessage = 4096;
-
     using OnConnectedCallback = std::function<void()>;
     using OnDisConnectedCallback = std::function<void()>;
     using OnMessageCallback = std::function<void(std::string&&)>;
