@@ -36,6 +36,7 @@ namespace tc
         virtual void Start();
         virtual void Stop();
         virtual void PostBinaryMessage(const std::string& msg) = 0;
+        virtual void PostTextMessage(const std::string& msg) {}
 
     protected:
         OnConnectedCallback conn_cbk_;

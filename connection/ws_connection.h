@@ -24,6 +24,7 @@ namespace tc
         void Start() override;
         void Stop() override;
         void PostBinaryMessage(const std::string& msg) override;
+        void PostTextMessage(const std::string& msg) override;
 
     private:
         std::string host_;

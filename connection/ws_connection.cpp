@@ -29,7 +29,6 @@ namespace tc
         });
 
         client_->bind_init([=, this]() {
-            client_->ws_stream().binary(true);
             client_->set_no_delay(true);
             client_->ws_stream().set_option(
                     websocket::stream_base::decorator([](websocket::request_type &req) {
@@ -78,9 +77,24 @@ namespace tc
 
     void WsConnection::PostBinaryMessage(const std::string& msg) {
         if (client_ && client_->is_started()) {
-            queued_msg_count_++;
-            client_->async_send(msg, [this]() {
-                queued_msg_count_--;
+            client_->post_queued_event([=, this]() {
+                client_->ws_stream().binary(true);
+                queued_msg_count_++;
+                client_->async_send(msg, [this]() {
+                    queued_msg_count_--;
+                });
+            });
+        }
+    }
+
+    void WsConnection::PostTextMessage(const std::string& msg) {
+        if (client_ && client_->is_started()) {
+            client_->post_queued_event([=, this]() {
+                client_->ws_stream().text(true);
+                queued_msg_count_++;
+                client_->async_send(msg, [this]() {
+                    queued_msg_count_--;
+                });
             });
         }
     }
