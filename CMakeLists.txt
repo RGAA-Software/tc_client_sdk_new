@@ -65,7 +65,7 @@ target_link_libraries(tc_sdk PRIVATE tc_opus_codec_new tc_message)
 message("ffmpeg libraries: ${FFMPEG_LIBRARIES}")
 
 if (ANDROID)
-    target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES})
+    target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES} tc_relay_client)
 else ()
     target_link_libraries(tc_sdk PRIVATE libprotobuf tc_relay_client)
 
