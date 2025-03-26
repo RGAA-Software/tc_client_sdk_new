@@ -7,6 +7,8 @@
 #include "tc_relay_client/relay_net_client.h"
 #include "relay_message.pb.h"
 
+using namespace relay;
+
 namespace tc
 {
 
