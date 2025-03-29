@@ -129,6 +129,7 @@ namespace tc
 
                 SdkCaptureMonitorInfo cap_mon_info {
                     .mon_name_ = frame.mon_name(),
+                    .mon_index_ = frame.mon_index(),
                     .mon_left_ = frame.mon_left(),
                     .mon_top_ = frame.mon_top(),
                     .mon_right_ = frame.mon_right(),
