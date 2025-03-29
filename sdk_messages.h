@@ -20,13 +20,13 @@ namespace tc
     class SdkCaptureMonitorInfo {
     public:
         std::string mon_name_;
-        int mon_left_;
-        int mon_top_;
-        int mon_right_;
-        int mon_bottom_;
-        int frame_width_;
-        int frame_height_;
-
+        int mon_index_ = -1;
+        int mon_left_ = 0;
+        int mon_top_ = 0;
+        int mon_right_ = 0;
+        int mon_bottom_ = 0;
+        int frame_width_ = -1;
+        int frame_height_ = -1;
     };
 
     //
