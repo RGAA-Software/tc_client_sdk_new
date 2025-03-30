@@ -131,7 +131,7 @@ namespace tc
 
     void NetClient::Exit() {
         if (conn_) {
-            LOGI("Queued message count: {}", queued_msg_count_.load());
+            LOGI("Queued message count: {}", queuing_message_count_.load());
             conn_->Stop();
         }
         LOGI("WS has exited...");
@@ -266,5 +266,12 @@ namespace tc
         hb->set_index(hb_idx_++);
         auto proto_msg = msg->SerializeAsString();
         this->PostBinaryMessage(proto_msg);
+    }
+
+    int64_t NetClient::GetQueuingMsgCount() {
+        if (conn_) {
+            return conn_->GetQueuingMsgCount();
+        }
+        return 0;
     }
 }
