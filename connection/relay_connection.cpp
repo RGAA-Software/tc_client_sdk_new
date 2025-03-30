@@ -67,4 +67,11 @@ namespace tc
         }
     }
 
+    int64_t RelayConnection::GetQueuingMsgCount() {
+        if (relay_sdk_) {
+            return relay_sdk_->GetQueuingMsgCount();
+        }
+        return Connection::GetQueuingMsgCount();
+    }
+
 }

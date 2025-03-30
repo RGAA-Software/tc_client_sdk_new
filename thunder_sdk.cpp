@@ -349,6 +349,13 @@ namespace tc
         return sdk_params_;
     }
 
+    int64_t ThunderSdk::GetQueuingMsgCount() {
+        if (net_client_) {
+            return net_client_->GetQueuingMsgCount();
+        }
+        return 0;
+    }
+
     void ThunderSdk::Exit() {
         LOGI("ThunderSdk start exiting.");
         exit_ = true;

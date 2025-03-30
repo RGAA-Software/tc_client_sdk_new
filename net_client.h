@@ -65,6 +65,8 @@ namespace tc
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
         void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
+        int64_t GetQueuingMsgCount();
+
     private:
         void ParseMessage(std::string&& msg);
         void HeartBeat();
@@ -92,7 +94,7 @@ namespace tc
         std::string remote_device_id_;
         std::string stream_id_;
 
-        std::atomic_int queued_msg_count_ = 0;
+        std::atomic_int queuing_message_count_ = 0;
         uint64_t hb_idx_ = 0;
 
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;

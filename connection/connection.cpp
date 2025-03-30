@@ -23,4 +23,8 @@ namespace tc
 
     }
 
+    int64_t Connection::GetQueuingMsgCount() {
+        return queuing_message_count_;
+    }
+
 }

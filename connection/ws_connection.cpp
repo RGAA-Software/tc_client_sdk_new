@@ -79,9 +79,9 @@ namespace tc
         if (client_ && client_->is_started()) {
             client_->post_queued_event([=, this]() {
                 client_->ws_stream().binary(true);
-                queued_msg_count_++;
+                queuing_message_count_++;
                 client_->async_send(msg, [this]() {
-                    queued_msg_count_--;
+                    queuing_message_count_--;
                 });
             });
         }
@@ -91,9 +91,9 @@ namespace tc
         if (client_ && client_->is_started()) {
             client_->post_queued_event([=, this]() {
                 client_->ws_stream().text(true);
-                queued_msg_count_++;
+                queuing_message_count_++;
                 client_->async_send(msg, [this]() {
-                    queued_msg_count_--;
+                    queuing_message_count_--;
                 });
             });
         }

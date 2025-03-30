@@ -37,12 +37,13 @@ namespace tc
         virtual void Stop();
         virtual void PostBinaryMessage(const std::string& msg) = 0;
         virtual void PostTextMessage(const std::string& msg) {}
+        virtual int64_t GetQueuingMsgCount();
 
     protected:
         OnConnectedCallback conn_cbk_;
         OnDisConnectedCallback dis_conn_cbk_;
         OnMessageCallback msg_cbk_;
-        std::atomic_int queued_msg_count_ = 0;
+        std::atomic_int64_t queuing_message_count_ = 0;
     };
 
 }
