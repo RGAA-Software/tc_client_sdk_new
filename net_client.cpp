@@ -291,9 +291,9 @@ namespace tc
 
     int64_t NetClient::GetQueuingMsgCount() {
         int64_t msg_count = 0;
-        if (media_conn_) {
-            msg_count += media_conn_->GetQueuingMsgCount();
-        }
+//        if (media_conn_) {
+//            msg_count += media_conn_->GetQueuingMsgCount();
+//        }
         if (ft_conn_) {
             msg_count += ft_conn_->GetQueuingMsgCount();
         }
