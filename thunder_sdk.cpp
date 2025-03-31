@@ -23,7 +23,7 @@ namespace tc
 {
 
     std::string ThunderSdkParams::MakeReqPath() const {
-        auto base_url = ip_ + ":" + std::to_string(port_) + req_path_;
+        auto base_url = ip_ + ":" + std::to_string(port_) + media_path_;
         return ssl_ ? "wss://" +  base_url : "ws://" + base_url;
     }
 
@@ -49,7 +49,8 @@ namespace tc
         net_client_ = std::make_shared<NetClient>(msg_notifier_,
                                       sdk_params_.ip_,
                                       sdk_params_.port_,
-                                      sdk_params_.req_path_,
+                                      sdk_params_.media_path_,
+                                      sdk_params_.ft_path_,
                                       sdk_params_.conn_type_,
                                       sdk_params_.nt_type_,
                                       sdk_params_.device_id_,
@@ -221,9 +222,15 @@ namespace tc
         msg_notifier_->SendAppMessage(msg);
     }
 
-    void ThunderSdk::PostBinaryMessage(const std::string& msg) {
+    void ThunderSdk::PostMediaMessage(const std::string& msg) {
         if(net_client_) {
-            net_client_->PostBinaryMessage(msg);
+            net_client_->PostMediaMessage(msg);
+        }
+    }
+
+    void ThunderSdk::PostFileTransferMessage(const std::string& msg) {
+        if(net_client_) {
+            net_client_->PostFileTransferMessage(msg);
         }
     }
 
@@ -231,7 +238,7 @@ namespace tc
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<SdkMsgTimer100>([=, this](const auto& msg) {
             auto m = statistics_->AsProtoMessage(sdk_params_.device_id_, sdk_params_.stream_id_);
-            this->PostBinaryMessage(m);
+            this->PostMediaMessage(m);
         });
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
             statistics_->TickFps();
@@ -254,7 +261,7 @@ namespace tc
         hello->set_enable_video(sdk_params_.enable_video_);
         hello->set_client_type(sdk_params_.client_type_);
         hello->set_enable_controller(sdk_params_.enable_controller_);
-        net_client_->PostBinaryMessage(msg.SerializeAsString());
+        net_client_->PostMediaMessage(msg.SerializeAsString());
     }
 
     void ThunderSdk::RequestIFrame() {
@@ -267,7 +274,7 @@ namespace tc
         msg.set_stream_id(sdk_params_.stream_id_);
         auto ack = msg.mutable_ack();
         ack->set_type(MessageType::kInsertKeyFrame);
-        net_client_->PostBinaryMessage(msg.SerializeAsString());
+        net_client_->PostMediaMessage(msg.SerializeAsString());
     }
 
     void ThunderSdk::PostVideoTask(std::function<void()>&& task) {

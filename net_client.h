@@ -39,7 +39,8 @@ namespace tc
         explicit NetClient(const std::shared_ptr<MessageNotifier>& notifier,
                            const std::string& ip,
                            int port,
-                           const std::string& path,
+                           const std::string& media_path,
+                           const std::string& ft_path,
                            const ClientConnectType& conn_type,
                            const ClientNetworkType& nt_type,
                            const std::string& device_id,
@@ -50,8 +51,8 @@ namespace tc
         void Start();
         void Exit();
 
-        void PostBinaryMessage(const std::string& msg);
-        void PostBinaryMessage(const std::shared_ptr<Data>& msg);
+        void PostMediaMessage(const std::string& msg);
+        void PostFileTransferMessage(const std::string& msg);
 
         void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
         void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
@@ -72,7 +73,8 @@ namespace tc
         void HeartBeat();
 
     private:
-        std::shared_ptr<Connection> conn_ = nullptr;
+        std::shared_ptr<Connection> media_conn_ = nullptr;
+        std::shared_ptr<Connection> ft_conn_ = nullptr;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
@@ -87,7 +89,8 @@ namespace tc
 
         std::string ip_{};
         int port_{};
-        std::string path_{};
+        std::string media_path_{};
+        std::string ft_path_;
         ClientConnectType conn_type_;
         ClientNetworkType network_type_;
         std::string device_id_;

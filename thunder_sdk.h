@@ -39,7 +39,8 @@ namespace tc
         bool enable_controller_ = false;
         std::string ip_;
         int port_;
-        std::string req_path_;
+        std::string media_path_;
+        std::string ft_path_;
         ClientType client_type_;
         ClientConnectType conn_type_;
         ClientNetworkType nt_type_;
@@ -74,7 +75,8 @@ namespace tc
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
         void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
-        void PostBinaryMessage(const std::string& msg);
+        void PostMediaMessage(const std::string& msg);
+        void PostFileTransferMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);
         void PostAudioTask(std::function<void()>&& task);
         void PostAudioSpectrumTask(std::function<void()>&& task);

@@ -24,7 +24,8 @@ namespace tc
     NetClient::NetClient(const std::shared_ptr<MessageNotifier>& notifier,
                          const std::string& ip,
                          int port,
-                         const std::string& path,
+                         const std::string& media_path,
+                         const std::string& ft_path,
                          const ClientConnectType& conn_type,
                          const ClientNetworkType& nt_type,
                          const std::string& device_id,
@@ -33,7 +34,8 @@ namespace tc
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
         this->port_ = port;
-        this->path_ = path;
+        this->media_path_ = media_path;
+        this->ft_path_ = ft_path;
         this->conn_type_ = conn_type;
         this->network_type_ = nt_type;
         this->device_id_ = device_id;
@@ -50,38 +52,47 @@ namespace tc
 
     void NetClient::Start() {
         if (network_type_ == ClientNetworkType::kWebsocket) {
-            LOGI("Will connect by Websocket");
-            conn_ = std::make_shared<WsConnection>(ip_, port_, path_);
+            LOGI("Will connect by Websocket:");
+            LOGI("media: {}", media_path_);
+            LOGI("file transfer: {}", ft_path_);
+            media_conn_ = std::make_shared<WsConnection>(ip_, port_, media_path_);
+            ft_conn_ = std::make_shared<WsConnection>(ip_, port_, ft_path_);
         }
         else if (network_type_ == ClientNetworkType::kUdpKcp) {
             LOGI("Will connect by UDP");
-            conn_ = std::make_shared<UdpConnection>(ip_, port_);
+            media_conn_ = std::make_shared<UdpConnection>(ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_);
+            media_conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
             return;
         }
 
-        conn_->RegisterOnConnectedCallback([=, this]() {
+        media_conn_->RegisterOnConnectedCallback([=, this]() {
             if (conn_cbk_) {
                 conn_cbk_();
             }
         });
 
-        conn_->RegisterOnDisConnectedCallback([=, this]() {
+        media_conn_->RegisterOnDisConnectedCallback([=, this]() {
             if (dis_conn_cbk_) {
                 dis_conn_cbk_();
             }
         });
 
-        conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
+        media_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
             this->ParseMessage(std::move(data));
         });
 
-        conn_->Start();
+        media_conn_->Start();
+        if (ft_conn_) {
+            ft_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
+                this->ParseMessage(std::move(data));
+            });
+            ft_conn_->Start();
+        }
 //
 //        client_ = std::make_shared<asio2::ws_client>();
 //        client_->set_auto_reconnect(true);
@@ -123,16 +134,19 @@ namespace tc
 //        });
 //
 //        // the /ws is the websocket upgraged target
-//        if (!client_->async_start(this->ip_, this->port_, this->path_)) {
+//        if (!client_->async_start(this->ip_, this->port_, this->media_path_)) {
 //            LOGE("connect websocket server failure : {} {}", asio2::last_error_val(), asio2::last_error_msg().c_str());
 //        }
 
     }
 
     void NetClient::Exit() {
-        if (conn_) {
+        if (media_conn_) {
             LOGI("Queued message count: {}", queuing_message_count_.load());
-            conn_->Stop();
+            media_conn_->Stop();
+        }
+        if (ft_conn_) {
+            ft_conn_->Stop();
         }
         LOGI("WS has exited...");
     }
@@ -203,14 +217,16 @@ namespace tc
         }
     }
 
-    void NetClient::PostBinaryMessage(const std::string& msg) {
-        if (conn_) {
-            conn_->PostBinaryMessage(msg);
+    void NetClient::PostMediaMessage(const std::string& msg) {
+        if (media_conn_) {
+            media_conn_->PostBinaryMessage(msg);
         }
     }
 
-    void NetClient::PostBinaryMessage(const std::shared_ptr<Data>& msg) {
-        this->PostBinaryMessage(msg->AsString());
+    void NetClient::PostFileTransferMessage(const std::string& msg) {
+        if (ft_conn_) {
+            ft_conn_->PostBinaryMessage(msg);
+        }
     }
 
     void NetClient::SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk) {
@@ -265,12 +281,12 @@ namespace tc
         auto hb = msg->mutable_heartbeat();
         hb->set_index(hb_idx_++);
         auto proto_msg = msg->SerializeAsString();
-        this->PostBinaryMessage(proto_msg);
+        this->PostMediaMessage(proto_msg);
     }
 
     int64_t NetClient::GetQueuingMsgCount() {
-        if (conn_) {
-            return conn_->GetQueuingMsgCount();
+        if (media_conn_) {
+            return media_conn_->GetQueuingMsgCount();
         }
         return 0;
     }
