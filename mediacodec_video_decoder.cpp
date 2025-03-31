@@ -7,7 +7,7 @@
 #ifdef ANDROID
 
 #include "tc_common_new/log.h"
-#include "tc_common_new/time_ext.h"
+#include "tc_common_new/time_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "stream_helper.h"
 #include "statistics.h"
@@ -147,7 +147,7 @@ namespace tc
     }
 
     int MediacodecVideoDecoder::Decode(const uint8_t *in_data, int in_size, DecodedCallback &&cbk) {
-        auto beg = TimeExt::GetCurrentTimestamp();
+        auto beg = TimeUtil::GetCurrentTimestamp();
         if (!media_codec_ || !in_data || in_size <= 0) {
             LOGE("param valid...");
             return -1;
@@ -206,7 +206,7 @@ namespace tc
 
                 AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, true);
 
-                auto end = TimeExt::GetCurrentTimestamp();
+                auto end = TimeUtil::GetCurrentTimestamp();
                 Statistics::Instance()->AppendDecodeDuration(end-beg);
 
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
