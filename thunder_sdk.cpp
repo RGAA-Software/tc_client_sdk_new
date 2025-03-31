@@ -55,6 +55,8 @@ namespace tc
                                       sdk_params_.nt_type_,
                                       sdk_params_.device_id_,
                                       sdk_params_.remote_device_id_,
+                                      sdk_params_.ft_device_id_,
+                                      sdk_params_.ft_remote_device_id_,
                                       sdk_params_.stream_id_);
         return true;
     }
