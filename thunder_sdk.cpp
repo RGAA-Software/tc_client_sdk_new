@@ -8,7 +8,7 @@
 #include "tc_common_new/file.h"
 #include "tc_common_new/message_notifier.h"
 #include "tc_common_new/thread.h"
-#include "tc_common_new/time_ext.h"
+#include "tc_common_new/time_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "net_client.h"
 #include "video_decoder_factory.h"
@@ -114,7 +114,7 @@ namespace tc
                     video_decoders_[monitor_name] = video_decoder;
                 }
 
-                auto current_time = TimeExt::GetCurrentTimestamp();
+                auto current_time = TimeUtil::GetCurrentTimestamp();
                 if (last_received_video_ == 0) {
                     last_received_video_ = current_time;
                 }
@@ -172,7 +172,7 @@ namespace tc
         net_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
             if (exit_) { return; }
             this->PostAudioTask([=, this]() {
-                auto beg = TimeExt::GetCurrentTimestamp();
+                auto beg = TimeUtil::GetCurrentTimestamp();
                 if (!audio_decoder_) {
                     audio_decoder_ = std::make_shared<OpusAudioDecoder>(frame.samples(), frame.channels());
                 }
@@ -187,7 +187,7 @@ namespace tc
                     static FilePtr pcm_audio = File::OpenForWriteB("1.test.pcm");
                     pcm_audio->Append((char *) pcm_data.data(), pcm_data.size()*2);
                 }
-                auto end = TimeExt::GetCurrentTimestamp();
+                auto end = TimeUtil::GetCurrentTimestamp();
                 //LOGI("decode audio : {}", end-beg);
             });
         });

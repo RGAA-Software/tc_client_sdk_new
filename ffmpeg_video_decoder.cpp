@@ -8,7 +8,7 @@
 #include "tc_message.pb.h"
 #include "tc_common_new/log.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
-#include "tc_common_new/time_ext.h"
+#include "tc_common_new/time_util.h"
 #if 000
 #include <libyuv.h>
 #endif
@@ -163,7 +163,7 @@ namespace tc
         }
         std::lock_guard<std::mutex> guard(decode_mtx_);
 
-        auto beg = TimeExt::GetCurrentTimestamp();
+        auto beg = TimeUtil::GetCurrentTimestamp();
         av_frame_unref(av_frame);
 
         packet->data = (uint8_t*)data;//frame->CStr();
@@ -243,7 +243,7 @@ namespace tc
 #endif
                 }
                 else {
-                    auto end = TimeExt::GetCurrentTimestamp();
+                    auto end = TimeUtil::GetCurrentTimestamp();
                     Statistics::Instance()->AppendDecodeDuration(end-beg);
                     //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     cbk(decoded_image_);
