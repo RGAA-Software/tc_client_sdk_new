@@ -45,6 +45,8 @@ namespace tc
                            const ClientNetworkType& nt_type,
                            const std::string& device_id,
                            const std::string& remote_device_id,
+                           const std::string& ft_device_id,
+                           const std::string& ft_remote_device_id,
                            const std::string& stream_id);
         ~NetClient();
 
@@ -95,6 +97,8 @@ namespace tc
         ClientNetworkType network_type_;
         std::string device_id_;
         std::string remote_device_id_;
+        std::string ft_device_id_;
+        std::string ft_remote_device_id_;
         std::string stream_id_;
 
         std::atomic_int queuing_message_count_ = 0;

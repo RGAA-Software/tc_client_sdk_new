@@ -30,6 +30,8 @@ namespace tc
                          const ClientNetworkType& nt_type,
                          const std::string& device_id,
                          const std::string& remote_device_id,
+                         const std::string& ft_device_id,
+                         const std::string& ft_remote_device_id,
                          const std::string& stream_id) {
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
@@ -40,6 +42,8 @@ namespace tc
         this->network_type_ = nt_type;
         this->device_id_ = device_id;
         this->remote_device_id_ = remote_device_id;
+        this->ft_device_id_ = ft_device_id;
+        this->ft_remote_device_id_ = ft_remote_device_id;
         this->stream_id_ = stream_id;
 
         msg_listener_ = msg_notifier_->CreateListener();
@@ -64,6 +68,7 @@ namespace tc
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
             media_conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_);
+            ft_conn_ = std::make_shared<RelayConnection>(ip_, port_, ft_device_id_, ft_remote_device_id_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
@@ -285,9 +290,13 @@ namespace tc
     }
 
     int64_t NetClient::GetQueuingMsgCount() {
+        int64_t msg_count = 0;
         if (media_conn_) {
-            return media_conn_->GetQueuingMsgCount();
+            msg_count += media_conn_->GetQueuingMsgCount();
         }
-        return 0;
+        if (ft_conn_) {
+            msg_count += ft_conn_->GetQueuingMsgCount();
+        }
+        return msg_count;
     }
 }
