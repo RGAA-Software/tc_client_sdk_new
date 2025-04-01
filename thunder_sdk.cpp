@@ -358,9 +358,16 @@ namespace tc
         return sdk_params_;
     }
 
-    int64_t ThunderSdk::GetQueuingMsgCount() {
+    int64_t ThunderSdk::GetQueuingMediaMsgCount() {
         if (net_client_) {
-            return net_client_->GetQueuingMsgCount();
+            return net_client_->GetQueuingMediaMsgCount();
+        }
+        return 0;
+    }
+
+    int64_t ThunderSdk::GetQueuingFtMsgCount() {
+        if (net_client_) {
+            return net_client_->GetQueuingFtMsgCount();
         }
         return 0;
     }

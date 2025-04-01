@@ -68,7 +68,8 @@ namespace tc
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
         void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
-        int64_t GetQueuingMsgCount();
+        int64_t GetQueuingMediaMsgCount();
+        int64_t GetQueuingFtMsgCount();
 
     private:
         void ParseMessage(std::string&& msg);
