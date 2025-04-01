@@ -77,9 +77,6 @@ namespace tc
 
     void WsConnection::PostBinaryMessage(const std::string& msg) {
         if (client_ && client_->is_started()) {
-//            client_->post_queued_event([=, this]() {
-//
-//            });
             client_->ws_stream().binary(true);
             queuing_message_count_++;
             client_->async_send(msg, [this]() {
@@ -90,9 +87,6 @@ namespace tc
 
     void WsConnection::PostTextMessage(const std::string& msg) {
         if (client_ && client_->is_started()) {
-//            client_->post_queued_event([=, this]() {
-//
-//            });
             client_->ws_stream().text(true);
             queuing_message_count_++;
             client_->async_send(msg, [this]() {
