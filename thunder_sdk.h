@@ -85,7 +85,8 @@ namespace tc
 
         int GetProgressSteps() const;
         ThunderSdkParams GetSdkParams();
-        int64_t GetQueuingMsgCount();
+        int64_t GetQueuingMediaMsgCount();
+        int64_t GetQueuingFtMsgCount();
 
     private:
 

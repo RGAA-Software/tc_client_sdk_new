@@ -289,14 +289,17 @@ namespace tc
         this->PostMediaMessage(proto_msg);
     }
 
-    int64_t NetClient::GetQueuingMsgCount() {
-        int64_t msg_count = 0;
-//        if (media_conn_) {
-//            msg_count += media_conn_->GetQueuingMsgCount();
-//        }
-        if (ft_conn_) {
-            msg_count += ft_conn_->GetQueuingMsgCount();
+    int64_t NetClient::GetQueuingMediaMsgCount() {
+        if (media_conn_) {
+            return media_conn_->GetQueuingMsgCount();
         }
-        return msg_count;
+        return 0;
+    }
+
+    int64_t NetClient::GetQueuingFtMsgCount() {
+        if (ft_conn_) {
+            return ft_conn_->GetQueuingMsgCount();
+        }
+        return 0;
     }
 }
