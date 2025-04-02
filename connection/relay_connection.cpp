@@ -29,6 +29,7 @@ namespace tc
         relay_sdk_->SetOnRelayProtoMessageCallback([=, this](const std::shared_ptr<RelayMessage>& rl_msg) {
             if (rl_msg->type() == RelayMessageType::kRelayTargetMessage) {
                 auto sub = rl_msg->relay();
+                auto relay_msg_index = sub.relay_msg_index();
                 if (msg_cbk_) {
                     auto payload = std::string(sub.payload());
                     msg_cbk_(std::move(payload));
