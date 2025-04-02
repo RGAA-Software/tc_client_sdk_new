@@ -49,6 +49,7 @@ namespace tc
         std::string ft_device_id_;
         std::string ft_remote_device_id_;
         std::string stream_id_;
+        std::string stream_name_;
     };
 
     // callbacks
