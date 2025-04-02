@@ -171,8 +171,8 @@ namespace tc
         if (net_msg->type() == tc::kVideoFrame) {
             const auto& video_frame = net_msg->video_frame();
             if (video_frame.key()) {
-                LOGI("video frame index: {}, {}x{}, key: {}", video_frame.frame_index(),
-                     video_frame.frame_width(), video_frame.frame_height(), video_frame.key());
+                //LOGI("video frame index: {}, {}x{}, key: {}", video_frame.frame_index(),
+                //     video_frame.frame_width(), video_frame.frame_height(), video_frame.key());
             }
             if (video_frame_cbk_) {
                 video_frame_cbk_(video_frame);
