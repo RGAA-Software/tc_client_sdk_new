@@ -62,11 +62,6 @@ namespace tc
     }
 
     void ThunderSdk::Start() {
-        // webrtc
-#if 0
-        webrtc_client_ = WebRtcClient::Make();
-        webrtc_client_->Start("127.0.0.1", 9002);
-#endif
         statistics_ = Statistics::Instance();
 
         // threads

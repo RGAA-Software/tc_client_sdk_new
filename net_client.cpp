@@ -219,6 +219,11 @@ namespace tc
                 .monitor_name_ = sub.monitor_name(),
                 .result = sub.result(),
             });
+        } else if (net_msg->type() == tc::kClipboardReqBuffer) {
+            auto sub = net_msg->cp_req_buffer();
+            msg_notifier_->SendAppMessage(SdkMsgClipboardReqBuffer {
+                .req_buffer_ = sub,
+            });
         }
     }
 

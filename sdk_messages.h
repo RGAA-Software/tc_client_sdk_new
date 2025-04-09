@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "sdk_errors.h"
+#include "tc_message.pb.h"
 
 namespace tc
 {
@@ -83,6 +84,10 @@ namespace tc
     };
     // progress connection end
 
+    class SdkMsgClipboardReqBuffer {
+    public:
+        tc::ClipboardReqBuffer req_buffer_;
+    };
 
 }
 
