@@ -38,6 +38,8 @@ namespace tc
         virtual void PostBinaryMessage(const std::string& msg) = 0;
         virtual void PostTextMessage(const std::string& msg) {}
         virtual int64_t GetQueuingMsgCount();
+        virtual void RequestPauseStream() {}
+        virtual void RequestResumeStream() {}
 
     protected:
         OnConnectedCallback conn_cbk_;
