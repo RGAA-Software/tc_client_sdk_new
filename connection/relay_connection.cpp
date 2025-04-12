@@ -12,11 +12,12 @@ using namespace relay;
 namespace tc
 {
 
-    RelayConnection::RelayConnection(const std::string& host, int port, const std::string& device_id, const std::string& remote_device_id) {
+    RelayConnection::RelayConnection(const std::string& host, int port, const std::string& device_id, const std::string& remote_device_id, bool auto_relay) {
         this->host_ = host;
         this->port_ = port;
         this->device_id_ = device_id;
         this->remote_device_id_ = remote_device_id;
+        this->auto_relay_ = auto_relay;
         relay_sdk_ = std::make_shared<RelayClientSdk>(RelayClientSdkParam {
             .host_ = host,
             .port_ = port,
@@ -52,8 +53,10 @@ namespace tc
         });
 
         relay_sdk_->SetOnRelayRoomPreparedCallback([=, this]() {
-            // TODO:
-            this->RequestResumeStream();
+            LOGI("Auto relay: {}", auto_relay_);
+            if (auto_relay_) {
+                this->RequestResumeStream();
+            }
         });
 
         relay_sdk_->SetOnRelayRoomDestroyedCallback([=, this]() {
