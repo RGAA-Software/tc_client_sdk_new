@@ -50,6 +50,7 @@ namespace tc
         std::string ft_remote_device_id_;
         std::string stream_id_;
         std::string stream_name_;
+        bool enable_p2p_ = false;
     };
 
     // callbacks

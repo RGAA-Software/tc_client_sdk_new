@@ -47,7 +47,8 @@ namespace tc
                            const std::string& remote_device_id,
                            const std::string& ft_device_id,
                            const std::string& ft_remote_device_id,
-                           const std::string& stream_id);
+                           const std::string& stream_id,
+                           bool auto_relay);
         ~NetClient();
 
         void Start();
@@ -101,6 +102,7 @@ namespace tc
         std::string ft_device_id_;
         std::string ft_remote_device_id_;
         std::string stream_id_;
+        bool auto_relay_ = false;
 
         std::atomic_int queuing_message_count_ = 0;
         uint64_t hb_idx_ = 0;

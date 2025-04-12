@@ -32,7 +32,8 @@ namespace tc
                          const std::string& remote_device_id,
                          const std::string& ft_device_id,
                          const std::string& ft_remote_device_id,
-                         const std::string& stream_id) {
+                         const std::string& stream_id,
+                         bool auto_relay) {
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
         this->port_ = port;
@@ -45,6 +46,7 @@ namespace tc
         this->ft_device_id_ = ft_device_id;
         this->ft_remote_device_id_ = ft_remote_device_id;
         this->stream_id_ = stream_id;
+        this->auto_relay_ = auto_relay;
 
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
@@ -67,8 +69,8 @@ namespace tc
             media_conn_ = std::make_shared<UdpConnection>(ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            media_conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_);
-            ft_conn_ = std::make_shared<RelayConnection>(ip_, port_, ft_device_id_, ft_remote_device_id_);
+            media_conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_, auto_relay_);
+            ft_conn_ = std::make_shared<RelayConnection>(ip_, port_, ft_device_id_, ft_remote_device_id_, auto_relay_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
