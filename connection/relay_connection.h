@@ -26,6 +26,8 @@ namespace tc
         void Stop() override;
         void PostBinaryMessage(const std::string& msg) override;
         int64_t GetQueuingMsgCount() override;
+        void RequestPauseStream() override;
+        void RequestResumeStream() override;
 
     private:
         std::string host_;

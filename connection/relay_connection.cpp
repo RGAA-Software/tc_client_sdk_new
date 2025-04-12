@@ -50,6 +50,15 @@ namespace tc
                 dis_conn_cbk_();
             }
         });
+
+        relay_sdk_->SetOnRelayRoomPreparedCallback([=, this]() {
+            // TODO:
+            this->RequestResumeStream();
+        });
+
+        relay_sdk_->SetOnRelayRoomDestroyedCallback([=, this]() {
+
+        });
     }
 
     void RelayConnection::Start() {
@@ -73,6 +82,18 @@ namespace tc
             return relay_sdk_->GetQueuingMsgCount();
         }
         return Connection::GetQueuingMsgCount();
+    }
+
+    void RelayConnection::RequestPauseStream() {
+        if (relay_sdk_) {
+            relay_sdk_->RequestPauseStream();
+        }
+    }
+
+    void RelayConnection::RequestResumeStream() {
+        if (relay_sdk_) {
+            relay_sdk_->RequestResumeStream();
+        }
     }
 
 }
