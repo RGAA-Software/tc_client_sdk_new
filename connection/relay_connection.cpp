@@ -6,13 +6,20 @@
 #include "tc_relay_client/relay_client_sdk.h"
 #include "tc_relay_client/relay_net_client.h"
 #include "relay_message.pb.h"
+#include "tc_common_new/message_notifier.h"
+#include "tc_client_sdk_new/sdk_messages.h"
 
 using namespace relay;
 
 namespace tc
 {
 
-    RelayConnection::RelayConnection(const std::string& host, int port, const std::string& device_id, const std::string& remote_device_id, bool auto_relay) {
+    RelayConnection::RelayConnection(const std::shared_ptr<MessageNotifier>& notifier,
+                                     const std::string& host,
+                                     int port,
+                                     const std::string& device_id,
+                                     const std::string& remote_device_id,
+                                     bool auto_relay) : Connection(notifier) {
         this->host_ = host;
         this->port_ = port;
         this->device_id_ = device_id;
@@ -57,10 +64,14 @@ namespace tc
             if (auto_relay_) {
                 this->RequestResumeStream();
             }
+
+            // notify
+            msg_notifier_->SendAppMessage(SdkMsgRoomPrepared{});
         });
 
         relay_sdk_->SetOnRelayRoomDestroyedCallback([=, this]() {
-
+            // notify
+            msg_notifier_->SendAppMessage(SdkMsgRoomDestroyed{});
         });
     }
 

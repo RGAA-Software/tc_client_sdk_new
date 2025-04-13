@@ -8,6 +8,7 @@
 #include <string>
 #include <functional>
 #include <atomic>
+#include <memory>
 
 namespace tc
 {
@@ -16,9 +17,11 @@ namespace tc
     using OnDisConnectedCallback = std::function<void()>;
     using OnMessageCallback = std::function<void(std::string&&)>;
 
+    class MessageNotifier;
+
     class Connection {
     public:
-        Connection();
+        explicit Connection(const std::shared_ptr<MessageNotifier>& notifier);
         ~Connection();
 
         void RegisterOnConnectedCallback(OnConnectedCallback&& cbk) {
@@ -46,6 +49,7 @@ namespace tc
         OnDisConnectedCallback dis_conn_cbk_;
         OnMessageCallback msg_cbk_;
         std::atomic_int64_t queuing_message_count_ = 0;
+        std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
     };
 
 }

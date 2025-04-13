@@ -18,7 +18,7 @@ namespace tc
 
     class UdpConnection : public Connection {
     public:
-        UdpConnection(const std::string& host, int port);
+        UdpConnection(const std::shared_ptr<MessageNotifier>& notifier, const std::string& host, int port);
         void Start() override;
         void Stop() override;
         void PostBinaryMessage(const std::string& msg) override;
