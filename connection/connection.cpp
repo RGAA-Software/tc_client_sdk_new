@@ -7,8 +7,8 @@
 namespace tc
 {
 
-    Connection::Connection() {
-
+    Connection::Connection(const std::shared_ptr<MessageNotifier>& notifier) {
+        msg_notifier_ = notifier;
     }
 
     Connection::~Connection() {

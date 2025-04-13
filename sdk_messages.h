@@ -89,6 +89,30 @@ namespace tc
         tc::ClipboardReqBuffer req_buffer_;
     };
 
+    // room prepared in relay/p2p mode
+    class SdkMsgRoomPrepared {
+    public:
+
+    };
+
+    // room destroyed in relay/p2p mode
+    class SdkMsgRoomDestroyed {
+    public:
+
+    };
+
+    // remote answer sdp
+    class SdkMsgRemoteAnswerSdp {
+    public:
+        SigAnswerSdpMessage answer_sdp_;
+    };
+
+    // remote ice
+    class SdkMsgRemoteIce {
+    public:
+        SigIceMessage ice_;
+    };
+
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H

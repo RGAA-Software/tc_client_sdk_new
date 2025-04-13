@@ -21,7 +21,12 @@ namespace tc
 
     class RelayConnection : public Connection {
     public:
-        RelayConnection(const std::string& host, int port, const std::string& device_id, const std::string& remote_device_id, bool auto_relay);
+        RelayConnection(const std::shared_ptr<MessageNotifier>& notifier,
+                        const std::string& host,
+                        int port,
+                        const std::string& device_id,
+                        const std::string& remote_device_id,
+                        bool auto_relay);
         void Start() override;
         void Stop() override;
         void PostBinaryMessage(const std::string& msg) override;

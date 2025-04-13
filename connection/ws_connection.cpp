@@ -10,7 +10,10 @@
 namespace tc
 {
 
-    WsConnection::WsConnection(const std::string& host, int port, const std::string& path) {
+    WsConnection::WsConnection(const std::shared_ptr<MessageNotifier>& notifier,
+                               const std::string& host,
+                               int port,
+                               const std::string& path) : Connection(notifier) {
         this->host_ = host;
         this->port_ = port;
         this->path_ = path;

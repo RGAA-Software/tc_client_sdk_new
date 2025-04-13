@@ -61,16 +61,16 @@ namespace tc
             LOGI("Will connect by Websocket:");
             LOGI("media: {}", media_path_);
             LOGI("file transfer: {}", ft_path_);
-            media_conn_ = std::make_shared<WsConnection>(ip_, port_, media_path_);
-            ft_conn_ = std::make_shared<WsConnection>(ip_, port_, ft_path_);
+            media_conn_ = std::make_shared<WsConnection>(msg_notifier_, ip_, port_, media_path_);
+            ft_conn_ = std::make_shared<WsConnection>(msg_notifier_, ip_, port_, ft_path_);
         }
         else if (network_type_ == ClientNetworkType::kUdpKcp) {
             LOGI("Will connect by UDP");
-            media_conn_ = std::make_shared<UdpConnection>(ip_, port_);
+            media_conn_ = std::make_shared<UdpConnection>(msg_notifier_, ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            media_conn_ = std::make_shared<RelayConnection>(ip_, port_, device_id_, remote_device_id_, auto_relay_);
-            ft_conn_ = std::make_shared<RelayConnection>(ip_, port_, ft_device_id_, ft_remote_device_id_, auto_relay_);
+            media_conn_ = std::make_shared<RelayConnection>(msg_notifier_, ip_, port_, device_id_, remote_device_id_, auto_relay_);
+            ft_conn_ = std::make_shared<RelayConnection>(msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_, auto_relay_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
@@ -135,51 +135,72 @@ namespace tc
                 video_frame_cbk_(video_frame);
             }
 
-        } else if (net_msg->type() == tc::kAudioFrame) {
+        }
+        else if (net_msg->type() == tc::kAudioFrame) {
             const auto& audio_frame = net_msg->audio_frame();
             if (audio_frame_cbk_) {
                 audio_frame_cbk_(audio_frame);
             }
-        } else if (net_msg->type() == tc::kCursorInfoSync) {
+        }
+        else if (net_msg->type() == tc::kCursorInfoSync) {
             const auto& cursor_info = net_msg->cursor_info_sync();
             if(cursor_info_sync_cbk_) {
                 cursor_info_sync_cbk_(cursor_info);
             }
-        } else if (net_msg->type() == tc::kServerAudioSpectrum) {
+        }
+        else if (net_msg->type() == tc::kServerAudioSpectrum) {
             const auto& spectrum = net_msg->server_audio_spectrum();
             if (audio_spectrum_cbk_) {
                 audio_spectrum_cbk_(spectrum);
             }
-        } else if (net_msg->type() == tc::kOnHeartBeat) {
+        }
+        else if (net_msg->type() == tc::kOnHeartBeat) {
             const auto& hb = net_msg->on_heartbeat();
             if (hb_cbk_) {
                 hb_cbk_(hb);
             }
-        } else if (net_msg->type() == tc::kClipboardInfo) {
+        }
+        else if (net_msg->type() == tc::kClipboardInfo) {
             const auto& clipboard_info = net_msg->clipboard_info();
             if (clipboard_cbk_) {
                 clipboard_cbk_(clipboard_info);
             }
-        } else if (net_msg->type() == tc::kServerConfiguration) {
+        }
+        else if (net_msg->type() == tc::kServerConfiguration) {
             const auto& config = net_msg->config();
             if (config_cbk_) {
                 config_cbk_(config);
             }
-        } else if (net_msg->type() == tc::kMonitorSwitched) {
+        }
+        else if (net_msg->type() == tc::kMonitorSwitched) {
             const auto& monitor_switched = net_msg->monitor_switched();
             if (monitor_switched_cbk_) {
                 monitor_switched_cbk_(monitor_switched);
             }
-        } else if (net_msg->type() == tc::kChangeMonitorResolutionResult) {
+        }
+        else if (net_msg->type() == tc::kChangeMonitorResolutionResult) {
             auto sub = net_msg->change_monitor_resolution_result();
             msg_notifier_->SendAppMessage(SdkMsgChangeMonitorResolutionResult {
                 .monitor_name_ = sub.monitor_name(),
                 .result = sub.result(),
             });
-        } else if (net_msg->type() == tc::kClipboardReqBuffer) {
+        }
+        else if (net_msg->type() == tc::kClipboardReqBuffer) {
             auto sub = net_msg->cp_req_buffer();
             msg_notifier_->SendAppMessage(SdkMsgClipboardReqBuffer {
                 .req_buffer_ = sub,
+            });
+        }
+        else if (net_msg->type() == tc::kSigAnswerSdpMessage) {
+            auto sub = net_msg->sig_answer_sdp();
+            msg_notifier_->SendAppMessage(SdkMsgRemoteAnswerSdp {
+                .answer_sdp_ = sub,
+            });
+        }
+        else if (net_msg->type() == tc::kSigIceMessage) {
+            auto sub = net_msg->sig_ice();
+            msg_notifier_->SendAppMessage(SdkMsgRemoteIce {
+                .ice_ = sub,
             });
         }
     }

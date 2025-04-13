@@ -16,7 +16,7 @@ namespace tc
         // data below...
     };
 
-    UdpConnection::UdpConnection(const std::string &host, int port) {
+    UdpConnection::UdpConnection(const std::shared_ptr<MessageNotifier>& notifier, const std::string &host, int port) : Connection(notifier) {
         this->host_ = host;
         this->port_ = port;
     }
