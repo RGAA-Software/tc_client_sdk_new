@@ -14,6 +14,9 @@
 namespace tc
 {
 
+    const std::string kRoomTypeMedia = "media";
+    const std::string kRoomTypeFileTransfer = "file_transfer";
+
     class RawImage;
 
     // monitor info
@@ -92,7 +95,7 @@ namespace tc
     // room prepared in relay/p2p mode
     class SdkMsgRoomPrepared {
     public:
-
+        std::string room_type_;
     };
 
     // room destroyed in relay/p2p mode

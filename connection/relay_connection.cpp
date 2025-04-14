@@ -19,12 +19,14 @@ namespace tc
                                      int port,
                                      const std::string& device_id,
                                      const std::string& remote_device_id,
-                                     bool auto_relay) : Connection(notifier) {
+                                     bool auto_relay,
+                                     const std::string& room_type) : Connection(notifier) {
         this->host_ = host;
         this->port_ = port;
         this->device_id_ = device_id;
         this->remote_device_id_ = remote_device_id;
         this->auto_relay_ = auto_relay;
+        this->room_type_ = room_type;
         relay_sdk_ = std::make_shared<RelayClientSdk>(RelayClientSdkParam {
             .host_ = host,
             .port_ = port,
@@ -66,7 +68,9 @@ namespace tc
             }
 
             // notify
-            msg_notifier_->SendAppMessage(SdkMsgRoomPrepared{});
+            msg_notifier_->SendAppMessage(SdkMsgRoomPrepared{
+                .room_type_ = room_type,
+            });
         });
 
         relay_sdk_->SetOnRelayRoomDestroyedCallback([=, this]() {
