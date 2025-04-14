@@ -69,8 +69,10 @@ namespace tc
             media_conn_ = std::make_shared<UdpConnection>(msg_notifier_, ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            media_conn_ = std::make_shared<RelayConnection>(msg_notifier_, ip_, port_, device_id_, remote_device_id_, auto_relay_);
-            ft_conn_ = std::make_shared<RelayConnection>(msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_, auto_relay_);
+            media_conn_ = std::make_shared<RelayConnection>(msg_notifier_,ip_, port_,device_id_,remote_device_id_,
+                                                            auto_relay_, kRoomTypeMedia);
+            ft_conn_ = std::make_shared<RelayConnection>(msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_,
+                                                         auto_relay_, kRoomTypeFileTransfer);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);

@@ -26,7 +26,8 @@ namespace tc
                         int port,
                         const std::string& device_id,
                         const std::string& remote_device_id,
-                        bool auto_relay);
+                        bool auto_relay,
+                        const std::string& room_type);
         void Start() override;
         void Stop() override;
         void PostBinaryMessage(const std::string& msg) override;
@@ -42,6 +43,7 @@ namespace tc
         std::shared_ptr<RelayClientSdk> relay_sdk_ = nullptr;
         std::shared_ptr<RelayNetClient> relay_net_client_ = nullptr;
         bool auto_relay_ = false;
+        std::string room_type_;
     };
 
 }
