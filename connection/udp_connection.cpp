@@ -16,7 +16,10 @@ namespace tc
         // data below...
     };
 
-    UdpConnection::UdpConnection(const std::shared_ptr<MessageNotifier>& notifier, const std::string &host, int port) : Connection(notifier) {
+    UdpConnection::UdpConnection(const ThunderSdkParams& params,
+                                 const std::shared_ptr<MessageNotifier>& notifier,
+                                 const std::string& host,
+                                 int port) : Connection(params, notifier) {
         this->host_ = host;
         this->port_ = port;
     }

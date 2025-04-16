@@ -7,6 +7,7 @@
 
 #include "tc_message.pb.h"
 #include <atomic>
+#include "sdk_params.h"
 
 namespace asio2 {
     class ws_client;
@@ -33,10 +34,12 @@ namespace tc
     class MessageNotifier;
     class MessageListener;
     class Connection;
+    class WebRtcConnection;
 
     class NetClient {
     public:
-        explicit NetClient(const std::shared_ptr<MessageNotifier>& notifier,
+        explicit NetClient(const ThunderSdkParams& params,
+                           const std::shared_ptr<MessageNotifier>& notifier,
                            const std::string& ip,
                            int port,
                            const std::string& media_path,
@@ -47,8 +50,7 @@ namespace tc
                            const std::string& remote_device_id,
                            const std::string& ft_device_id,
                            const std::string& ft_remote_device_id,
-                           const std::string& stream_id,
-                           bool auto_relay);
+                           const std::string& stream_id);
         ~NetClient();
 
         void Start();
@@ -73,12 +75,13 @@ namespace tc
         int64_t GetQueuingFtMsgCount();
 
     private:
-        void ParseMessage(std::string&& msg);
+        void ParseMessage(const std::string& msg);
         void HeartBeat();
 
     private:
         std::shared_ptr<Connection> media_conn_ = nullptr;
         std::shared_ptr<Connection> ft_conn_ = nullptr;
+        std::shared_ptr<WebRtcConnection> rtc_conn_ = nullptr;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
@@ -91,6 +94,8 @@ namespace tc
         OnMonitorSwitchedCallback monitor_switched_cbk_;
         OnRawMessageCallback raw_msg_cbk_;
 
+        ThunderSdkParams sdk_params_;
+
         std::string ip_{};
         int port_{};
         std::string media_path_{};
@@ -102,7 +107,6 @@ namespace tc
         std::string ft_device_id_;
         std::string ft_remote_device_id_;
         std::string stream_id_;
-        bool auto_relay_ = false;
 
         std::atomic_int queuing_message_count_ = 0;
         uint64_t hb_idx_ = 0;

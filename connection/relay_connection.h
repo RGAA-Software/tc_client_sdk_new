@@ -21,7 +21,8 @@ namespace tc
 
     class RelayConnection : public Connection {
     public:
-        RelayConnection(const std::shared_ptr<MessageNotifier>& notifier,
+        RelayConnection(const ThunderSdkParams& params,
+                        const std::shared_ptr<MessageNotifier>& notifier,
                         const std::string& host,
                         int port,
                         const std::string& device_id,

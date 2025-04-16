@@ -46,7 +46,8 @@ namespace tc
         drt_ = drt;
         render_surface_ = surface;
 
-        net_client_ = std::make_shared<NetClient>(msg_notifier_,
+        net_client_ = std::make_shared<NetClient>(sdk_params_,
+                                      msg_notifier_,
                                       sdk_params_.ip_,
                                       sdk_params_.port_,
                                       sdk_params_.media_path_,
@@ -57,8 +58,7 @@ namespace tc
                                       sdk_params_.remote_device_id_,
                                       sdk_params_.ft_device_id_,
                                       sdk_params_.ft_remote_device_id_,
-                                      sdk_params_.stream_id_,
-                                      !sdk_params_.enable_p2p_);
+                                      sdk_params_.stream_id_);
         return true;
     }
 
@@ -352,6 +352,10 @@ namespace tc
 
     ThunderSdkParams ThunderSdk::GetSdkParams() {
         return sdk_params_;
+    }
+
+    std::shared_ptr<MessageNotifier> ThunderSdk::GetMessageNotifier() {
+        return msg_notifier_;
     }
 
     int64_t ThunderSdk::GetQueuingMediaMsgCount() {

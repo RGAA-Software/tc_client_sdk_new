@@ -14,6 +14,7 @@
 #include "connection/udp_connection.h"
 #include "connection/ws_connection.h"
 #include "connection/relay_connection.h"
+#include "connection/webrtc/webrtc_connection.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -21,7 +22,8 @@
 namespace tc
 {
 
-    NetClient::NetClient(const std::shared_ptr<MessageNotifier>& notifier,
+    NetClient::NetClient(const ThunderSdkParams& params,
+                         const std::shared_ptr<MessageNotifier>& notifier,
                          const std::string& ip,
                          int port,
                          const std::string& media_path,
@@ -32,8 +34,8 @@ namespace tc
                          const std::string& remote_device_id,
                          const std::string& ft_device_id,
                          const std::string& ft_remote_device_id,
-                         const std::string& stream_id,
-                         bool auto_relay) {
+                         const std::string& stream_id) {
+        this->sdk_params_ = params;
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
         this->port_ = port;
@@ -46,7 +48,6 @@ namespace tc
         this->ft_device_id_ = ft_device_id;
         this->ft_remote_device_id_ = ft_remote_device_id;
         this->stream_id_ = stream_id;
-        this->auto_relay_ = auto_relay;
 
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
@@ -61,18 +62,24 @@ namespace tc
             LOGI("Will connect by Websocket:");
             LOGI("media: {}", media_path_);
             LOGI("file transfer: {}", ft_path_);
-            media_conn_ = std::make_shared<WsConnection>(msg_notifier_, ip_, port_, media_path_);
-            ft_conn_ = std::make_shared<WsConnection>(msg_notifier_, ip_, port_, ft_path_);
+            media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, media_path_);
+            ft_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_path_);
         }
         else if (network_type_ == ClientNetworkType::kUdpKcp) {
             LOGI("Will connect by UDP");
-            media_conn_ = std::make_shared<UdpConnection>(msg_notifier_, ip_, port_);
+            media_conn_ = std::make_shared<UdpConnection>(sdk_params_, msg_notifier_, ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            media_conn_ = std::make_shared<RelayConnection>(msg_notifier_,ip_, port_,device_id_,remote_device_id_,
-                                                            auto_relay_, kRoomTypeMedia);
-            ft_conn_ = std::make_shared<RelayConnection>(msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_,
-                                                         auto_relay_, kRoomTypeFileTransfer);
+            auto auto_relay = !sdk_params_.enable_p2p_;
+            media_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_,ip_, port_,device_id_,remote_device_id_,
+                                                            auto_relay, kRoomTypeMedia);
+            ft_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_,
+                                                         auto_relay, kRoomTypeFileTransfer);
+
+            if (sdk_params_.enable_p2p_) {
+                auto relay_conn = std::dynamic_pointer_cast<RelayConnection>(media_conn_);
+                rtc_conn_ = std::make_shared<WebRtcConnection>(relay_conn, sdk_params_, msg_notifier_);
+            }
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
@@ -92,15 +99,26 @@ namespace tc
         });
 
         media_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
-            this->ParseMessage(std::move(data));
+            this->ParseMessage(data);
         });
 
         media_conn_->Start();
         if (ft_conn_) {
             ft_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
-                this->ParseMessage(std::move(data));
+                this->ParseMessage(data);
             });
             ft_conn_->Start();
+        }
+
+        if (sdk_params_.enable_p2p_ && rtc_conn_) {
+            rtc_conn_->SetOnMediaMessageCallback([=, this](const std::string& msg) {
+                LOGI("OnMediaMessageCallback, : {}", msg.size());
+                this->ParseMessage(msg);
+            });
+            rtc_conn_->SetOnFtMessageCallback([=, this](const std::string& msg) {
+                this->ParseMessage(msg);
+            });
+            rtc_conn_->Start();
         }
     }
 
@@ -115,7 +133,7 @@ namespace tc
         LOGI("WS has exited...");
     }
 
-    void NetClient::ParseMessage(std::string&& msg) {
+    void NetClient::ParseMessage(const std::string& msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParseFromArray(msg.data(), msg.size());
         if (!ok) {
@@ -211,11 +229,17 @@ namespace tc
         if (media_conn_) {
             media_conn_->PostBinaryMessage(msg);
         }
+        if (sdk_params_.enable_p2p_ && rtc_conn_) {
+            rtc_conn_->PostMediaMessage(msg);
+        }
     }
 
     void NetClient::PostFileTransferMessage(const std::string& msg) {
         if (ft_conn_) {
             ft_conn_->PostBinaryMessage(msg);
+        }
+        if (sdk_params_.enable_p2p_ && rtc_conn_) {
+            rtc_conn_->PostFtMessage(msg);
         }
     }
 

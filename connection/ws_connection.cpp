@@ -10,10 +10,11 @@
 namespace tc
 {
 
-    WsConnection::WsConnection(const std::shared_ptr<MessageNotifier>& notifier,
+    WsConnection::WsConnection(const ThunderSdkParams& params,
+                               const std::shared_ptr<MessageNotifier>& notifier,
                                const std::string& host,
                                int port,
-                               const std::string& path) : Connection(notifier) {
+                               const std::string& path) : Connection(params, notifier) {
         this->host_ = host;
         this->port_ = port;
         this->path_ = path;

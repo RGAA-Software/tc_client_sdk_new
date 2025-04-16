@@ -12,6 +12,7 @@
 #include "decoder_render_type.h"
 #include "net_client.h"
 #include "sdk_messages.h"
+#include "sdk_params.h"
 
 namespace tc
 {
@@ -26,32 +27,6 @@ namespace tc
     class CastReceiver;
     class AppTimer;
     class Statistics;
-
-    // param
-    class ThunderSdkParams {
-    public:
-        [[nodiscard]] std::string MakeReqPath() const;
-
-    public:
-        bool ssl_ = false;
-        bool enable_audio_ = false;
-        bool enable_video_ = false;
-        bool enable_controller_ = false;
-        std::string ip_;
-        int port_;
-        std::string media_path_;
-        std::string ft_path_;
-        ClientType client_type_;
-        ClientConnectType conn_type_;
-        ClientNetworkType nt_type_;
-        std::string device_id_;
-        std::string remote_device_id_;
-        std::string ft_device_id_;
-        std::string ft_remote_device_id_;
-        std::string stream_id_;
-        std::string stream_name_;
-        bool enable_p2p_ = false;
-    };
 
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&, const SdkCaptureMonitorInfo&)>;
@@ -87,6 +62,7 @@ namespace tc
 
         int GetProgressSteps() const;
         ThunderSdkParams GetSdkParams();
+        std::shared_ptr<MessageNotifier> GetMessageNotifier();
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
 

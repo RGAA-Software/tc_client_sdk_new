@@ -7,7 +7,8 @@
 namespace tc
 {
 
-    Connection::Connection(const std::shared_ptr<MessageNotifier>& notifier) {
+    Connection::Connection(const ThunderSdkParams& params, const std::shared_ptr<MessageNotifier>& notifier) {
+        sdk_params_ = params;
         msg_notifier_ = notifier;
     }
 
