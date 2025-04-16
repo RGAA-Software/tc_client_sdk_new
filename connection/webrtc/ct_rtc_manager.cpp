@@ -54,10 +54,6 @@ namespace tc
             if (!rtc_client_) {
                 return;
             }
-            if (!rtc_client_->Init()) {
-                LOGE("RTC client init FAILED!");
-                return;
-            }
 
             rtc_client_->SetOnLocalSdpSetCallback([=, this](const std::string& sdp) {
                 LOGI("Will send sdp to remote, sdp size: {}", sdp.size());
@@ -80,6 +76,11 @@ namespace tc
                     ft_msg_cbk_(msg);
                 }
             });
+
+            if (!rtc_client_->Init()) {
+                LOGE("RTC client init FAILED!");
+                return;
+            }
 
             LOGI("RTC client init success");
         });
