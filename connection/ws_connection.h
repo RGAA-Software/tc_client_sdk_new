@@ -19,7 +19,11 @@ namespace tc
 
     class WsConnection : public Connection {
     public:
-        WsConnection(const std::shared_ptr<MessageNotifier>& notifier, const std::string& host, int port, const std::string& path);
+        WsConnection(const ThunderSdkParams& params,
+                     const std::shared_ptr<MessageNotifier>& notifier,
+                     const std::string& host,
+                     int port,
+                     const std::string& path);
         ~WsConnection();
         void Start() override;
         void Stop() override;

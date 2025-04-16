@@ -14,13 +14,14 @@ using namespace relay;
 namespace tc
 {
 
-    RelayConnection::RelayConnection(const std::shared_ptr<MessageNotifier>& notifier,
+    RelayConnection::RelayConnection(const ThunderSdkParams& params,
+                                     const std::shared_ptr<MessageNotifier>& notifier,
                                      const std::string& host,
                                      int port,
                                      const std::string& device_id,
                                      const std::string& remote_device_id,
                                      bool auto_relay,
-                                     const std::string& room_type) : Connection(notifier) {
+                                     const std::string& room_type) : Connection(params, notifier) {
         this->host_ = host;
         this->port_ = port;
         this->device_id_ = device_id;
