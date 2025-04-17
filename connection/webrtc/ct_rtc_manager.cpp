@@ -24,7 +24,7 @@ namespace tc
         sdk_params_ = params;
         msg_notifier_ = notifier;
         msg_listener_ = notifier->CreateListener();
-        thread_ = Thread::Make("rtc_client_thread", 1024);
+        thread_ = Thread::Make("rtc_client_thread", 1024 * 8);
         thread_->Poll();
 
         msg_listener_->Listen<SdkMsgNetworkConnected>([=, this](const SdkMsgNetworkConnected& msg) {
@@ -121,11 +121,31 @@ namespace tc
     }
 
     void CtRtcManager::PostFtMessage(const std::string& msg) {
-        RunInRtcThread([=, this]() {
-            if (rtc_client_) {
-                rtc_client_->PostFtMessage(msg);
+        if (!rtc_client_) {
+           return;
+        }
+
+        // test beg //
+        if (false) {
+            tc::Message pt_msg;
+            if (pt_msg.ParseFromString(msg)) {
+                if (pt_msg.type() == tc::kFileTransDataPacket) {
+                    auto pkt = pt_msg.file_trans_data_packet();
+                    LOGI("Send Ft pkt index: {}", pkt.index());
+                }
             }
-        });
+        }
+        // test end //
+
+        rtc_client_->PostFtMessage(msg);
+    }
+
+    int64_t CtRtcManager::GetQueuingMediaMsgCount() {
+        return rtc_client_->GetQueuingMediaMsgCount();
+    }
+
+    int64_t CtRtcManager::GetQueuingFtMsgCount() {
+        return rtc_client_->GetQueuingFtMsgCount();
     }
 
     void CtRtcManager::SetOnMediaMessageCallback(const std::function<void(const std::string&)>& cbk) {

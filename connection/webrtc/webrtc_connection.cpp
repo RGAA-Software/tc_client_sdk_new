@@ -52,6 +52,14 @@ namespace tc
         return 0;
     }
 
+    int64_t WebRtcConnection::GetQueuingMediaMsgCount() {
+        return rtc_mgr_->GetQueuingMediaMsgCount();
+    }
+
+    int64_t WebRtcConnection::GetQueuingFtMsgCount() {
+        return rtc_mgr_->GetQueuingFtMsgCount();
+    }
+
     void WebRtcConnection::RequestPauseStream() {
 
     }
