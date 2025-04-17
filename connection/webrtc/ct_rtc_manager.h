@@ -33,6 +33,9 @@ namespace tc
         void SetOnMediaMessageCallback(const std::function<void(const std::string&)>&);
         void SetOnFtMessageCallback(const std::function<void(const std::string&)>&);
 
+        int64_t GetQueuingMediaMsgCount();
+        int64_t GetQueuingFtMsgCount();
+
     private:
         void Init();
         void LoadRtcLibrary();

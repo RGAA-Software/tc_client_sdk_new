@@ -112,7 +112,7 @@ namespace tc
 
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->SetOnMediaMessageCallback([=, this](const std::string& msg) {
-                LOGI("OnMediaMessageCallback, : {}", msg.size());
+                //LOGI("OnMediaMessageCallback, : {}", msg.size());
                 this->ParseMessage(msg);
             });
             rtc_conn_->SetOnFtMessageCallback([=, this](const std::string& msg) {
@@ -226,20 +226,24 @@ namespace tc
     }
 
     void NetClient::PostMediaMessage(const std::string& msg) {
-        if (media_conn_) {
-            media_conn_->PostBinaryMessage(msg);
-        }
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->PostMediaMessage(msg);
+        }
+        else {
+            if (media_conn_) {
+                media_conn_->PostBinaryMessage(msg);
+            }
         }
     }
 
     void NetClient::PostFileTransferMessage(const std::string& msg) {
-        if (ft_conn_) {
-            ft_conn_->PostBinaryMessage(msg);
-        }
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->PostFtMessage(msg);
+        }
+        else {
+            if (ft_conn_) {
+                ft_conn_->PostBinaryMessage(msg);
+            }
         }
     }
 
@@ -299,16 +303,26 @@ namespace tc
     }
 
     int64_t NetClient::GetQueuingMediaMsgCount() {
-        if (media_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_) {
+            return rtc_conn_->GetQueuingMediaMsgCount();
+        }
+        else if (media_conn_) {
             return media_conn_->GetQueuingMsgCount();
         }
-        return 0;
+        else {
+            return 0;
+        }
     }
 
     int64_t NetClient::GetQueuingFtMsgCount() {
-        if (ft_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_) {
+            return rtc_conn_->GetQueuingFtMsgCount();
+        }
+        else if (ft_conn_) {
             return ft_conn_->GetQueuingMsgCount();
         }
-        return 0;
+        else {
+            return 0;
+        }
     }
 }

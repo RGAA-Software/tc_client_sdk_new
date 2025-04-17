@@ -34,7 +34,13 @@ namespace tc
         void SetOnMediaMessageCallback(const std::function<void(const std::string&)>&);
         void SetOnFtMessageCallback(const std::function<void(const std::string&)>&);
 
+        // DON'T USE IN RTC MODE
         int64_t GetQueuingMsgCount() override;
+
+        // USE THESE
+        int64_t GetQueuingMediaMsgCount();
+        int64_t GetQueuingFtMsgCount();
+
         void RequestPauseStream() override;
         void RequestResumeStream() override;
 
