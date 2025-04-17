@@ -22,7 +22,7 @@ namespace tc
 
     class Connection {
     public:
-        Connection(const ThunderSdkParams& params, const std::shared_ptr<MessageNotifier>& notifier);
+        Connection(const std::shared_ptr<ThunderSdkParams>& params, const std::shared_ptr<MessageNotifier>& notifier);
         ~Connection();
 
         void RegisterOnConnectedCallback(OnConnectedCallback&& cbk) {
@@ -51,7 +51,7 @@ namespace tc
         OnMessageCallback msg_cbk_;
         std::atomic_int64_t queuing_message_count_ = 0;
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
-        ThunderSdkParams sdk_params_;
+        std::shared_ptr<ThunderSdkParams> sdk_params_;
     };
 
 }

@@ -14,7 +14,7 @@ using namespace relay;
 namespace tc
 {
 
-    RelayConnection::RelayConnection(const ThunderSdkParams& params,
+    RelayConnection::RelayConnection(const std::shared_ptr<ThunderSdkParams>& params,
                                      const std::shared_ptr<MessageNotifier>& notifier,
                                      const std::string& host,
                                      int port,

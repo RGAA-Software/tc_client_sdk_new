@@ -24,7 +24,7 @@ namespace tc
     class CtRtcManager {
     public:
         CtRtcManager(const std::shared_ptr<RelayConnection>& relay_conn,
-                     const ThunderSdkParams& params,
+                     const std::shared_ptr<ThunderSdkParams>& params,
                      const std::shared_ptr<MessageNotifier>& notifier);
 
         void PostMediaMessage(const std::string& msg);
@@ -45,7 +45,7 @@ namespace tc
         void RunInRtcThread(std::function<void()>&&);
 
     private:
-        ThunderSdkParams sdk_params_;
+        std::shared_ptr<ThunderSdkParams> sdk_params_;
         std::shared_ptr<Thread> thread_ = nullptr;
         QLibrary* rtc_lib_ = nullptr;
         RtcClientInterface* rtc_client_ = nullptr;

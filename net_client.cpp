@@ -22,7 +22,7 @@
 namespace tc
 {
 
-    NetClient::NetClient(const ThunderSdkParams& params,
+    NetClient::NetClient(const std::shared_ptr<ThunderSdkParams>& params,
                          const std::shared_ptr<MessageNotifier>& notifier,
                          const std::string& ip,
                          int port,
@@ -70,13 +70,13 @@ namespace tc
             media_conn_ = std::make_shared<UdpConnection>(sdk_params_, msg_notifier_, ip_, port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
-            auto auto_relay = !sdk_params_.enable_p2p_;
+            auto auto_relay = !sdk_params_->enable_p2p_;
             media_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_,ip_, port_,device_id_,remote_device_id_,
                                                             auto_relay, kRoomTypeMedia);
             ft_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_,
                                                          auto_relay, kRoomTypeFileTransfer);
 
-            if (sdk_params_.enable_p2p_) {
+            if (sdk_params_->enable_p2p_) {
                 auto relay_conn = std::dynamic_pointer_cast<RelayConnection>(media_conn_);
                 rtc_conn_ = std::make_shared<WebRtcConnection>(relay_conn, sdk_params_, msg_notifier_);
             }
@@ -110,7 +110,7 @@ namespace tc
             ft_conn_->Start();
         }
 
-        if (sdk_params_.enable_p2p_ && rtc_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->SetOnMediaMessageCallback([=, this](const std::string& msg) {
                 LOGI("OnMediaMessageCallback, : {}", msg.size());
                 this->ParseMessage(msg);
@@ -229,7 +229,7 @@ namespace tc
         if (media_conn_) {
             media_conn_->PostBinaryMessage(msg);
         }
-        if (sdk_params_.enable_p2p_ && rtc_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->PostMediaMessage(msg);
         }
     }
@@ -238,7 +238,7 @@ namespace tc
         if (ft_conn_) {
             ft_conn_->PostBinaryMessage(msg);
         }
-        if (sdk_params_.enable_p2p_ && rtc_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->PostFtMessage(msg);
         }
     }
