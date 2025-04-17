@@ -41,24 +41,24 @@ namespace tc
 
     }
 
-    bool ThunderSdk::Init(const ThunderSdkParams& params, void* surface, const DecoderRenderType& drt) {
+    bool ThunderSdk::Init(const std::shared_ptr<ThunderSdkParams>& params, void* surface, const DecoderRenderType& drt) {
         sdk_params_ = params;
         drt_ = drt;
         render_surface_ = surface;
 
         net_client_ = std::make_shared<NetClient>(sdk_params_,
                                       msg_notifier_,
-                                      sdk_params_.ip_,
-                                      sdk_params_.port_,
-                                      sdk_params_.media_path_,
-                                      sdk_params_.ft_path_,
-                                      sdk_params_.conn_type_,
-                                      sdk_params_.nt_type_,
-                                      sdk_params_.device_id_,
-                                      sdk_params_.remote_device_id_,
-                                      sdk_params_.ft_device_id_,
-                                      sdk_params_.ft_remote_device_id_,
-                                      sdk_params_.stream_id_);
+                                      sdk_params_->ip_,
+                                      sdk_params_->port_,
+                                      sdk_params_->media_path_,
+                                      sdk_params_->ft_path_,
+                                      sdk_params_->conn_type_,
+                                      sdk_params_->nt_type_,
+                                      sdk_params_->device_id_,
+                                      sdk_params_->remote_device_id_,
+                                      sdk_params_->ft_device_id_,
+                                      sdk_params_->ft_remote_device_id_,
+                                      sdk_params_->stream_id_);
         return true;
     }
 
@@ -235,7 +235,7 @@ namespace tc
     void ThunderSdk::RegisterEventListeners() {
         msg_listener_ = msg_notifier_->CreateListener();
         msg_listener_->Listen<SdkMsgTimer100>([=, this](const auto& msg) {
-            auto m = statistics_->AsProtoMessage(sdk_params_.device_id_, sdk_params_.stream_id_);
+            auto m = statistics_->AsProtoMessage(sdk_params_->device_id_, sdk_params_->stream_id_);
             this->PostMediaMessage(m);
         });
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
@@ -252,13 +252,13 @@ namespace tc
         }
         tc::Message msg;
         msg.set_type(tc::MessageType::kHello);
-        msg.set_device_id(sdk_params_.device_id_);
-        msg.set_stream_id(sdk_params_.stream_id_);
+        msg.set_device_id(sdk_params_->device_id_);
+        msg.set_stream_id(sdk_params_->stream_id_);
         auto hello = msg.mutable_hello();
-        hello->set_enable_audio(sdk_params_.enable_audio_);
-        hello->set_enable_video(sdk_params_.enable_video_);
-        hello->set_client_type(sdk_params_.client_type_);
-        hello->set_enable_controller(sdk_params_.enable_controller_);
+        hello->set_enable_audio(sdk_params_->enable_audio_);
+        hello->set_enable_video(sdk_params_->enable_video_);
+        hello->set_client_type(sdk_params_->client_type_);
+        hello->set_enable_controller(sdk_params_->enable_controller_);
         net_client_->PostMediaMessage(msg.SerializeAsString());
     }
 
@@ -268,8 +268,8 @@ namespace tc
         }
         tc::Message msg;
         msg.set_type(MessageType::kInsertKeyFrame);
-        msg.set_device_id(sdk_params_.device_id_);
-        msg.set_stream_id(sdk_params_.stream_id_);
+        msg.set_device_id(sdk_params_->device_id_);
+        msg.set_stream_id(sdk_params_->stream_id_);
         auto ack = msg.mutable_ack();
         ack->set_type(MessageType::kInsertKeyFrame);
         net_client_->PostMediaMessage(msg.SerializeAsString());
@@ -333,24 +333,24 @@ namespace tc
     }
 
     int ThunderSdk::GetProgressSteps() const {
-        if (sdk_params_.conn_type_ == ClientConnectType::kDirect) {
-            if (sdk_params_.nt_type_ == ClientNetworkType::kWebsocket) {
+        if (sdk_params_->conn_type_ == ClientConnectType::kDirect) {
+            if (sdk_params_->nt_type_ == ClientNetworkType::kWebsocket) {
                 return 3;
-            } else if (sdk_params_.nt_type_ == ClientNetworkType::kUdpKcp) {
+            } else if (sdk_params_->nt_type_ == ClientNetworkType::kUdpKcp) {
                 return 3;
-            } else if (sdk_params_.nt_type_ == ClientNetworkType::kWebRtc) {
+            } else if (sdk_params_->nt_type_ == ClientNetworkType::kWebRtc) {
                 return 3;
             }
         }
         else {
-            if (sdk_params_.nt_type_ == ClientNetworkType::kWebRtc) {
+            if (sdk_params_->nt_type_ == ClientNetworkType::kWebRtc) {
                 return 3;
             }
         }
         return 0;
     }
 
-    ThunderSdkParams ThunderSdk::GetSdkParams() {
+    std::shared_ptr<ThunderSdkParams> ThunderSdk::GetSdkParams() {
         return sdk_params_;
     }
 

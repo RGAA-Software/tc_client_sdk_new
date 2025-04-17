@@ -19,7 +19,7 @@ namespace tc
     class WebRtcConnection : public Connection {
     public:
         explicit WebRtcConnection(const std::shared_ptr<RelayConnection>& relay_conn,
-                                  const ThunderSdkParams& params,
+                                  const std::shared_ptr<ThunderSdkParams>& params,
                                   const std::shared_ptr<MessageNotifier>& notifier);
         ~WebRtcConnection();
 

@@ -18,7 +18,7 @@ namespace tc
 {
 
     CtRtcManager::CtRtcManager(const std::shared_ptr<RelayConnection>& relay_conn,
-                               const ThunderSdkParams& params,
+                               const std::shared_ptr<ThunderSdkParams>& params,
                                const std::shared_ptr<MessageNotifier>& notifier) {
         relay_conn_ = relay_conn;
         sdk_params_ = params;
@@ -32,7 +32,7 @@ namespace tc
         });
 
         msg_listener_->Listen<SdkMsgRoomPrepared>([=, this](const SdkMsgRoomPrepared& msg) {
-            if (sdk_params_.enable_p2p_ && msg.room_type_ == kRoomTypeMedia) {
+            if (sdk_params_->enable_p2p_ && msg.room_type_ == kRoomTypeMedia) {
                 LOGI("Sdk msg, room prepared, will init webrtc!");
                 this->Init();
             }
@@ -162,11 +162,11 @@ namespace tc
     void CtRtcManager::SendSdpToRemote(const std::string& sdp) {
         // pack to proto & send it
         tc::Message pt_msg;
-        pt_msg.set_device_id(sdk_params_.device_id_);
-        pt_msg.set_stream_id(sdk_params_.stream_id_);
+        pt_msg.set_device_id(sdk_params_->device_id_);
+        pt_msg.set_stream_id(sdk_params_->stream_id_);
         pt_msg.set_type(tc::MessageType::kSigOfferSdpMessage);
         auto sub = pt_msg.mutable_sig_offer_sdp();
-        sub->set_device_id(sdk_params_.device_id_);
+        sub->set_device_id(sdk_params_->device_id_);
         sub->set_sdp(sdp);
         relay_conn_->PostBinaryMessage(pt_msg.SerializeAsString());
     }
@@ -174,11 +174,11 @@ namespace tc
     void CtRtcManager::SendIceToRemote(const std::string& ice, const std::string& mid, int sdp_mline_index) {
         // pack to proto & send it
         tc::Message pt_msg;
-        pt_msg.set_device_id(sdk_params_.device_id_);
-        pt_msg.set_stream_id(sdk_params_.stream_id_);
+        pt_msg.set_device_id(sdk_params_->device_id_);
+        pt_msg.set_stream_id(sdk_params_->stream_id_);
         pt_msg.set_type(tc::MessageType::kSigIceMessage);
         auto sub = pt_msg.mutable_sig_ice();
-        sub->set_device_id(sdk_params_.device_id_);
+        sub->set_device_id(sdk_params_->device_id_);
         sub->set_ice(ice);
         sub->set_mid(mid);
         sub->set_sdp_mline_index(sdp_mline_index);

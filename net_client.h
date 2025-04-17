@@ -38,7 +38,7 @@ namespace tc
 
     class NetClient {
     public:
-        explicit NetClient(const ThunderSdkParams& params,
+        explicit NetClient(const std::shared_ptr<ThunderSdkParams>& params,
                            const std::shared_ptr<MessageNotifier>& notifier,
                            const std::string& ip,
                            int port,
@@ -94,7 +94,7 @@ namespace tc
         OnMonitorSwitchedCallback monitor_switched_cbk_;
         OnRawMessageCallback raw_msg_cbk_;
 
-        ThunderSdkParams sdk_params_;
+        std::shared_ptr<ThunderSdkParams> sdk_params_;
 
         std::string ip_{};
         int port_{};

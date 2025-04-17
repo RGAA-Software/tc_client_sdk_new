@@ -40,7 +40,7 @@ namespace tc
         explicit ThunderSdk(const std::shared_ptr<MessageNotifier>& notifier);
         ~ThunderSdk();
 
-        bool Init(const ThunderSdkParams& params, void* surface, const DecoderRenderType& drt);
+        bool Init(const std::shared_ptr<ThunderSdkParams>& params, void* surface, const DecoderRenderType& drt);
         void Start();
         void Exit();
 
@@ -61,7 +61,7 @@ namespace tc
         void PostAudioSpectrumTask(std::function<void()>&& task);
 
         int GetProgressSteps() const;
-        ThunderSdkParams GetSdkParams();
+        std::shared_ptr<ThunderSdkParams> GetSdkParams();
         std::shared_ptr<MessageNotifier> GetMessageNotifier();
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
@@ -75,7 +75,7 @@ namespace tc
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
-        ThunderSdkParams sdk_params_;
+        std::shared_ptr<ThunderSdkParams> sdk_params_;
         std::shared_ptr<NetClient> net_client_ = nullptr;
         std::map<std::string, std::shared_ptr<VideoDecoder>> video_decoders_;
 
