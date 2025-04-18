@@ -34,6 +34,7 @@ namespace tc
         void SetOnMediaMessageCallback(const std::function<void(const std::string&)>&);
         void SetOnFtMessageCallback(const std::function<void(const std::string&)>&);
 
+        // @Deprecated HERE!!
         // DON'T USE IN RTC MODE
         int64_t GetQueuingMsgCount() override;
 
@@ -43,6 +44,9 @@ namespace tc
 
         void RequestPauseStream() override;
         void RequestResumeStream() override;
+
+        bool HasEnoughBufferForQueuingMediaMessages();
+        bool HasEnoughBufferForQueuingFtMessages();
 
     private:
         std::shared_ptr<RelayConnection> relay_conn_ = nullptr;

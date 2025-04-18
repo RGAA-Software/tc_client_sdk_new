@@ -15,6 +15,7 @@
 #include "connection/ws_connection.h"
 #include "connection/relay_connection.h"
 #include "connection/webrtc/webrtc_connection.h"
+#include "tc_common_new/time_util.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -238,9 +239,32 @@ namespace tc
 
     void NetClient::PostFileTransferMessage(const std::string& msg) {
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
+            auto queuing_msg_count = rtc_conn_->GetQueuingFtMsgCount();
+            auto has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingFtMessages();
+            int wait_count = 0;
+            while (queuing_msg_count >= kMaxQueuingFtMessages || !has_enough_buffer) {
+                TimeUtil::DelayByCount(1);
+                queuing_msg_count = rtc_conn_->GetQueuingFtMsgCount();
+                has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingFtMessages();
+                wait_count++;
+            }
+            if (wait_count > 0) {
+                LOGI("===> wait for {}ms", wait_count);
+            }
+
             rtc_conn_->PostFtMessage(msg);
         }
         else {
+            // TODO:
+            auto queuing_msg_count = this->GetQueuingFtMsgCount();
+            int wait_count = 0;
+            while (queuing_msg_count >= kMaxQueuingFtMessages) {
+                //LOGI("===> queue too many msgs, count: {}, wait for 1ms", queuing_msg_count);
+                TimeUtil::DelayByCount(1);
+                queuing_msg_count = this->GetQueuingFtMsgCount();
+                wait_count++;
+            }
+
             if (ft_conn_) {
                 ft_conn_->PostBinaryMessage(msg);
             }
