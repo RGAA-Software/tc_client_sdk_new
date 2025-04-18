@@ -27,6 +27,8 @@ namespace tc
                      const std::shared_ptr<ThunderSdkParams>& params,
                      const std::shared_ptr<MessageNotifier>& notifier);
 
+        RtcClientInterface* GetRtcClient();
+
         void PostMediaMessage(const std::string& msg);
         void PostFtMessage(const std::string& msg);
 

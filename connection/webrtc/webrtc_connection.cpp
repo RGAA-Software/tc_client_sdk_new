@@ -4,6 +4,7 @@
 
 #include "webrtc_connection.h"
 #include "ct_rtc_manager.h"
+#include "tc_webrtc_client/rtc_client_interface.h"
 
 namespace tc
 {
@@ -66,6 +67,14 @@ namespace tc
 
     void WebRtcConnection::RequestResumeStream() {
 
+    }
+
+    bool WebRtcConnection::HasEnoughBufferForQueuingMediaMessages() {
+        return rtc_mgr_->GetRtcClient()->HasEnoughBufferForQueuingMediaMessages();
+    }
+
+    bool WebRtcConnection::HasEnoughBufferForQueuingFtMessages() {
+        return rtc_mgr_->GetRtcClient()->HasEnoughBufferForQueuingFtMessages();
     }
 
 }

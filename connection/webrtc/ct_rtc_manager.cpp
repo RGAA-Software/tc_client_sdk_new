@@ -112,6 +112,10 @@ namespace tc
         });
     }
 
+    RtcClientInterface* CtRtcManager::GetRtcClient() {
+        return rtc_client_;
+    }
+
     void CtRtcManager::PostMediaMessage(const std::string& msg) {
         RunInRtcThread([=, this]() {
             if (rtc_client_) {

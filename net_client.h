@@ -17,6 +17,8 @@ namespace asio2 {
 namespace tc
 {
 
+    constexpr uint32_t kMaxQueuingFtMessages = 256;
+
     using OnVideoFrameMsgCallback = std::function<void(const VideoFrame& frame)>;
     using OnAudioFrameMsgCallback = std::function<void(const AudioFrame& frame)>;
     using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
