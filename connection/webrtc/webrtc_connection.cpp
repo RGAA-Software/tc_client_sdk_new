@@ -54,11 +54,11 @@ namespace tc
     }
 
     int64_t WebRtcConnection::GetQueuingMediaMsgCount() {
-        return rtc_mgr_->GetQueuingMediaMsgCount();
+        return rtc_mgr_ ? rtc_mgr_->GetQueuingMediaMsgCount() : 0;
     }
 
     int64_t WebRtcConnection::GetQueuingFtMsgCount() {
-        return rtc_mgr_->GetQueuingFtMsgCount();
+        return rtc_mgr_ ? rtc_mgr_->GetQueuingFtMsgCount() : 0;
     }
 
     void WebRtcConnection::RequestPauseStream() {
@@ -70,11 +70,21 @@ namespace tc
     }
 
     bool WebRtcConnection::HasEnoughBufferForQueuingMediaMessages() {
-        return rtc_mgr_->GetRtcClient()->HasEnoughBufferForQueuingMediaMessages();
+        return (rtc_mgr_ && rtc_mgr_->GetRtcClient()) &&
+               rtc_mgr_->GetRtcClient()->HasEnoughBufferForQueuingMediaMessages();
     }
 
     bool WebRtcConnection::HasEnoughBufferForQueuingFtMessages() {
-        return rtc_mgr_->GetRtcClient()->HasEnoughBufferForQueuingFtMessages();
+        return (rtc_mgr_ && rtc_mgr_->GetRtcClient()) &&
+            rtc_mgr_->GetRtcClient()->HasEnoughBufferForQueuingFtMessages();
+    }
+
+    bool WebRtcConnection::IsMediaChannelReady() {
+        return (rtc_mgr_ && rtc_mgr_->GetRtcClient()) && rtc_mgr_->GetRtcClient()->IsMediaChannelReady();
+    }
+
+    bool WebRtcConnection::IsFtChannelReady() {
+        return (rtc_mgr_ && rtc_mgr_->GetRtcClient()) && rtc_mgr_->GetRtcClient()->IsFtChannelReady();
     }
 
 }

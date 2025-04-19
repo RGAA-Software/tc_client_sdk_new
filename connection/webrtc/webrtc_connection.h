@@ -48,6 +48,9 @@ namespace tc
         bool HasEnoughBufferForQueuingMediaMessages();
         bool HasEnoughBufferForQueuingFtMessages();
 
+        bool IsMediaChannelReady();
+        bool IsFtChannelReady();
+
     private:
         std::shared_ptr<RelayConnection> relay_conn_ = nullptr;
         std::shared_ptr<CtRtcManager> rtc_mgr_ = nullptr;

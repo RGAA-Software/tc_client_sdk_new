@@ -227,10 +227,35 @@ namespace tc
     }
 
     void NetClient::PostMediaMessage(const std::string& msg) {
-        if (sdk_params_->enable_p2p_ && rtc_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_ && rtc_conn_->IsMediaChannelReady()) {
+            auto queuing_msg_count = rtc_conn_->GetQueuingMediaMsgCount();
+            auto has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingMediaMessages();
+            int wait_count = 0;
+            while (queuing_msg_count >= kMaxQueuingFtMessages || !has_enough_buffer) {
+                if (!rtc_conn_->IsMediaChannelReady()) {
+                    return;
+                }
+                TimeUtil::DelayByCount(1);
+                queuing_msg_count = rtc_conn_->GetQueuingMediaMsgCount();
+                has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingMediaMessages();
+                wait_count++;
+            }
+            if (wait_count > 0) {
+                LOGI("===> [Media] wait for {}ms", wait_count);
+            }
+
             rtc_conn_->PostMediaMessage(msg);
         }
         else {
+            auto queuing_msg_count = this->GetQueuingMediaMsgCount();
+            int wait_count = 0;
+            while (queuing_msg_count >= kMaxQueuingFtMessages) {
+                //LOGI("===> queue too many msgs, count: {}, wait for 1ms", queuing_msg_count);
+                TimeUtil::DelayByCount(1);
+                queuing_msg_count = this->GetQueuingMediaMsgCount();
+                wait_count++;
+            }
+
             if (media_conn_) {
                 media_conn_->PostBinaryMessage(msg);
             }
@@ -238,18 +263,21 @@ namespace tc
     }
 
     void NetClient::PostFileTransferMessage(const std::string& msg) {
-        if (sdk_params_->enable_p2p_ && rtc_conn_) {
+        if (sdk_params_->enable_p2p_ && rtc_conn_ && rtc_conn_->IsFtChannelReady()) {
             auto queuing_msg_count = rtc_conn_->GetQueuingFtMsgCount();
             auto has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingFtMessages();
             int wait_count = 0;
             while (queuing_msg_count >= kMaxQueuingFtMessages || !has_enough_buffer) {
+                if (!rtc_conn_->IsFtChannelReady()) {
+                    return;
+                }
                 TimeUtil::DelayByCount(1);
                 queuing_msg_count = rtc_conn_->GetQueuingFtMsgCount();
                 has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingFtMessages();
                 wait_count++;
             }
             if (wait_count > 0) {
-                LOGI("===> wait for {}ms", wait_count);
+                LOGI("===> [File] wait for {}ms", wait_count);
             }
 
             rtc_conn_->PostFtMessage(msg);
