@@ -33,6 +33,8 @@ namespace tc
         std::string stream_id_;
         std::string stream_name_;
         bool enable_p2p_ = false;
+        std::string display_name_;
+        std::string display_remote_name_;
     };
 
 }
