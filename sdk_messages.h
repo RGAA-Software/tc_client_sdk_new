@@ -45,6 +45,10 @@ namespace tc
     class SdkMsgTimer100 {
     };
 
+    //
+    class SdkMsgTimer16 {
+    };
+
     // change monitor resolution
     class SdkMsgChangeMonitorResolutionResult {
     public:

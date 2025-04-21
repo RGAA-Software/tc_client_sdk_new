@@ -234,13 +234,21 @@ namespace tc
 
     void ThunderSdk::RegisterEventListeners() {
         msg_listener_ = msg_notifier_->CreateListener();
+
+        // notify to net client
+        msg_listener_->Listen<SdkMsgTimer16>([=, this](const auto& msg) {
+            net_client_->On16msTimeout();
+        });
+
         msg_listener_->Listen<SdkMsgTimer100>([=, this](const auto& msg) {
             auto m = statistics_->AsProtoMessage(sdk_params_->device_id_, sdk_params_->stream_id_);
             this->PostMediaMessage(m);
         });
+
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
             statistics_->TickFps();
         });
+
         msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
             //this->statistics_->Dump();
         });

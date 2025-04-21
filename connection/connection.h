@@ -44,6 +44,7 @@ namespace tc
         virtual int64_t GetQueuingMsgCount();
         virtual void RequestPauseStream() {}
         virtual void RequestResumeStream() {}
+        virtual void On16msTimeout() {}
 
     protected:
         OnConnectedCallback conn_cbk_;
