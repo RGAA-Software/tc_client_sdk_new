@@ -38,6 +38,8 @@ namespace tc
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
 
+        void Exit();
+
     private:
         void Init();
         void LoadRtcLibrary();

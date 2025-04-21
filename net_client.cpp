@@ -131,6 +131,9 @@ namespace tc
         if (ft_conn_) {
             ft_conn_->Stop();
         }
+        if (rtc_conn_) {
+            rtc_conn_->Stop();
+        }
         LOGI("WS has exited...");
     }
 
@@ -375,6 +378,18 @@ namespace tc
         }
         else {
             return 0;
+        }
+    }
+
+    void NetClient::On16msTimeout() {
+        if (sdk_params_->enable_p2p_ && rtc_conn_) {
+            rtc_conn_->On16msTimeout();
+        }
+        if (ft_conn_) {
+            ft_conn_->On16msTimeout();
+        }
+        if (media_conn_) {
+            media_conn_->On16msTimeout();
         }
     }
 }

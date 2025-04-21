@@ -208,4 +208,10 @@ namespace tc
         sub->set_sdp_mline_index(sdp_mline_index);
         relay_conn_->PostBinaryMessage(pt_msg.SerializeAsString());
     }
+
+    void CtRtcManager::Exit() {
+        if (rtc_client_) {
+            rtc_client_->Exit();
+        }
+    }
 }

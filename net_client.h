@@ -76,6 +76,8 @@ namespace tc
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
 
+        void On16msTimeout();
+
     private:
         void ParseMessage(const std::string& msg);
         void HeartBeat();

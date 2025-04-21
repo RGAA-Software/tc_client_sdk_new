@@ -51,6 +51,8 @@ namespace tc
         bool IsMediaChannelReady();
         bool IsFtChannelReady();
 
+        void On16msTimeout() override;
+
     private:
         std::shared_ptr<RelayConnection> relay_conn_ = nullptr;
         std::shared_ptr<CtRtcManager> rtc_mgr_ = nullptr;

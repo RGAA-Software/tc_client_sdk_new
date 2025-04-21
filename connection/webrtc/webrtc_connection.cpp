@@ -26,7 +26,7 @@ namespace tc
     }
 
     void WebRtcConnection::Stop() {
-
+        rtc_mgr_->Exit();
     }
 
     void WebRtcConnection::PostBinaryMessage(const std::string& msg) {
@@ -85,6 +85,12 @@ namespace tc
 
     bool WebRtcConnection::IsFtChannelReady() {
         return (rtc_mgr_ && rtc_mgr_->GetRtcClient()) && rtc_mgr_->GetRtcClient()->IsFtChannelReady();
+    }
+
+    void WebRtcConnection::On16msTimeout() {
+        if (rtc_mgr_ && rtc_mgr_->GetRtcClient()) {
+            rtc_mgr_->GetRtcClient()->On16msTimeout();
+        }
     }
 
 }
