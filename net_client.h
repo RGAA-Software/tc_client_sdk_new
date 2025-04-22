@@ -46,7 +46,6 @@ namespace tc
                            int port,
                            const std::string& media_path,
                            const std::string& ft_path,
-                           const ClientConnectType& conn_type,
                            const ClientNetworkType& nt_type,
                            const std::string& device_id,
                            const std::string& remote_device_id,
@@ -104,7 +103,6 @@ namespace tc
         int port_{};
         std::string media_path_{};
         std::string ft_path_;
-        ClientConnectType conn_type_;
         ClientNetworkType network_type_;
         std::string device_id_;
         std::string remote_device_id_;

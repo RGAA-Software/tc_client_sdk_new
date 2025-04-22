@@ -1,44 +1,66 @@
 //
-// Created by RGAA on 13/04/2025.
+// Created by RGAA on 16/04/2025.
 //
 
-#ifndef GAMMARAY_CT_RTC_MANAGER_H
-#define GAMMARAY_CT_RTC_MANAGER_H
+#ifndef GAMMARAY_WEBRTC_CONNECTION_H
+#define GAMMARAY_WEBRTC_CONNECTION_H
 
-#include <memory>
+#include <functional>
+#include <string>
 #include <QLibrary>
-#include <QApplication>
-#include "sdk_messages.h"
 #include "sdk_params.h"
+#include "sdk_messages.h"
+#include "tc_client_sdk_new/connection/connection.h"
 
 namespace tc
 {
 
+    // we need relay to exchange signaling messages
+    class RelayConnection;
     class Thread;
     class MessageNotifier;
     class RtcClientInterface;
     class Message;
     class MessageListener;
-    class RelayConnection;
 
-    class CtRtcManager {
+    class WebRtcConnection : public Connection {
     public:
-        CtRtcManager(const std::shared_ptr<RelayConnection>& relay_conn,
-                     const std::shared_ptr<ThunderSdkParams>& params,
-                     const std::shared_ptr<MessageNotifier>& notifier);
+        explicit WebRtcConnection(const std::shared_ptr<RelayConnection>& relay_conn,
+                                  const std::shared_ptr<ThunderSdkParams>& params,
+                                  const std::shared_ptr<MessageNotifier>& notifier);
+        ~WebRtcConnection();
 
-        RtcClientInterface* GetRtcClient();
+        void Start() override;
+        void Stop() override;
+        // @see PostMediaMessage
+        void PostBinaryMessage(const std::string& msg) override;
 
         void PostMediaMessage(const std::string& msg);
         void PostFtMessage(const std::string& msg);
-
+        //
         void SetOnMediaMessageCallback(const std::function<void(const std::string&)>&);
         void SetOnFtMessageCallback(const std::function<void(const std::string&)>&);
 
+        RtcClientInterface* GetRtcClient();
+
+        // @Deprecated HERE!!
+        // DON'T USE IN RTC MODE
+        int64_t GetQueuingMsgCount() override;
+
+        // USE THESE
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
 
-        void Exit();
+        void RequestPauseStream() override;
+        void RequestResumeStream() override;
+
+        bool HasEnoughBufferForQueuingMediaMessages();
+        bool HasEnoughBufferForQueuingFtMessages();
+
+        bool IsMediaChannelReady();
+        bool IsFtChannelReady();
+
+        void On16msTimeout() override;
 
     private:
         void Init();
@@ -52,18 +74,20 @@ namespace tc
         void RunInRtcThread(std::function<void()>&&);
 
     private:
+        std::shared_ptr<RelayConnection> relay_conn_ = nullptr;
+
         std::shared_ptr<ThunderSdkParams> sdk_params_;
         std::shared_ptr<Thread> thread_ = nullptr;
         QLibrary* rtc_lib_ = nullptr;
         RtcClientInterface* rtc_client_ = nullptr;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
-        std::shared_ptr<RelayConnection> relay_conn_;
 
         std::function<void(const std::string&)> media_msg_cbk_;
         std::function<void(const std::string&)> ft_msg_cbk_;
+
     };
 
 }
 
-#endif //GAMMARAY_CT_RTC_MANAGER_H
+#endif //GAMMARAY_WEBRTC_CONNECTION_H

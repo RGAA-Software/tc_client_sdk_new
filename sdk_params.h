@@ -24,9 +24,15 @@ namespace tc
         std::string media_path_;
         std::string ft_path_;
         ClientType client_type_;
-        ClientConnectType conn_type_;
+        //ClientConnectType conn_type_;
         ClientNetworkType nt_type_;
+        // id only: xxxxx
+        std::string bare_device_id_;
+        // id only: xxxxx
+        std::string bare_remote_device_id_;
+        // client_xxxx_xxxx
         std::string device_id_;
+        // server_xxxx
         std::string remote_device_id_;
         std::string ft_device_id_;
         std::string ft_remote_device_id_;
