@@ -1,8 +1,9 @@
 //
-// Created by RGAA on 13/04/2025.
+// Created by RGAA on 16/04/2025.
 //
 
-#include "ct_rtc_manager.h"
+#include "webrtc_connection.h"
+#include "tc_common_new/log.h"
 #include "tc_message.pb.h"
 #include "tc_common_new/thread.h"
 #include "tc_common_new/log.h"
@@ -12,14 +13,19 @@
 #include "tc_client_sdk_new/thunder_sdk.h"
 #include "tc_client_sdk_new/connection/relay_connection.h"
 
+#include <QApplication>
+
 typedef void *(*FnGetInstance)();
 
 namespace tc
 {
 
-    CtRtcManager::CtRtcManager(const std::shared_ptr<RelayConnection>& relay_conn,
-                               const std::shared_ptr<ThunderSdkParams>& params,
-                               const std::shared_ptr<MessageNotifier>& notifier) {
+    WebRtcConnection::WebRtcConnection(const std::shared_ptr<RelayConnection>& relay_conn,
+                                       const std::shared_ptr<ThunderSdkParams>& params,
+                                       const std::shared_ptr<MessageNotifier>& notifier)
+                                       : Connection(params, notifier) {
+        this->relay_conn_ = relay_conn;
+
         relay_conn_ = relay_conn;
         sdk_params_ = params;
         msg_notifier_ = notifier;
@@ -49,7 +55,21 @@ namespace tc
         this->LoadRtcLibrary();
     }
 
-    void CtRtcManager::Init() {
+    WebRtcConnection::~WebRtcConnection() {
+
+    }
+
+    void WebRtcConnection::Start() {
+
+    }
+
+    void WebRtcConnection::Stop() {
+        if (rtc_client_) {
+            rtc_client_->Exit();
+        }
+    }
+
+    void WebRtcConnection::Init() {
         RunInRtcThread([=, this]() {
             if (!rtc_client_) {
                 return;
@@ -77,7 +97,7 @@ namespace tc
                 }
             });
 
-            if (!rtc_client_->Init()) {
+            if (!rtc_client_->Init(sdk_params_->bare_remote_device_id_)) {
                 LOGE("RTC client init FAILED!");
                 return;
             }
@@ -86,7 +106,7 @@ namespace tc
         });
     }
 
-    void CtRtcManager::LoadRtcLibrary() {
+    void WebRtcConnection::LoadRtcLibrary() {
         RunInRtcThread([=, this]() {
             LOGI("Begin to load library!");
             auto lib_name = QApplication::applicationDirPath() + "/gr_client/tc_rtc_client.dll";
@@ -112,11 +132,11 @@ namespace tc
         });
     }
 
-    RtcClientInterface* CtRtcManager::GetRtcClient() {
+    RtcClientInterface* WebRtcConnection::GetRtcClient() {
         return rtc_client_;
     }
 
-    void CtRtcManager::PostMediaMessage(const std::string& msg) {
+    void WebRtcConnection::PostMediaMessage(const std::string& msg) {
         RunInRtcThread([=, this]() {
             if (rtc_client_) {
                 rtc_client_->PostMediaMessage(msg);
@@ -124,9 +144,9 @@ namespace tc
         });
     }
 
-    void CtRtcManager::PostFtMessage(const std::string& msg) {
+    void WebRtcConnection::PostFtMessage(const std::string& msg) {
         if (!rtc_client_) {
-           return;
+            return;
         }
 
         // test beg //
@@ -144,23 +164,23 @@ namespace tc
         rtc_client_->PostFtMessage(msg);
     }
 
-    int64_t CtRtcManager::GetQueuingMediaMsgCount() {
+    int64_t WebRtcConnection::GetQueuingMediaMsgCount() {
         return rtc_client_->GetQueuingMediaMsgCount();
     }
 
-    int64_t CtRtcManager::GetQueuingFtMsgCount() {
+    int64_t WebRtcConnection::GetQueuingFtMsgCount() {
         return rtc_client_->GetQueuingFtMsgCount();
     }
 
-    void CtRtcManager::SetOnMediaMessageCallback(const std::function<void(const std::string&)>& cbk) {
+    void WebRtcConnection::SetOnMediaMessageCallback(const std::function<void(const std::string&)>& cbk) {
         media_msg_cbk_ = cbk;
     }
 
-    void CtRtcManager::SetOnFtMessageCallback(const std::function<void(const std::string&)>& cbk) {
+    void WebRtcConnection::SetOnFtMessageCallback(const std::function<void(const std::string&)>& cbk) {
         ft_msg_cbk_ = cbk;
     }
 
-    void CtRtcManager::OnRemoteSdp(const SdkMsgRemoteAnswerSdp& m) {
+    void WebRtcConnection::OnRemoteSdp(const SdkMsgRemoteAnswerSdp& m) {
         RunInRtcThread([=, this]() {
             if (rtc_client_) {
                 rtc_client_->OnRemoteSdp(m.answer_sdp_.sdp());
@@ -168,7 +188,7 @@ namespace tc
         });
     }
 
-    void CtRtcManager::OnRemoteIce(const SdkMsgRemoteIce& m) {
+    void WebRtcConnection::OnRemoteIce(const SdkMsgRemoteIce& m) {
         RunInRtcThread([=, this]() {
             if (rtc_client_) {
                 auto sub = m.ice_;
@@ -177,13 +197,13 @@ namespace tc
         });
     }
 
-    void CtRtcManager::RunInRtcThread(std::function<void()>&& task) {
+    void WebRtcConnection::RunInRtcThread(std::function<void()>&& task) {
         thread_->Post([=]() {
             task();
         });
     }
 
-    void CtRtcManager::SendSdpToRemote(const std::string& sdp) {
+    void WebRtcConnection::SendSdpToRemote(const std::string& sdp) {
         // pack to proto & send it
         tc::Message pt_msg;
         pt_msg.set_device_id(sdk_params_->device_id_);
@@ -195,7 +215,7 @@ namespace tc
         relay_conn_->PostBinaryMessage(pt_msg.SerializeAsString());
     }
 
-    void CtRtcManager::SendIceToRemote(const std::string& ice, const std::string& mid, int sdp_mline_index) {
+    void WebRtcConnection::SendIceToRemote(const std::string& ice, const std::string& mid, int sdp_mline_index) {
         // pack to proto & send it
         tc::Message pt_msg;
         pt_msg.set_device_id(sdk_params_->device_id_);
@@ -209,9 +229,42 @@ namespace tc
         relay_conn_->PostBinaryMessage(pt_msg.SerializeAsString());
     }
 
-    void CtRtcManager::Exit() {
+    void WebRtcConnection::PostBinaryMessage(const std::string& msg) {
+        this->PostMediaMessage(msg);
+    }
+
+    int64_t WebRtcConnection::GetQueuingMsgCount() {
+        return 0;
+    }
+
+    void WebRtcConnection::RequestPauseStream() {
+
+    }
+
+    void WebRtcConnection::RequestResumeStream() {
+
+    }
+
+    bool WebRtcConnection::HasEnoughBufferForQueuingMediaMessages() {
+        return rtc_client_ && rtc_client_->HasEnoughBufferForQueuingMediaMessages();
+    }
+
+    bool WebRtcConnection::HasEnoughBufferForQueuingFtMessages() {
+        return rtc_client_ && rtc_client_->HasEnoughBufferForQueuingFtMessages();
+    }
+
+    bool WebRtcConnection::IsMediaChannelReady() {
+        return rtc_client_ && rtc_client_->IsMediaChannelReady();
+    }
+
+    bool WebRtcConnection::IsFtChannelReady() {
+        return rtc_client_ && rtc_client_->IsFtChannelReady();
+    }
+
+    void WebRtcConnection::On16msTimeout() {
         if (rtc_client_) {
-            rtc_client_->Exit();
+            rtc_client_->On16msTimeout();
         }
     }
+
 }

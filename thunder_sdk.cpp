@@ -52,7 +52,6 @@ namespace tc
                                       sdk_params_->port_,
                                       sdk_params_->media_path_,
                                       sdk_params_->ft_path_,
-                                      sdk_params_->conn_type_,
                                       sdk_params_->nt_type_,
                                       sdk_params_->device_id_,
                                       sdk_params_->remote_device_id_,
@@ -341,21 +340,18 @@ namespace tc
     }
 
     int ThunderSdk::GetProgressSteps() const {
-        if (sdk_params_->conn_type_ == ClientConnectType::kDirect) {
-            if (sdk_params_->nt_type_ == ClientNetworkType::kWebsocket) {
-                return 3;
-            } else if (sdk_params_->nt_type_ == ClientNetworkType::kUdpKcp) {
-                return 3;
-            } else if (sdk_params_->nt_type_ == ClientNetworkType::kWebRtc) {
-                return 3;
-            }
+        if (sdk_params_->nt_type_ == ClientNetworkType::kWebsocket) {
+            return 3;
+        }
+        else if (sdk_params_->nt_type_ == ClientNetworkType::kUdpKcp) {
+            return 3;
+        }
+        else if (sdk_params_->nt_type_ == ClientNetworkType::kWebRtc) {
+            return 3;
         }
         else {
-            if (sdk_params_->nt_type_ == ClientNetworkType::kWebRtc) {
-                return 3;
-            }
+            return 3;
         }
-        return 0;
     }
 
     std::shared_ptr<ThunderSdkParams> ThunderSdk::GetSdkParams() {

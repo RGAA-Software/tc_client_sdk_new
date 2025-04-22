@@ -14,7 +14,7 @@
 #include "connection/udp_connection.h"
 #include "connection/ws_connection.h"
 #include "connection/relay_connection.h"
-#include "connection/webrtc/webrtc_connection.h"
+#include "connection/webrtc_connection.h"
 #include "tc_common_new/time_util.h"
 
 #include <asio2/websocket/ws_client.hpp>
@@ -29,7 +29,6 @@ namespace tc
                          int port,
                          const std::string& media_path,
                          const std::string& ft_path,
-                         const ClientConnectType& conn_type,
                          const ClientNetworkType& nt_type,
                          const std::string& device_id,
                          const std::string& remote_device_id,
@@ -42,7 +41,6 @@ namespace tc
         this->port_ = port;
         this->media_path_ = media_path;
         this->ft_path_ = ft_path;
-        this->conn_type_ = conn_type;
         this->network_type_ = nt_type;
         this->device_id_ = device_id;
         this->remote_device_id_ = remote_device_id;
