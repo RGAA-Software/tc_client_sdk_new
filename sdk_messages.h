@@ -120,6 +120,22 @@ namespace tc
         SigIceMessage ice_;
     };
 
+    // sdk statistics
+    class SdkMsgStatistics {
+    public:
+        // network type
+        ClientNetworkType net_type_;
+        // total media bytes
+        int64_t recv_total_media_bytes_ = 0;
+        // receiving media speed
+        int64_t recv_media_speed_ = 0;
+        //
+        int32_t recv_video_fps_ = 0;
+        //
+        int32_t decode_fps_ = 0;
+        //
+        int32_t render_fps_ = 0;
+    };
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H

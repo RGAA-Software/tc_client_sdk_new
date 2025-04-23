@@ -58,6 +58,7 @@ namespace tc
         void PostFileTransferMessage(const std::string& msg);
         void PostVideoTask(std::function<void()>&& task);
         void PostAudioTask(std::function<void()>&& task);
+        // !! @Deprecated
         void PostAudioSpectrumTask(std::function<void()>&& task);
 
         int GetProgressSteps() const;
@@ -67,11 +68,11 @@ namespace tc
         int64_t GetQueuingFtMsgCount();
 
     private:
-
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const SdkCaptureMonitorInfo& info);
         void RegisterEventListeners();
         void SendHelloMessage();
         void RequestIFrame();
+        void ReportStatistics();
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
@@ -100,6 +101,7 @@ namespace tc
         Statistics* statistics_ = nullptr;
         std::shared_ptr<Thread> video_thread_ = nullptr;
         std::shared_ptr<Thread> audio_thread_ = nullptr;
+        // !! @Deprecated
         std::shared_ptr<Thread> audio_spectrum_thread_ = nullptr;
 
         uint64_t last_received_video_ = 0;
