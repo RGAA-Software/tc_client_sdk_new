@@ -246,6 +246,7 @@ namespace tc
 
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
             statistics_->TickFps();
+            this->ReportStatistics();
         });
 
         msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
@@ -374,6 +375,10 @@ namespace tc
             return net_client_->GetQueuingFtMsgCount();
         }
         return 0;
+    }
+
+    void ThunderSdk::ReportStatistics() {
+
     }
 
     void ThunderSdk::Exit() {
