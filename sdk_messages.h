@@ -64,12 +64,53 @@ namespace tc
     };
 
     // progress connection begin
-    class SdkMsgNetworkPrePing {
+
+    // get remote device info
+    // step 1
+    class SdkMsgNetworkGetRemoteInfo {
     public:
 
     };
 
+    // 1. can connect directly ?
+    // step 2
+    class SdkMsgNetworkConnectDirectly {
+    public:
+        bool ok_ = false;
+    };
+
+    // step 3
+    // 1. websocket connect directly
+    // 2. relay connected
     class SdkMsgNetworkConnected {
+    public:
+
+    };
+
+    // step 4
+    // room prepared
+    class SdkMsgRelayRoomPrepared {
+    public:
+
+    };
+
+    // step 5
+    // remote is under control
+    class SdkMsgRelayRemoteUnderControl {
+    public:
+
+    };
+
+    // step 6
+    //
+    class SdkMsgRtcAnswerSdp {
+    public:
+
+    };
+
+    // step 7
+    //
+    class SdkMsgRtcDataChannelEstablished {
     public:
 
     };
@@ -84,6 +125,7 @@ namespace tc
 
     };
 
+    // step 8
     class SdkMsgFirstVideoFrameDecoded {
     public:
         std::shared_ptr<RawImage> raw_image_ = nullptr;
