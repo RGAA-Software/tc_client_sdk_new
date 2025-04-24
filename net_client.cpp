@@ -183,9 +183,8 @@ namespace tc
             }
         }
         else if (net_msg->type() == tc::kClipboardInfo) {
-            const auto& clipboard_info = net_msg->clipboard_info();
             if (clipboard_cbk_) {
-                clipboard_cbk_(clipboard_info);
+                clipboard_cbk_(net_msg);
             }
         }
         else if (net_msg->type() == tc::kServerConfiguration) {
