@@ -26,7 +26,7 @@ namespace tc
     using OnConnectedCallback = std::function<void()>;
     using OnDisconnectedCallback = std::function<void()>;
     using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat&)>;
-    using OnClipboardInfoCallback = std::function<void(const tc::ClipboardInfo&)>;
+    using OnClipboardInfoCallback = std::function<void(std::shared_ptr<tc::Message>)>;
     using OnConfigCallback = std::function<void(const tc::ServerConfiguration&)>;
     using OnMonitorSwitchedCallback = std::function<void(const tc::MonitorSwitched&)>;
     using OnRawMessageCallback = std::function<void(const std::shared_ptr<tc::Message>&)>;
