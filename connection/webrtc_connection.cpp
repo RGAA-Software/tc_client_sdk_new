@@ -12,8 +12,9 @@
 #include "tc_client_sdk_new/sdk_messages.h"
 #include "tc_client_sdk_new/thunder_sdk.h"
 #include "tc_client_sdk_new/connection/relay_connection.h"
-
+#ifdef WIN32
 #include <QApplication>
+#endif
 
 typedef void *(*FnGetInstance)();
 
@@ -108,6 +109,7 @@ namespace tc
 
     void WebRtcConnection::LoadRtcLibrary() {
         RunInRtcThread([=, this]() {
+#ifdef WIN32
             LOGI("Begin to load library!");
             auto lib_name = QApplication::applicationDirPath() + "/gr_client/tc_rtc_client.dll";
             rtc_lib_ = new QLibrary(lib_name);
@@ -129,6 +131,7 @@ namespace tc
                 return;
             }
             LOGI("Load Rtc library success.");
+#endif
         });
     }
 
@@ -165,11 +168,11 @@ namespace tc
     }
 
     int64_t WebRtcConnection::GetQueuingMediaMsgCount() {
-        return rtc_client_->GetQueuingMediaMsgCount();
+        return rtc_client_ ? rtc_client_->GetQueuingMediaMsgCount() : -1;
     }
 
     int64_t WebRtcConnection::GetQueuingFtMsgCount() {
-        return rtc_client_->GetQueuingFtMsgCount();
+        return rtc_client_ ? rtc_client_->GetQueuingFtMsgCount() : -1;
     }
 
     void WebRtcConnection::SetOnMediaMessageCallback(const std::function<void(const std::string&)>& cbk) {
