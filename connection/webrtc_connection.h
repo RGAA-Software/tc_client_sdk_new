@@ -7,7 +7,9 @@
 
 #include <functional>
 #include <string>
+#ifdef WIN32
 #include <QLibrary>
+#endif
 #include "sdk_params.h"
 #include "sdk_messages.h"
 #include "tc_client_sdk_new/connection/connection.h"
@@ -78,7 +80,9 @@ namespace tc
 
         std::shared_ptr<ThunderSdkParams> sdk_params_;
         std::shared_ptr<Thread> thread_ = nullptr;
+#ifdef WIN32
         QLibrary* rtc_lib_ = nullptr;
+#endif
         RtcClientInterface* rtc_client_ = nullptr;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
