@@ -9,19 +9,23 @@ namespace tc
 	}
 
 	std::shared_ptr<RawImage> RawImage::MakeRGB(char* data, int size, int width, int height) {
-		return std::make_shared<RawImage>(data, size, width, height, 3, RawImageFormat::kRGB);
+		return std::make_shared<RawImage>(data, size, width, height, 3, RawImageFormat::kRawImageRGB);
 	}
 
 	std::shared_ptr<RawImage> RawImage::MakeRGBA(char* data, int size, int width, int height) {
-		return std::make_shared<RawImage>(data, size, width, height, 4, RawImageFormat::kRGBA);
+		return std::make_shared<RawImage>(data, size, width, height, 4, RawImageFormat::kRawImageRGBA);
 	}
 
 	std::shared_ptr<RawImage> RawImage::MakeNV12(char* data, int size, int width, int height) {
-		return std::make_shared<RawImage>(data, size, width, height, -1, RawImageFormat::kNV12);
+		return std::make_shared<RawImage>(data, size, width, height, -1, RawImageFormat::kRawImageNV12);
 	}
 
 	std::shared_ptr<RawImage> RawImage::MakeI420(char* data, int size, int width, int height) {
-		return std::make_shared<RawImage>(data, size, width, height, -1, RawImageFormat::kI420);
+		return std::make_shared<RawImage>(data, size, width, height, -1, RawImageFormat::kRawImageI420);
+	}
+	
+	std::shared_ptr<RawImage> RawImage::MakeI444(char* data, int size, int width, int height) {
+		return std::make_shared<RawImage>(data, size, width, height, -1, RawImageFormat::kRawImageI444);
 	}
 
 	RawImage::RawImage(char* data, int size, int width, int height, int ch, RawImageFormat format) {
