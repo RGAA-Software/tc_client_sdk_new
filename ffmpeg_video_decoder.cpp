@@ -9,6 +9,7 @@
 #include "tc_common_new/log.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "tc_common_new/time_util.h"
+#include "tc_common_new/file.h"
 #if 000
 #include <libyuv.h>
 #endif
@@ -169,8 +170,6 @@ namespace tc
         packet->data = (uint8_t*)data;//frame->CStr();
         packet->size = size;//frame->Size();
 
-        auto format = codec_context->pix_fmt;
-
         int ret = avcodec_send_packet(codec_context, packet);
         if (ret == AVERROR(EAGAIN)) {
             LOGW("EAGAIN...");
@@ -199,10 +198,13 @@ namespace tc
             auto height = av_frame->height;
 
             auto x1 = av_frame->linesize[0];
-            //auto x2 = av_frame->linesize[1];
-            //auto x3 = av_frame->linesize[2];
+            auto x2 = av_frame->linesize[1];
+            auto x3 = av_frame->linesize[2];
             //width = x1;
             //LOGI("frame width: {}, x1: {}", av_frame->width, x1);
+
+            auto format = codec_context->pix_fmt;
+
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
                 frame_width_ = width; //std::max(frame_width_, width);
                 frame_height_ = height; //std::max(frame_height_, height);
@@ -227,6 +229,40 @@ namespace tc
                     memcpy(buffer + yu_offset + (frame_width_ / 2 * k),
                            av_frame->data[2] + x1 / 2 * k, frame_width_ / 2);
                 }
+            }
+            else if (format == AVPixelFormat::AV_PIX_FMT_YUV444P) {
+                frame_width_ = width; 
+                frame_height_ = height;
+                if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
+                    frame_height_ != decoded_image_->img_height) {
+                    decoded_image_ = RawImage::MakeI444(nullptr, frame_width_ * frame_height_ * 3, frame_width_, frame_height_);
+                }
+                char* buffer = decoded_image_->Data();
+                for (int i = 0; i < frame_height_; i++) {
+                    memcpy(buffer + frame_width_ * i, av_frame->data[0] + x1 * i, frame_width_);
+                }
+
+                int y_offset = frame_width_ * frame_height_;
+                for (int j = 0; j < frame_height_ ; j++) {
+                    memcpy(buffer + y_offset + (frame_width_ * j), av_frame->data[1] + x2 * j, frame_width_);
+                }
+
+                int yu_offset = y_offset + (frame_width_ * frame_height_);
+                for (int k = 0; k < frame_height_; k++) {
+                    memcpy(buffer + yu_offset + (frame_width_ * k), av_frame->data[2] + x3 * k, frame_width_);
+                }
+
+
+#if 0           // save yuv file
+                static int index = 0;
+                std::string file_name = "decode_" + std::to_string(index % 10) + ".yuv444";
+                FILE* pf  = fopen(file_name.c_str(), "wb");
+                if (pf) {
+                    fwrite(buffer, 1, decoded_image_->Size(), pf);
+                    fclose(pf);
+                }
+                ++index;
+#endif
             }
 
             if (decoded_image_ && !stop_) {

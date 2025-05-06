@@ -5,10 +5,11 @@
 namespace tc
 {
 	enum RawImageFormat {
-		kRGB,
-		kRGBA,
-		kNV12,
-		kI420
+		kRawImageRGB,
+		kRawImageRGBA,
+		kRawImageNV12,
+		kRawImageI420,
+		kRawImageI444,
 	};
 
 	class RawImage {
@@ -19,6 +20,7 @@ namespace tc
 		static std::shared_ptr<RawImage> MakeRGBA(char* data, int size, int width, int height);
 		static std::shared_ptr<RawImage> MakeNV12(char* data, int size, int width, int height);
 		static std::shared_ptr<RawImage> MakeI420(char* data, int size, int width, int height);
+		static std::shared_ptr<RawImage> MakeI444(char* data, int size, int width, int height);
 
 		RawImage(char* data, int size, int width, int height, int ch, RawImageFormat format);
 		~RawImage();
