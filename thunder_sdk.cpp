@@ -90,7 +90,7 @@ namespace tc
                 std::shared_ptr<VideoDecoder> video_decoder = nullptr;
                 if (video_decoders_.contains(monitor_name)) {
                     video_decoder = video_decoders_[monitor_name];
-                    bool rebuild = video_decoder->NeedReConstruct(frame.type(), frame.frame_width(), frame.frame_height());
+                    bool rebuild = video_decoder->NeedReConstruct(frame.type(), frame.frame_width(), frame.frame_height(), frame.image_format());
                     if (rebuild) {
                         video_decoder->Release();
                         video_decoders_.erase(monitor_name);
@@ -102,7 +102,7 @@ namespace tc
                     video_decoder = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
                     bool ready = video_decoder->Ready();
                     if (!ready) {
-                        auto result = video_decoder->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_);
+                        auto result = video_decoder->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
                         if (result != 0) {
                             LOGI("Video decoder init failed!");
                             return;
