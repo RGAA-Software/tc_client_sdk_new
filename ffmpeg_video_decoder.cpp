@@ -32,11 +32,11 @@ namespace tc
 
     }
 
-    int FFmpegVideoDecoder::Init(int codec_type, int width, int height, const std::string& frame, void* surface) {
+    int FFmpegVideoDecoder::Init(int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
         if (inited_) {
             return 0;
         }
-
+        img_format_ = img_format;
         av_log_set_level(AV_LOG_INFO);
         av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
         #if defined(__ANDROID__)
@@ -205,6 +205,7 @@ namespace tc
 
             auto format = codec_context->pix_fmt;
 
+     
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
                 frame_width_ = width; //std::max(frame_width_, width);
                 frame_height_ = height; //std::max(frame_height_, height);

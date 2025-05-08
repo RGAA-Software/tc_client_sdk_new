@@ -173,6 +173,7 @@ namespace tc
                 uint8_t* buf = nullptr;
                 int real_frame_size = 0;
                 auto format = AMediaCodec_getOutputFormat(media_codec_);
+                // to do 格式变化的时候 android 这里也要注意下
                 int width, height;
                 AMediaFormat_getInt32(format, "width", &width);
                 AMediaFormat_getInt32(format, "height", &height);

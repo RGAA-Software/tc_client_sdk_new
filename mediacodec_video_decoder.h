@@ -24,7 +24,7 @@ namespace tc
 
         MediacodecVideoDecoder();
         ~MediacodecVideoDecoder() override;
-
+        // to do : 安卓端也要设置 img_format, 并根据img_format是否 变化，来重新创建解码器
         int Init(int codec_type, int width, int height, const std::string& frame, void* surface) override;
         int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) override;
         void Release() override;
