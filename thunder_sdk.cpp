@@ -102,7 +102,7 @@ namespace tc
                     video_decoder = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
                     bool ready = video_decoder->Ready();
                     if (!ready) {
-                        auto result = video_decoder->Init(frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+                        auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
                         if (result != 0) {
                             LOGI("Video decoder init failed!");
                             return;
@@ -118,12 +118,9 @@ namespace tc
                 }
                 auto diff = current_time - last_received_video_;
                 last_received_video_ = current_time;
-                //LOGI("video msg received diff: {}", diff);
-                statistics_->AppendVideoRecvGap(diff);
-                statistics_->fps_video_recv_->Tick();
-                statistics_->AppendMediaDataSize(frame.data().size());
-                statistics_->render_width_ = frame.frame_width();
-                statistics_->render_height_ = frame.frame_height();
+                statistics_->AppendVideoRecvGap(frame.mon_name(), diff);
+                statistics_->TickVideoRecvFps(frame.mon_name());
+                statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
 
                 SdkCaptureMonitorInfo cap_mon_info {
                     .mon_name_ = frame.mon_name(),
@@ -240,12 +237,12 @@ namespace tc
         });
 
         msg_listener_->Listen<SdkMsgTimer100>([=, this](const auto& msg) {
-            auto m = statistics_->AsProtoMessage(sdk_params_->device_id_, sdk_params_->stream_id_);
-            this->PostMediaMessage(m);
+            //auto m = statistics_->AsProtoMessage(sdk_params_->device_id_, sdk_params_->stream_id_);
+            //this->PostMediaMessage(m);
         });
 
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
-            statistics_->TickFps();
+            statistics_->TickDataSpeed();
             this->ReportStatistics();
         });
 

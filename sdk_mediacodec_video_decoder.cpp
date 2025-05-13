@@ -53,8 +53,9 @@ namespace tc
 
     }
 
-    int MediacodecVideoDecoder::Init(int codec_type, int width, int height, const std::string& frame, void* surface) {
+    int MediacodecVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface) {
         std::lock_guard<std::mutex> guard(decode_mtx_);
+        monitor_name_ = mon_name;
         auto decoder_name = [&]() -> std::string {
             if (codec_type == 1) {
                 return "video/hevc";

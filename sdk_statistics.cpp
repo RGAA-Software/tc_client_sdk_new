@@ -5,36 +5,79 @@
 #include "sdk_statistics.h"
 #include "tc_message.pb.h"
 #include "tc_common_new/log.h"
+#include "tc_common_new/num_formatter.h"
 
 namespace tc
 {
 
     SdkStatistics::SdkStatistics() {
-        fps_video_recv_ = std::make_shared<FpsStat>();
-        fps_render_ = std::make_shared<FpsStat>();
+
     }
 
-    void SdkStatistics::AppendDecodeDuration(uint32_t time) {
-        if (decode_durations_.size() >= kMaxStatCounts) {
-            decode_durations_.erase(decode_durations_.begin());
+    void SdkStatistics::AppendDecodeDuration(const std::string& monitor_name, uint32_t time) {
+        if (!decode_durations_.contains(monitor_name)) {
+            decode_durations_[monitor_name] = {};
         }
-        decode_durations_.push_back(time);
-    }
-
-    void SdkStatistics::AppendVideoRecvGap(uint32_t time) {
-        if (video_recv_gaps_.size() >= kMaxStatCounts) {
-            video_recv_gaps_.erase(video_recv_gaps_.begin());
+        auto& durations = decode_durations_[monitor_name];
+        if (durations.size() >= kMaxStatCounts) {
+            durations.erase(durations.begin());
         }
-        video_recv_gaps_.push_back(time);
+        durations.push_back(time);
     }
 
-    void SdkStatistics::AppendMediaDataSize(int size) {
-        recv_media_data_ += size;
+    void SdkStatistics::AppendVideoRecvGap(const std::string& monitor_name, uint32_t time) {
+        if (!video_recv_gaps_.contains(monitor_name)) {
+            video_recv_gaps_[monitor_name] = {};
+        }
+        auto& gaps = video_recv_gaps_[monitor_name];
+        if (gaps.size() >= kMaxStatCounts) {
+            gaps.erase(gaps.begin());
+        }
+        gaps.push_back(time);
     }
 
-    void SdkStatistics::TickFps() {
-        fps_video_recv_value_ = fps_video_recv_->value();
-        fps_render_value_ = fps_render_->value();
+    void SdkStatistics::AppendDataSize(int size) {
+        recv_data_ += size;
+    }
+
+    void SdkStatistics::TickVideoRecvFps(const std::string& monitor_name) {
+        if (!fps_video_recv_.contains(monitor_name)) {
+            fps_video_recv_[monitor_name] = std::make_shared<FpsStat>();
+        }
+        fps_video_recv_[monitor_name]->Tick();
+    }
+
+    void SdkStatistics::TickFrameRenderFps(const std::string& monitor_name) {
+        if (!fps_render_.contains(monitor_name)) {
+            fps_render_[monitor_name] = std::make_shared<FpsStat>();
+        }
+        fps_render_[monitor_name]->Tick();
+    }
+
+    void SdkStatistics::UpdateFrameSize(const std::string& monitor_name, int width, int height) {
+        if (!frames_size_.contains(monitor_name)) {
+            frames_size_.insert({monitor_name, SdkStatFrameSize {
+                .width_ = width,
+                .height_ = height,
+            }});
+        }
+        else {
+            frames_size_[monitor_name].width_ = width;
+            frames_size_[monitor_name].height_ = height;
+        }
+    }
+
+    void SdkStatistics::TickDataSpeed() {
+        if (last_recv_data_ > recv_data_) {
+            return;
+        }
+        auto diff = (recv_data_ - last_recv_data_)*1.0;
+        diff /= (1024*1024);
+        last_recv_data_ = recv_data_;
+        data_speeds_.push_back(NumFormatter::Round2DecimalPlaces((float)diff));
+        if (data_speeds_.size() > kMaxStatCounts) {
+            data_speeds_.erase(data_speeds_.begin());
+        }
     }
 
     std::string SdkStatistics::AsProtoMessage(const std::string& device_id, const std::string& stream_id) {
@@ -43,21 +86,21 @@ namespace tc
         msg.set_device_id(device_id);
         msg.set_stream_id(stream_id);
         auto cst = msg.mutable_client_statistics();
-        cst->mutable_decode_durations()->Add(decode_durations_.begin(), decode_durations_.end());
-        cst->mutable_video_recv_gaps()->Add(video_recv_gaps_.begin(), video_recv_gaps_.end());
-        cst->set_fps_video_recv(fps_video_recv_value_);
-        cst->set_fps_render(fps_render_value_);
-        cst->set_recv_media_data(recv_media_data_);
-        cst->set_render_width(render_width_);
-        cst->set_render_height(render_height_);
+        //cst->mutable_decode_durations()->Add(decode_durations_.begin(), decode_durations_.end());
+        //cst->mutable_video_recv_gaps()->Add(video_recv_gaps_.begin(), video_recv_gaps_.end());
+        //cst->set_fps_video_recv(fps_video_recv_value_);
+        //cst->set_fps_render(fps_render_value_);
+        cst->set_recv_media_data(recv_data_);
+        //cst->set_render_width(render_width_);
+        //cst->set_render_height(render_height_);
         return msg.SerializeAsString();
     }
 
     void SdkStatistics::Dump() {
         LOGI("-------------------------SdkStatistics Begin-------------------------");
-        LOGI("Video recv fps: {}", fps_video_recv_value_);
-        LOGI("Frame render fps: {}", fps_render_value_);
-        LOGI("Received data size: {} MB", recv_media_data_/1024/1024);
+        //LOGI("Video recv fps: {}", fps_video_recv_value_);
+        //LOGI("Frame render fps: {}", fps_render_value_);
+        LOGI("Received data size: {} MB", recv_data_/1024/1024);
         LOGI("-------------------------SdkStatistics End---------------------------");
     }
 

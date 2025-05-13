@@ -16,6 +16,7 @@
 #include "connection/relay_connection.h"
 #include "connection/webrtc_connection.h"
 #include "tc_common_new/time_util.h"
+#include "sdk_statistics.h"
 
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
@@ -35,6 +36,9 @@ namespace tc
                          const std::string& ft_device_id,
                          const std::string& ft_remote_device_id,
                          const std::string& stream_id) {
+
+        this->stat_ = SdkStatistics::Instance();
+
         this->sdk_params_ = params;
         this->msg_notifier_ = notifier;
         this->ip_ = ip;
@@ -99,6 +103,9 @@ namespace tc
 
         media_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
             this->ParseMessage(data);
+
+            // statistics
+            this->stat_->AppendDataSize(data.size());
         });
 
         media_conn_->Start();
@@ -113,6 +120,9 @@ namespace tc
             rtc_conn_->SetOnMediaMessageCallback([=, this](const std::string& msg) {
                 //LOGI("OnMediaMessageCallback, : {}", msg.size());
                 this->ParseMessage(msg);
+
+                // statistics
+                this->stat_->AppendDataSize(msg.size());
             });
             rtc_conn_->SetOnFtMessageCallback([=, this](const std::string& msg) {
                 this->ParseMessage(msg);
