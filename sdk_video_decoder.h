@@ -21,7 +21,7 @@ namespace tc
         VideoDecoder();
         virtual ~VideoDecoder();
 
-        virtual int Init(int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) = 0;
+        virtual int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) = 0;
         virtual int Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk);
         virtual int Decode(const std::string& frame, DecodedCallback&& cbk);
         virtual int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) = 0;
@@ -38,6 +38,7 @@ namespace tc
 
         bool stop_ = false;
         std::mutex decode_mtx_;
+        std::string monitor_name_;
     };
 
 }

@@ -5,6 +5,7 @@
 #ifndef GAMMARAYPC_STATISTICS_H
 #define GAMMARAYPC_STATISTICS_H
 
+#include <map>
 #include <vector>
 #include <cstdint>
 #include <string>
@@ -16,6 +17,12 @@ namespace tc
 
     constexpr auto kMaxStatCounts = 180;
 
+    class SdkStatFrameSize {
+    public:
+        int width_ = 0;
+        int height_ = 0;
+    };
+
     class SdkStatistics {
     public:
 
@@ -26,25 +33,32 @@ namespace tc
 
         SdkStatistics();
 
-        void AppendDecodeDuration(uint32_t time);
-        void AppendVideoRecvGap(uint32_t time);
-        void AppendMediaDataSize(int size);
+        void AppendDecodeDuration(const std::string& monitor_name, uint32_t time);
+        void AppendVideoRecvGap(const std::string& monitor_name, uint32_t time);
+        void AppendDataSize(int size);
 
-        void TickFps();
+        void TickVideoRecvFps(const std::string& monitor_name);
+        void TickFrameRenderFps(const std::string& monitor_name);
+        void UpdateFrameSize(const std::string& monitor_name, int width, int height);
+        // By one second
+        void TickDataSpeed();
+
         std::string AsProtoMessage(const std::string& device_id, const std::string& stream_id);
 
         void Dump();
 
     public:
-        std::vector<uint32_t> decode_durations_;
-        std::vector<uint32_t> video_recv_gaps_;
-        std::shared_ptr<FpsStat> fps_video_recv_ = nullptr;
-        int fps_video_recv_value_ = 0;
-        std::shared_ptr<FpsStat> fps_render_ = nullptr;
-        int fps_render_value_ = 0;
-        std::atomic_int64_t recv_media_data_ = 0;
-        int render_width_ = 0;
-        int render_height_ = 0;
+        // monitor name <==> value
+        std::map<std::string, std::vector<uint32_t>> decode_durations_;
+        std::map<std::string, std::vector<uint32_t>> video_recv_gaps_;
+        std::map<std::string, std::shared_ptr<FpsStat>> fps_video_recv_;
+        std::map<std::string, std::shared_ptr<FpsStat>> fps_render_;
+        std::map<std::string, SdkStatFrameSize> frames_size_;
+        std::atomic_int64_t recv_data_ = 0;
+        int64_t last_recv_data_ = 0;
+
+        // in MB/S
+        std::vector<float> data_speeds_;
     };
 
 }

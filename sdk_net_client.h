@@ -37,6 +37,7 @@ namespace tc
     class MessageListener;
     class Connection;
     class WebRtcConnection;
+    class SdkStatistics;
 
     class NetClient {
     public:
@@ -115,6 +116,8 @@ namespace tc
 
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
+
+        SdkStatistics* stat_ = nullptr;
     };
 
 }

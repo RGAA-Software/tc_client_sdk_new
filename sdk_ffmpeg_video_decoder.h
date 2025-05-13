@@ -28,7 +28,7 @@ namespace tc {
         explicit FFmpegVideoDecoder();
         ~FFmpegVideoDecoder() override;
 
-        int Init(int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) override;
+        int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) override;
         int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) override;
         void Release() override;
         bool Ready() override;

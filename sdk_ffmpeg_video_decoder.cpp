@@ -32,10 +32,11 @@ namespace tc
 
     }
 
-    int FFmpegVideoDecoder::Init(int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
+    int FFmpegVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
         if (inited_) {
             return 0;
         }
+        monitor_name_ = mon_name;
         img_format_ = img_format;
         av_log_set_level(AV_LOG_INFO);
         av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
@@ -281,7 +282,7 @@ namespace tc
                 }
                 else {
                     auto end = TimeUtil::GetCurrentTimestamp();
-                    SdkStatistics::Instance()->AppendDecodeDuration(end-beg);
+                    SdkStatistics::Instance()->AppendDecodeDuration(monitor_name_, end-beg);
                     //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     cbk(decoded_image_);
                 }
