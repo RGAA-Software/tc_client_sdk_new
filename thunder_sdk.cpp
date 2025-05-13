@@ -10,14 +10,14 @@
 #include "tc_common_new/thread.h"
 #include "tc_common_new/time_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
-#include "net_client.h"
-#include "video_decoder_factory.h"
-#include "tc_message.pb.h"
-#include "sdk_messages.h"
 #include "tc_opus_codec_new/opus_codec.h"
-#include "cast_receiver.h"
-#include "app_timer.h"
-#include "statistics.h"
+#include "tc_message.pb.h"
+#include "sdk_timer.h"
+#include "sdk_messages.h"
+#include "sdk_statistics.h"
+#include "sdk_net_client.h"
+#include "sdk_cast_receiver.h"
+#include "sdk_video_decoder_factory.h"
 
 namespace tc
 {
@@ -62,7 +62,7 @@ namespace tc
     }
 
     void ThunderSdk::Start() {
-        statistics_ = Statistics::Instance();
+        statistics_ = SdkStatistics::Instance();
 
         // threads
         video_thread_ = Thread::Make("video", 16);
@@ -205,8 +205,8 @@ namespace tc
         // cast_receiver_ = CastReceiver::Make();
         // cast_receiver_->Start();
 
-        app_timer_ = std::make_shared<AppTimer>(msg_notifier_);
-        app_timer_->StartTimers();
+        sdk_timer_ = std::make_shared<SdkTimer>(msg_notifier_);
+        sdk_timer_->StartTimers();
 
         RegisterEventListeners();
 
@@ -389,8 +389,8 @@ namespace tc
         }
 
         LOGI("Will exit app timer.");
-        if (app_timer_) {
-            app_timer_->Exit();
+        if (sdk_timer_) {
+            sdk_timer_->Exit();
         }
 
         LOGI("Will exit ws client.");

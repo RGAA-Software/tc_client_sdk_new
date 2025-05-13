@@ -5,8 +5,8 @@
 #ifndef TC_CLIENT_ANDROID_VIDEO_DECODER_FACTORY_H
 #define TC_CLIENT_ANDROID_VIDEO_DECODER_FACTORY_H
 
-#include "ffmpeg_video_decoder.h"
-#include "mediacodec_video_decoder.h"
+#include "sdk_ffmpeg_video_decoder.h"
+#include "sdk_mediacodec_video_decoder.h"
 
 namespace tc
 {

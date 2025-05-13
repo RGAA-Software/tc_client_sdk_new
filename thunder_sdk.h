@@ -9,10 +9,10 @@
 #include <string>
 
 #include "tc_message.pb.h"
-#include "decoder_render_type.h"
-#include "net_client.h"
-#include "sdk_messages.h"
 #include "sdk_params.h"
+#include "sdk_messages.h"
+#include "sdk_net_client.h"
+#include "sdk_decoder_render_type.h"
 
 namespace tc
 {
@@ -25,8 +25,8 @@ namespace tc
     class OpusAudioDecoder;
     class WebRtcClient;
     class CastReceiver;
-    class AppTimer;
-    class Statistics;
+    class SdkTimer;
+    class SdkStatistics;
 
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&, const SdkCaptureMonitorInfo&)>;
@@ -96,9 +96,9 @@ namespace tc
 
         std::shared_ptr<WebRtcClient> webrtc_client_ = nullptr;
         std::shared_ptr<CastReceiver> cast_receiver_ = nullptr;
-        std::shared_ptr<AppTimer> app_timer_ = nullptr;
+        std::shared_ptr<SdkTimer> sdk_timer_ = nullptr;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
-        Statistics* statistics_ = nullptr;
+        SdkStatistics* statistics_ = nullptr;
         std::shared_ptr<Thread> video_thread_ = nullptr;
         std::shared_ptr<Thread> audio_thread_ = nullptr;
         // !! @Deprecated

@@ -16,7 +16,7 @@ extern "C" {
     #include <libavutil/log.h>
 }
 
-#include "video_decoder.h"
+#include "sdk_video_decoder.h"
 
 namespace tc {
 

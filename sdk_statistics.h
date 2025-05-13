@@ -16,15 +16,15 @@ namespace tc
 
     constexpr auto kMaxStatCounts = 180;
 
-    class Statistics {
+    class SdkStatistics {
     public:
 
-        static Statistics* Instance() {
-            static Statistics instance;
+        static SdkStatistics* Instance() {
+            static SdkStatistics instance;
             return &instance;
         }
 
-        Statistics();
+        SdkStatistics();
 
         void AppendDecodeDuration(uint32_t time);
         void AppendVideoRecvGap(uint32_t time);

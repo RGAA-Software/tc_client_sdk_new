@@ -2,7 +2,7 @@
 // Created by RGAA on 2023/8/11.
 //
 
-#include "ffmpeg_video_decoder.h"
+#include "sdk_ffmpeg_video_decoder.h"
 
 #include "tc_common_new/data.h"
 #include "tc_message.pb.h"
@@ -15,7 +15,7 @@
 #endif
 #include <iostream>
 #include <thread>
-#include "statistics.h"
+#include "sdk_statistics.h"
 
 namespace tc
 {
@@ -281,7 +281,7 @@ namespace tc
                 }
                 else {
                     auto end = TimeUtil::GetCurrentTimestamp();
-                    Statistics::Instance()->AppendDecodeDuration(end-beg);
+                    SdkStatistics::Instance()->AppendDecodeDuration(end-beg);
                     //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     cbk(decoded_image_);
                 }
