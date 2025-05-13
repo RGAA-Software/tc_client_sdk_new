@@ -2,7 +2,7 @@
 // Created by RGAA on 2024/1/26.
 //
 
-#include "video_decoder.h"
+#include "sdk_video_decoder.h"
 
 #include "tc_common_new/data.h"
 

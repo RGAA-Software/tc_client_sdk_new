@@ -2,7 +2,7 @@
 // Created by RGAA on 2024-02-05.
 //
 
-#include "app_timer.h"
+#include "sdk_timer.h"
 #include "tc_common_new/message_notifier.h"
 #include "sdk_messages.h"
 #include "tc_common_new/log.h"
@@ -13,13 +13,13 @@
 namespace tc
 {
 
-    AppTimer::AppTimer(const std::shared_ptr<MessageNotifier>& notifier) {
+    SdkTimer::SdkTimer(const std::shared_ptr<MessageNotifier>& notifier) {
         notifier_ = notifier;
         timer_ = std::make_shared<asio2::timer>();
     }
 
-    void AppTimer::StartTimers() {
-        auto durations = std::vector<AppTimerDuration>{
+    void SdkTimer::StartTimers() {
+        auto durations = std::vector<SdkTimerDuration>{
             kTimerDuration1000, kTimerDuration2000, kTimerDuration100, kTimerDuration16
         };
         for (const auto& duration : durations) {
@@ -30,7 +30,7 @@ namespace tc
         }
     }
 
-    void AppTimer::Exit() {
+    void SdkTimer::Exit() {
         if (timer_) {
             timer_->stop_all_timers();
             timer_->stop();
@@ -38,17 +38,17 @@ namespace tc
         }
     }
 
-    void AppTimer::NotifyTimeout(AppTimerDuration duration) {
-        if (duration == AppTimerDuration::kTimerDuration1000) {
+    void SdkTimer::NotifyTimeout(SdkTimerDuration duration) {
+        if (duration == SdkTimerDuration::kTimerDuration1000) {
             notifier_->SendAppMessage(SdkMsgTimer1000{});
         }
-        else if (duration == AppTimerDuration::kTimerDuration2000) {
+        else if (duration == SdkTimerDuration::kTimerDuration2000) {
             notifier_->SendAppMessage(SdkMsgTimer2000{});
         }
-        else if (duration == AppTimerDuration::kTimerDuration100) {
+        else if (duration == SdkTimerDuration::kTimerDuration100) {
             notifier_->SendAppMessage(SdkMsgTimer100{});
         }
-        else if (duration == AppTimerDuration::kTimerDuration16) {
+        else if (duration == SdkTimerDuration::kTimerDuration16) {
             notifier_->SendAppMessage(SdkMsgTimer16{});
         }
     }

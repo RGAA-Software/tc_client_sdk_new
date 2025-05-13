@@ -2,7 +2,7 @@
 // Created by RGAA on 2024/3/15.
 //
 
-#include "cast_receiver.h"
+#include "sdk_cast_receiver.h"
 #include "tc_common_new/log.h"
 
 namespace tc

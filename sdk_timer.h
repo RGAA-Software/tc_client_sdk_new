@@ -16,24 +16,24 @@ namespace tc
     class MessageNotifier;
     class AsyncTimer;
 
-    enum AppTimerDuration {
+    enum SdkTimerDuration {
         kTimerDuration1000 = 1000,
         kTimerDuration2000 = 2000,
         kTimerDuration100 = 100,
         kTimerDuration16 = 16,
     };
 
-    class AppTimer {
+    class SdkTimer {
     public:
 
-        explicit AppTimer(const std::shared_ptr<MessageNotifier>& notifier);
+        explicit SdkTimer(const std::shared_ptr<MessageNotifier>& notifier);
 
         void StartTimers();
         void Exit();
 
     private:
 
-        void NotifyTimeout(AppTimerDuration duration);
+        void NotifyTimeout(SdkTimerDuration duration);
 
     private:
 

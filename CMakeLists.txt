@@ -37,14 +37,14 @@ add_subdirectory(connection)
 
 set(SDK_SRCS
     thunder_sdk.cpp
-    video_decoder.cpp
-    ffmpeg_video_decoder.cpp
-    mediacodec_video_decoder.cpp
-    net_client.cpp
-    stream_helper.cpp
-    cast_receiver.cpp
-    app_timer.cpp
-    statistics.cpp
+    sdk_video_decoder.cpp
+    sdk_ffmpeg_video_decoder.cpp
+    sdk_mediacodec_video_decoder.cpp
+    sdk_net_client.cpp
+    sdk_stream_helper.cpp
+    sdk_cast_receiver.cpp
+    sdk_timer.cpp
+    sdk_statistics.cpp
     sdk_errors.cpp
 
     ${CONN_SRCS}
