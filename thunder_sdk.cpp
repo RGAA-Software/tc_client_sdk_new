@@ -113,11 +113,12 @@ namespace tc
                 }
 
                 auto current_time = TimeUtil::GetCurrentTimestamp();
-                if (last_received_video_ == 0) {
-                    last_received_video_ = current_time;
+                if (!last_received_video_timestamps_.contains(monitor_name)) {
+                    last_received_video_timestamps_[monitor_name] = current_time;
                 }
-                auto diff = current_time - last_received_video_;
-                last_received_video_ = current_time;
+                auto diff = current_time - last_received_video_timestamps_[monitor_name];
+                last_received_video_timestamps_[monitor_name] = current_time;
+
                 statistics_->AppendVideoRecvGap(frame.mon_name(), diff);
                 statistics_->TickVideoRecvFps(frame.mon_name());
                 statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
@@ -242,7 +243,8 @@ namespace tc
         });
 
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
-            statistics_->TickDataSpeed();
+            statistics_->CalculateDataSpeed();
+            statistics_->CalculateVideoFrameFps();
             this->ReportStatistics();
         });
 

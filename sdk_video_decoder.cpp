@@ -3,14 +3,14 @@
 //
 
 #include "sdk_video_decoder.h"
-
 #include "tc_common_new/data.h"
+#include "sdk_statistics.h"
 
 namespace tc
 {
 
     VideoDecoder::VideoDecoder() {
-
+        sdk_stat_ = SdkStatistics::Instance();
     }
 
     VideoDecoder::~VideoDecoder() {

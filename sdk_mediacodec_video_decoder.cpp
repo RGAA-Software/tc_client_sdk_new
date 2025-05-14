@@ -86,6 +86,8 @@ namespace tc
                 }
                 csd0 = pps_buf.substr(0,pps_size);
                 csd1 = sps_buf.substr(0,sps_size);
+
+                sdk_stat_->video_format_ = "H264";
             }
             else
             {
@@ -94,6 +96,8 @@ namespace tc
                     LOGE("{} :convert_sps_pps: failed\n", __func__);
                     return -1;
                 }
+
+                sdk_stat_->video_format_ = "HEVC";
             }
 
             LOGI("csd0: {} size: {}, csd1: {}, size: {}", csd0.c_str(), csd0.size(), csd1.c_str(), csd1.size());

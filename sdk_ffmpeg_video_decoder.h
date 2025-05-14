@@ -18,7 +18,8 @@ extern "C" {
 
 #include "sdk_video_decoder.h"
 
-namespace tc {
+namespace tc
+{
 
     class FFmpegVideoDecoder : public VideoDecoder {
     public:
