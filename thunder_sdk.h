@@ -104,7 +104,7 @@ namespace tc
         // !! @Deprecated
         std::shared_ptr<Thread> audio_spectrum_thread_ = nullptr;
 
-        uint64_t last_received_video_ = 0;
+        std::map<std::string, uint64_t> last_received_video_timestamps_ ;
 
         std::atomic_bool has_config_msg_ = false;
         std::atomic_bool has_video_frame_msg_ = false;

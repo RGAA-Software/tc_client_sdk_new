@@ -13,6 +13,7 @@ namespace tc
 {
     class Data;
     class RawImage;
+    class SdkStatistics;
 
     using DecodedCallback = std::function<void(const std::shared_ptr<RawImage>)>;
 
@@ -39,6 +40,7 @@ namespace tc
         bool stop_ = false;
         std::mutex decode_mtx_;
         std::string monitor_name_;
+        SdkStatistics* sdk_stat_ = nullptr;
     };
 
 }

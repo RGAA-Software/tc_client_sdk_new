@@ -53,7 +53,7 @@ namespace tc
         this->stream_id_ = stream_id;
 
         msg_listener_ = msg_notifier_->CreateListener();
-        msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
+        msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
             this->HeartBeat();
         });
     }
@@ -191,6 +191,12 @@ namespace tc
             if (hb_cbk_) {
                 hb_cbk_(hb);
             }
+
+            //
+            auto send_timestamp = hb.timestamp();
+            auto current_timestamp = TimeUtil::GetCurrentTimestamp();
+            auto diff = current_timestamp - send_timestamp;
+            stat_->AppendNetTimeDelay((int32_t)diff);
         }
         else if (net_msg->type() == tc::kClipboardInfo) {
             if (clipboard_cbk_) {
@@ -360,6 +366,7 @@ namespace tc
         msg->set_stream_id(stream_id_);
         auto hb = msg->mutable_heartbeat();
         hb->set_index(hb_idx_++);
+        hb->set_timestamp((int64_t)TimeUtil::GetCurrentTimestamp());
         auto proto_msg = msg->SerializeAsString();
         this->PostMediaMessage(proto_msg);
     }

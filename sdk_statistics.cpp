@@ -14,7 +14,7 @@ namespace tc
 
     }
 
-    void SdkStatistics::AppendDecodeDuration(const std::string& monitor_name, uint32_t time) {
+    void SdkStatistics::AppendDecodeDuration(const std::string& monitor_name, int32_t time) {
         if (!decode_durations_.contains(monitor_name)) {
             decode_durations_[monitor_name] = {};
         }
@@ -25,7 +25,7 @@ namespace tc
         durations.push_back(time);
     }
 
-    void SdkStatistics::AppendVideoRecvGap(const std::string& monitor_name, uint32_t time) {
+    void SdkStatistics::AppendVideoRecvGap(const std::string& monitor_name, int32_t time) {
         if (!video_recv_gaps_.contains(monitor_name)) {
             video_recv_gaps_[monitor_name] = {};
         }
@@ -38,6 +38,13 @@ namespace tc
 
     void SdkStatistics::AppendDataSize(int size) {
         recv_data_ += size;
+    }
+
+    void SdkStatistics::AppendNetTimeDelay(int32_t delay) {
+        if (net_delays_.size() >= kMaxStatCounts) {
+            net_delays_.erase(net_delays_.begin());
+        }
+        net_delays_.push_back(delay);
     }
 
     void SdkStatistics::TickVideoRecvFps(const std::string& monitor_name) {
@@ -67,7 +74,7 @@ namespace tc
         }
     }
 
-    void SdkStatistics::TickDataSpeed() {
+    void SdkStatistics::CalculateDataSpeed() {
         if (last_recv_data_ > recv_data_) {
             return;
         }
@@ -77,6 +84,20 @@ namespace tc
         data_speeds_.push_back(NumFormatter::Round2DecimalPlaces((float)diff));
         if (data_speeds_.size() > kMaxStatCounts) {
             data_speeds_.erase(data_speeds_.begin());
+        }
+    }
+
+    void SdkStatistics::CalculateVideoFrameFps() {
+        for (const auto& [mon_name, fps_stat] : fps_video_recv_) {
+            auto value = fps_stat->value();
+            if (!video_recv_fps_.contains(mon_name)) {
+                video_recv_fps_[mon_name] = {};
+            }
+            auto& target_video_recv_fps = video_recv_fps_[mon_name];
+            target_video_recv_fps.push_back(value);
+            if (target_video_recv_fps.size() > kMaxStatCounts) {
+                target_video_recv_fps.erase(target_video_recv_fps.begin());
+            }
         }
     }
 
