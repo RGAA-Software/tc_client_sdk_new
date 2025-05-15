@@ -11,6 +11,7 @@
 #include <string>
 #include <atomic>
 #include "tc_common_new/fps_stat.h"
+#include "tc_message.pb.h"
 
 namespace tc
 {
@@ -76,6 +77,18 @@ namespace tc
 
         // in ms
         std::vector<float> net_delays_;
+
+        //
+        std::map<std::string, IsolatedMonitorStatisticsInfoInRender> render_monitor_stat_;
+
+        // DXGI / GDI
+        std::string video_capture_type_;
+
+        // WASAPI / Inner[HOOK]
+        std::string audio_capture_type_;
+
+        // OPUS / ...
+        std::string audio_encode_type_;
     };
 
 }
