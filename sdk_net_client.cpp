@@ -192,11 +192,22 @@ namespace tc
                 hb_cbk_(hb);
             }
 
-            //
+            // calculate network delay
             auto send_timestamp = hb.timestamp();
             auto current_timestamp = TimeUtil::GetCurrentTimestamp();
             auto diff = current_timestamp - send_timestamp;
             stat_->AppendNetTimeDelay((int32_t)diff);
+
+            // save render statistics
+            auto& monitors_info = hb.monitors_info();
+            for (const auto& [monitor_name, info] : monitors_info) {
+                stat_->render_monitor_stat_[monitor_name] = info;
+            }
+
+            stat_->video_capture_type_ = hb.video_capture_type();
+            stat_->audio_capture_type_ = hb.audio_capture_type();
+            stat_->audio_encode_type_ = hb.audio_encode_type();
+
         }
         else if (net_msg->type() == tc::kClipboardInfo) {
             if (clipboard_cbk_) {
