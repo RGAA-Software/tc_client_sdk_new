@@ -208,6 +208,8 @@ namespace tc
             stat_->audio_capture_type_ = hb.audio_capture_type();
             stat_->audio_encode_type_ = hb.audio_encode_type();
 
+            stat_->remote_pc_info_ = hb.pc_info();
+
         }
         else if (net_msg->type() == tc::kClipboardInfo) {
             if (clipboard_cbk_) {

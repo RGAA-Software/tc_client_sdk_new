@@ -89,6 +89,9 @@ namespace tc
 
         // OPUS / ...
         std::string audio_encode_type_;
+
+        // remote pc info
+        std::string remote_pc_info_;
     };
 
 }
