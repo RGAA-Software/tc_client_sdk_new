@@ -92,6 +92,15 @@ namespace tc
 
         // remote pc info
         std::string remote_pc_info_;
+
+        // remote desktop name
+        std::string remote_desktop_name_;
+
+        // remote os name
+        std::string remote_os_name_;
+
+        // remote detailed hardware information
+        tc::RdHardwareInfo remote_hd_info_;
     };
 
 }

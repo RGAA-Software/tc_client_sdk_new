@@ -209,6 +209,9 @@ namespace tc
             stat_->audio_encode_type_ = hb.audio_encode_type();
 
             stat_->remote_pc_info_ = hb.pc_info();
+            stat_->remote_desktop_name_ = hb.desktop_name();
+            stat_->remote_hd_info_ = hb.device_info();
+            stat_->remote_os_name_ = hb.os_name();
 
         }
         else if (net_msg->type() == tc::kClipboardInfo) {
