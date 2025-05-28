@@ -9,8 +9,8 @@
 #include "tc_common_new/log.h"
 #include "tc_common_new/time_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
-#include "stream_helper.h"
-#include "statistics.h"
+#include "sdk_stream_helper.h"
+#include "sdk_statistics.h"
 
 #include <fstream>
 
@@ -53,7 +53,7 @@ namespace tc
 
     }
 
-    int MediacodecVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface) {
+    int MediacodecVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
         std::lock_guard<std::mutex> guard(decode_mtx_);
         monitor_name_ = mon_name;
         auto decoder_name = [&]() -> std::string {
@@ -207,13 +207,13 @@ namespace tc
 //                }
 
                 // only callback frame info
-                auto image = RawImage::Make(nullptr, 0, width, height, -1, RawImageFormat::kNV12);
+                auto image = RawImage::Make(nullptr, 0, width, height, -1, RawImageFormat::kRawImageNV12);
                 cbk(image);
 
                 AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, true);
 
                 auto end = TimeUtil::GetCurrentTimestamp();
-                Statistics::Instance()->AppendDecodeDuration(end-beg);
+                SdkStatistics::Instance()->AppendDecodeDuration(monitor_name_, end-beg);
 
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
                 int width, height;
