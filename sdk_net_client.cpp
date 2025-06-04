@@ -180,8 +180,8 @@ namespace tc
                 cursor_info_sync_cbk_(cursor_info);
             }
         }
-        else if (net_msg->type() == tc::kServerAudioSpectrum) {
-            const auto& spectrum = net_msg->server_audio_spectrum();
+        else if (net_msg->type() == tc::kRendererAudioSpectrum) {
+            const auto& spectrum = net_msg->renderer_audio_spectrum();
             if (audio_spectrum_cbk_) {
                 audio_spectrum_cbk_(spectrum);
             }
