@@ -22,7 +22,7 @@ namespace tc
     using OnVideoFrameMsgCallback = std::function<void(const VideoFrame& frame)>;
     using OnAudioFrameMsgCallback = std::function<void(const AudioFrame& frame)>;
     using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
-    using OnAudioSpectrumCallback = std::function<void(const tc::ServerAudioSpectrum&)>;
+    using OnAudioSpectrumCallback = std::function<void(const tc::RendererAudioSpectrum&)>;
     using OnConnectedCallback = std::function<void()>;
     using OnDisconnectedCallback = std::function<void()>;
     using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat&)>;

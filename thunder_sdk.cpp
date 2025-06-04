@@ -188,7 +188,7 @@ namespace tc
             });
         });
 
-        net_client_->SetOnAudioSpectrumCallback([=, this](const tc::ServerAudioSpectrum& spectrum) {
+        net_client_->SetOnAudioSpectrumCallback([=, this](const tc::RendererAudioSpectrum& spectrum) {
             if (exit_) { return; }
             this->PostAudioSpectrumTask([=, this]() {
                 if (audio_spectrum_cbk_) {
