@@ -62,7 +62,7 @@ namespace tc
             }
         });
 
-        relay_sdk_->SetOnRelayRoomPreparedCallback([=, this]() {
+        relay_sdk_->SetOnRelayRoomPreparedCallback([=, this](const std::shared_ptr<relay::RelayMessage>& msg) {
             LOGI("Auto relay: {}", auto_relay_);
             if (auto_relay_) {
                 this->RequestResumeStream();
@@ -74,7 +74,7 @@ namespace tc
             });
         });
 
-        relay_sdk_->SetOnRelayRoomDestroyedCallback([=, this]() {
+        relay_sdk_->SetOnRelayRoomDestroyedCallback([=, this](const std::shared_ptr<relay::RelayMessage>& msg) {
             // notify
             msg_notifier_->SendAppMessage(SdkMsgRoomDestroyed{});
         });
