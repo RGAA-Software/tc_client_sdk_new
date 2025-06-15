@@ -99,12 +99,22 @@ namespace tc
                     }
                 }
                 if (!video_decoder) {
+#if ANDROID
+                    // Some Android devices can't decode 2 or more streams at the same time, so, re-create it .
+                    if (!video_decoders_.empty()) {
+                        for (auto& [mon_name, decoder] : video_decoders_) {
+                            decoder->Release();
+                        }
+                        video_decoders_.clear();
+                    }
+#endif
                     video_decoder = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
                     bool ready = video_decoder->Ready();
                     if (!ready) {
                         auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
                         if (result != 0) {
-                            LOGI("Video decoder init failed!");
+                            LOGE("Video decoder init failed, mon name: {}, frame type: {}, frame width: {}, frame height: {}, format: {}",
+                                 frame.mon_name(), (int)frame.type(), frame.frame_width(), frame.frame_height(), (int)frame.image_format());
                             return;
                         }
                         LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());

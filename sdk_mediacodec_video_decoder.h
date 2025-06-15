@@ -29,8 +29,9 @@ namespace tc
         int Decode(const uint8_t* data, int size, DecodedCallback&& cbk) override;
         void Release() override;
         bool Ready() override;
-    private:
+        bool NeedReConstruct(int codec_type, int width, int height, int img_format) override;
 
+    private:
         AMediaCodec* media_codec_ = nullptr;
         AMediaFormat* media_format_ = nullptr;
         bool use_oes_ = false;
