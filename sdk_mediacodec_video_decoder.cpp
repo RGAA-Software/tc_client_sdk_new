@@ -115,10 +115,10 @@ namespace tc
         AMediaFormat_setInt32(media_format_, AMEDIAFORMAT_KEY_FRAME_RATE, 60);
 
         if (!csd0.empty()) {
-            //AMediaFormat_setBuffer(media_format_, "csd-0", csd0.c_str(), csd0.size());
+            // AMediaFormat_setBuffer(media_format_, "csd-0", csd0.c_str(), csd0.size());
         }
         if (!csd1.empty()) {
-            //AMediaFormat_setBuffer(media_format_, "csd-1", csd1.c_str(), csd1.size());
+            // AMediaFormat_setBuffer(media_format_, "csd-1", csd1.c_str(), csd1.size());
         }
 
         ANativeWindow* target = use_oes_ ? (ANativeWindow*)(surface) : nullptr;
@@ -249,6 +249,10 @@ namespace tc
 
     bool MediacodecVideoDecoder::Ready() {
         return inited_;
+    }
+
+    bool MediacodecVideoDecoder::NeedReConstruct(int codec_type, int width, int height, int img_format) {
+        return codec_type != this->codec_type_ || width != this->frame_width_ || height != this->frame_height_;
     }
 
 }
