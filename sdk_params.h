@@ -41,6 +41,9 @@ namespace tc
         bool enable_p2p_ = false;
         std::string display_name_;
         std::string display_remote_name_;
+
+        //语言种类, 切换语言的时候会用到
+        int language_id_ = 0;
     };
 
 }
