@@ -78,6 +78,16 @@ namespace tc
             // notify
             msg_notifier_->SendAppMessage(SdkMsgRoomDestroyed{});
         });
+
+        // error
+        relay_sdk_->SetOnRelayErrorCallback([=, this](const std::shared_ptr<relay::RelayMessage>& msg) {
+            auto re = msg->relay_error();
+            msg_notifier_->SendAppMessage(SdkMsgRelayError {
+                .code_ = re.code(),
+                .msg_ = re.message(),
+                .which_msg_ = re.which_message(),
+            });
+        });
     }
 
     void RelayConnection::Start() {
