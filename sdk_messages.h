@@ -150,6 +150,14 @@ namespace tc
 
     };
 
+    // relay error
+    class SdkMsgRelayError {
+    public:
+        int code_{0};
+        std::string msg_;
+        int which_msg_{0};
+    };
+
     // remote answer sdp
     class SdkMsgRemoteAnswerSdp {
     public:
