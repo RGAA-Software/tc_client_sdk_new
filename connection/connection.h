@@ -45,6 +45,7 @@ namespace tc
         virtual void RequestPauseStream() {}
         virtual void RequestResumeStream() {}
         virtual void On16msTimeout() {}
+        virtual void RetryConnection() {}
 
     protected:
         OnConnectedCallback conn_cbk_;

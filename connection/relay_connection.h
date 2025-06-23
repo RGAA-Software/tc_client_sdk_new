@@ -35,6 +35,7 @@ namespace tc
         int64_t GetQueuingMsgCount() override;
         void RequestPauseStream() override;
         void RequestResumeStream() override;
+        void RetryConnection() override;
 
     private:
         std::string host_;

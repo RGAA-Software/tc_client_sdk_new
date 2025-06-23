@@ -422,4 +422,16 @@ namespace tc
             media_conn_->On16msTimeout();
         }
     }
+
+    void NetClient::RetryConnection() {
+        if (media_conn_) {
+            media_conn_->RetryConnection();
+        }
+        if (ft_conn_) {
+            ft_conn_->RetryConnection();
+        }
+        if (rtc_conn_) {
+            rtc_conn_->RetryConnection();
+        }
+    }
 }

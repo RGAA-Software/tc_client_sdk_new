@@ -88,6 +88,16 @@ namespace tc
                 .which_msg_ = re.which_message(),
             });
         });
+
+        // remote device offline
+        relay_sdk_->SetOnRelayRemoteDeviceOffline([=, this](const std::shared_ptr<relay::RelayMessage>& msg) {
+            auto sub = msg->remote_device_offline();
+            msg_notifier_->SendAppMessage(SdkMsgRelayRemoteDeviceOffline {
+                .device_id_ = sub.device_id(),
+                .remote_device_id_ = sub.remote_device_id(),
+                .room_id_ = sub.room_id(),
+            });
+        });
     }
 
     void RelayConnection::Start() {
@@ -122,6 +132,12 @@ namespace tc
     void RelayConnection::RequestResumeStream() {
         if (relay_sdk_) {
             relay_sdk_->RequestResumeStream();
+        }
+    }
+
+    void RelayConnection::RetryConnection() {
+        if (relay_sdk_) {
+            relay_sdk_->RetryConnection();
         }
     }
 
