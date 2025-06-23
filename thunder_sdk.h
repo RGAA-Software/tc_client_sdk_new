@@ -66,6 +66,8 @@ namespace tc
         std::shared_ptr<MessageNotifier> GetMessageNotifier();
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
+        // retry connection
+        void RetryConnection();
 
     private:
         void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const SdkCaptureMonitorInfo& info);
@@ -73,6 +75,7 @@ namespace tc
         void SendHelloMessage();
         void RequestIFrame();
         void ReportStatistics();
+        void ClearFirstFrameState();
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;

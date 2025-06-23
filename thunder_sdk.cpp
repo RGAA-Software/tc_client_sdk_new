@@ -79,8 +79,7 @@ namespace tc
 
         net_client_->SetOnDisconnectedCallback([=, this]() {
             msg_notifier_->SendAppMessage(SdkMsgNetworkDisConnected{});
-            has_config_msg_ = false;
-            has_video_frame_msg_ = false;
+            this->ClearFirstFrameState();
         });
 
         net_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
@@ -261,6 +260,11 @@ namespace tc
         msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
             //this->statistics_->Dump();
         });
+
+        // remote device offline
+        msg_listener_->Listen<SdkMsgRelayRemoteDeviceOffline>([=, this](const SdkMsgRelayRemoteDeviceOffline& msg) {
+            this->ClearFirstFrameState();
+        });
     }
 
     void ThunderSdk::SendHelloMessage() {
@@ -386,8 +390,19 @@ namespace tc
         return 0;
     }
 
+    void ThunderSdk::RetryConnection() {
+        if (net_client_) {
+            net_client_->RetryConnection();
+        }
+    }
+
     void ThunderSdk::ReportStatistics() {
 
+    }
+
+    void ThunderSdk::ClearFirstFrameState() {
+        has_config_msg_ = false;
+        has_video_frame_msg_ = false;
     }
 
     void ThunderSdk::Exit() {

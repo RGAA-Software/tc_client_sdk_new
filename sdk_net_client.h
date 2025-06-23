@@ -78,6 +78,9 @@ namespace tc
 
         void On16msTimeout();
 
+        // retry connection
+        void RetryConnection();
+
     private:
         void ParseMessage(const std::string& msg);
         void HeartBeat();

@@ -158,6 +158,14 @@ namespace tc
         int which_msg_{0};
     };
 
+    // remote device offline
+    class SdkMsgRelayRemoteDeviceOffline {
+    public:
+        std::string device_id_;
+        std::string remote_device_id_;
+        std::string room_id_;
+    };
+
     // remote answer sdp
     class SdkMsgRemoteAnswerSdp {
     public:
