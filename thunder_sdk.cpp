@@ -22,13 +22,6 @@
 namespace tc
 {
 
-    std::string ThunderSdkParams::MakeReqPath() const {
-        auto base_url = ip_ + ":" + std::to_string(port_) + media_path_;
-        return ssl_ ? "wss://" +  base_url : "ws://" + base_url;
-    }
-
-    ///
-
     std::shared_ptr<ThunderSdk> ThunderSdk::Make(const std::shared_ptr<MessageNotifier>& notifier) {
         return std::make_shared<ThunderSdk>(notifier);
     }
@@ -332,12 +325,14 @@ namespace tc
 
     void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
         if (net_client_) {
-            net_client_->SetOnServerConfigurationCallback(std::move(cbk));
+            net_client_->SetOnServerConfigurationCallback([=, this](const tc::ServerConfiguration& cfg) {
+                cbk(cfg);
 
-            if (!has_config_msg_) {
-                has_config_msg_ = true;
-                msg_notifier_->SendAppMessage(SdkMsgFirstConfigInfoCallback());
-            }
+                if (!has_config_msg_) {
+                    has_config_msg_ = true;
+                    msg_notifier_->SendAppMessage(SdkMsgFirstConfigInfoCallback());
+                }
+            });
         }
     }
 
@@ -393,6 +388,9 @@ namespace tc
     void ThunderSdk::RetryConnection() {
         if (net_client_) {
             net_client_->RetryConnection();
+
+            // notify reconnecting
+            msg_notifier_->SendAppMessage(SdkMsgReconnect{});
         }
     }
 

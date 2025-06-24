@@ -12,9 +12,6 @@ namespace tc
 
     class ThunderSdkParams {
     public:
-        [[nodiscard]] std::string MakeReqPath() const;
-
-    public:
         bool ssl_ = false;
         bool enable_audio_ = false;
         bool enable_video_ = false;
