@@ -194,6 +194,12 @@ namespace tc
         //
         int32_t render_fps_ = 0;
     };
+
+    // sdk reconnect
+    class SdkMsgReconnect {
+    public:
+
+    };
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H
