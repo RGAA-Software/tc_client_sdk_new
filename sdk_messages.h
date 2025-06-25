@@ -133,10 +133,10 @@ namespace tc
     };
     // progress connection end
 
-    class SdkMsgClipboardReqBuffer {
-    public:
-        tc::ClipboardReqBuffer req_buffer_;
-    };
+//    class SdkMsgClipboardReqBuffer {
+//    public:
+//        tc::ClipboardReqBuffer req_buffer_;
+//    };
 
     // room prepared in relay/p2p mode
     class SdkMsgRoomPrepared {
