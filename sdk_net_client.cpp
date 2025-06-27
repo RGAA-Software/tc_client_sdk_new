@@ -238,12 +238,6 @@ namespace tc
                 .result = sub.result(),
             });
         }
-//        else if (net_msg->type() == tc::kClipboardReqBuffer) {
-//            auto sub = net_msg->cp_req_buffer();
-//            msg_notifier_->SendAppMessage(SdkMsgClipboardReqBuffer {
-//                .req_buffer_ = sub,
-//            });
-//        }
         else if (net_msg->type() == tc::kSigAnswerSdpMessage) {
             auto sub = net_msg->sig_answer_sdp();
             msg_notifier_->SendAppMessage(SdkMsgRemoteAnswerSdp {
