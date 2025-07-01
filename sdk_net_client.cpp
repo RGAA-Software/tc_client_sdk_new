@@ -112,6 +112,8 @@ namespace tc
         if (ft_conn_) {
             ft_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
                 this->ParseMessage(data);
+                // statistics
+                this->stat_->AppendDataSize(data.size());
             });
             ft_conn_->Start();
         }
@@ -126,6 +128,7 @@ namespace tc
             });
             rtc_conn_->SetOnFtMessageCallback([=, this](const std::string& msg) {
                 this->ParseMessage(msg);
+                this->stat_->AppendDataSize(msg.size());
             });
             rtc_conn_->Start();
         }
