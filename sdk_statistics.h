@@ -61,7 +61,7 @@ namespace tc
         std::map<std::string, std::vector<float>> video_recv_fps_;
         std::map<std::string, SdkStatFrameSize> frames_size_;
         std::atomic_int64_t recv_data_ = 0;
-        int64_t last_recv_data_ = 0;
+        std::atomic_int64_t last_recv_data_ = 0;
 
         // h264 / hevc ...
         std::string video_format_;

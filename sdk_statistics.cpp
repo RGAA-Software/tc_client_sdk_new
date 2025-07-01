@@ -80,7 +80,7 @@ namespace tc
         }
         auto diff = (recv_data_ - last_recv_data_)*1.0;
         diff /= (1024*1024);
-        last_recv_data_ = recv_data_;
+        last_recv_data_ = recv_data_.load();
         data_speeds_.push_back(NumFormatter::Round2DecimalPlaces((float)diff));
         if (data_speeds_.size() > kMaxStatCounts) {
             data_speeds_.erase(data_speeds_.begin());
