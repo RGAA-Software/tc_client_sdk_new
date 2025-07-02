@@ -382,6 +382,7 @@ namespace tc
         hb->set_timestamp((int64_t)TimeUtil::GetCurrentTimestamp());
         auto proto_msg = msg->SerializeAsString();
         this->PostMediaMessage(proto_msg);
+        this->PostFileTransferMessage(proto_msg);
     }
 
     int64_t NetClient::GetQueuingMediaMsgCount() {

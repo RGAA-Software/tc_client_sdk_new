@@ -28,9 +28,6 @@ namespace tc
         client_ = std::make_shared<asio2::wss_client>();
         client_->set_auto_reconnect(true);
         client_->set_timeout(std::chrono::milliseconds(2000));
-        client_->start_timer("ws-heartbeat", std::chrono::seconds(1), [=, this]() {
-            //this->HeartBeat();
-        });
 
         client_->bind_init([=, this]() {
             client_->set_no_delay(true);

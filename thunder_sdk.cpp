@@ -18,6 +18,9 @@
 #include "sdk_net_client.h"
 #include "sdk_cast_receiver.h"
 #include "sdk_video_decoder_factory.h"
+#ifdef WIN32
+#include "tc_common_new/hardware.h"
+#endif
 
 namespace tc
 {
@@ -38,6 +41,32 @@ namespace tc
         sdk_params_ = params;
         drt_ = drt;
         render_surface_ = surface;
+
+        auto fn_process_target_platform = [&]() {
+            #if defined(_WIN32)
+                sdk_params_->device_name_ = Hardware::GetDesktopName();
+                sdk_params_->client_type_ = ClientType::kWindows;
+                return ClientType::kWindows;
+            #elif defined(__APPLE__)
+                #include "TargetConditionals.h"
+                #if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR
+                    // iOS或iOS模拟器
+                    return ClientType::kiOS;
+                #elif TARGET_OS_MAC
+                    // macOS
+                    return ClientType::kMacOS;
+                #endif
+            #elif defined(__ANDROID__)
+                // Android
+                return ClientType::kAndroid;
+            #elif defined(__linux__)
+                // Linux (not Android)
+                return ClientType::kLinux;
+            #else
+                return ClientType::kUnknown;
+            #endif
+        };
+        fn_process_target_platform();
 
         net_client_ = std::make_shared<NetClient>(sdk_params_,
                                       msg_notifier_,
@@ -273,6 +302,7 @@ namespace tc
         hello->set_enable_video(sdk_params_->enable_video_);
         hello->set_client_type(sdk_params_->client_type_);
         hello->set_enable_controller(sdk_params_->enable_controller_);
+        hello->set_device_name(sdk_params_->device_name_);
         net_client_->PostMediaMessage(msg.SerializeAsString());
     }
 
