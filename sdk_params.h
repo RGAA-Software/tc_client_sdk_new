@@ -41,6 +41,9 @@ namespace tc
 
         //语言种类, 切换语言的时候会用到
         int language_id_ = 0;
+
+        // device name
+        std::string device_name_;
     };
 
 }

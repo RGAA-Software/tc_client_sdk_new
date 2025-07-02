@@ -32,7 +32,9 @@ namespace tc
             .host_ = host,
             .port_ = port,
             .device_id_ = device_id,
-            .remote_device_id_ = remote_device_id
+            .remote_device_id_ = remote_device_id,
+            .stream_id_ = params->stream_id_,
+            .device_name_ = params->device_name_,
         });
 
         relay_net_client_ = relay_sdk_->GetNetClient();
