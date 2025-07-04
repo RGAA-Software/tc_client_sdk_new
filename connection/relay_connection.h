@@ -43,7 +43,6 @@ namespace tc
         std::string device_id_;
         std::string remote_device_id_;
         std::shared_ptr<RelayClientSdk> relay_sdk_ = nullptr;
-        std::shared_ptr<RelayNetClient> relay_net_client_ = nullptr;
         bool auto_relay_ = false;
         std::string room_type_;
     };

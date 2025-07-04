@@ -37,8 +37,6 @@ namespace tc
             .device_name_ = params->device_name_,
         });
 
-        relay_net_client_ = relay_sdk_->GetNetClient();
-
         relay_sdk_->SetOnRelayProtoMessageCallback([=, this](const std::shared_ptr<RelayMessage>& rl_msg) {
             if (rl_msg->type() == RelayMessageType::kRelayTargetMessage) {
                 auto sub = rl_msg->relay();
