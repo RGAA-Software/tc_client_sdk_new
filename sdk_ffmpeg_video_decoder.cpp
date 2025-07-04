@@ -73,12 +73,12 @@ namespace tc
         if (codec_type == VideoType::kNetH264) {
             codec_id = AV_CODEC_ID_H264;
             sdk_stat_->video_format_ = "H264";
-            sdk_stat_->video_decoder_ = "x264";
+            sdk_stat_->video_decoder_ = "X264";
         }
         else if (codec_type == VideoType::kNetHevc) {
             codec_id = AV_CODEC_ID_H265;
             sdk_stat_->video_format_ = "HEVC";
-            sdk_stat_->video_decoder_ = "x265";
+            sdk_stat_->video_decoder_ = "X265";
         }
         /*else if (codec_type == VideoType::kVp9) {
             codec_id = AV_CODEC_ID_VP9;
