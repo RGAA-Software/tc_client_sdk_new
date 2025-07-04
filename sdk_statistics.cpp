@@ -36,8 +36,12 @@ namespace tc
         gaps.push_back(time);
     }
 
-    void SdkStatistics::AppendDataSize(int size) {
-        recv_data_ += size;
+    void SdkStatistics::AppendRecvDataSize(int size) {
+        recv_data_size_ += size;
+    }
+
+    void SdkStatistics::AppendSentDataSize(int size) {
+        send_data_size_  += size;
     }
 
     void SdkStatistics::AppendNetTimeDelay(int32_t delay) {
@@ -75,15 +79,23 @@ namespace tc
     }
 
     void SdkStatistics::CalculateDataSpeed() {
-        if (last_recv_data_ > recv_data_) {
-            return;
+        if (recv_data_size_ >= last_recv_data_size_) {
+            auto diff = (recv_data_size_ - last_recv_data_size_)*1.0;
+            diff /= (1024*1024);
+            last_recv_data_size_ = recv_data_size_.load();
+            recv_data_speeds_.push_back(NumFormatter::Round2DecimalPlaces((float)diff));
+            if (recv_data_speeds_.size() > kMaxStatCounts) {
+                recv_data_speeds_.erase(recv_data_speeds_.begin());
+            }
         }
-        auto diff = (recv_data_ - last_recv_data_)*1.0;
-        diff /= (1024*1024);
-        last_recv_data_ = recv_data_.load();
-        data_speeds_.push_back(NumFormatter::Round2DecimalPlaces((float)diff));
-        if (data_speeds_.size() > kMaxStatCounts) {
-            data_speeds_.erase(data_speeds_.begin());
+        if (send_data_size_ >= last_send_data_size_) {
+            auto diff = (send_data_size_ - last_send_data_size_)*1.0;
+            diff /= (1024*1024);
+            last_send_data_size_ = send_data_size_.load();
+            send_data_speeds_.push_back(NumFormatter::Round2DecimalPlaces((float)diff));
+            if (send_data_speeds_.size() > kMaxStatCounts) {
+                send_data_speeds_.erase(send_data_speeds_.begin());
+            }
         }
     }
 
@@ -111,7 +123,7 @@ namespace tc
         //cst->mutable_video_recv_gaps()->Add(video_recv_gaps_.begin(), video_recv_gaps_.end());
         //cst->set_fps_video_recv(fps_video_recv_value_);
         //cst->set_fps_render(fps_render_value_);
-        cst->set_recv_media_data(recv_data_);
+        cst->set_recv_media_data(recv_data_size_);
         //cst->set_render_width(render_width_);
         //cst->set_render_height(render_height_);
         return msg.SerializeAsString();
@@ -121,7 +133,7 @@ namespace tc
         LOGI("-------------------------SdkStatistics Begin-------------------------");
         //LOGI("Video recv fps: {}", fps_video_recv_value_);
         //LOGI("Frame render fps: {}", fps_render_value_);
-        LOGI("Received data size: {} MB", recv_data_/1024/1024);
+        LOGI("Received data size: {} MB", recv_data_size_/1024/1024);
         LOGI("-------------------------SdkStatistics End---------------------------");
     }
 

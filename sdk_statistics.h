@@ -36,9 +36,9 @@ namespace tc
 
         void AppendDecodeDuration(const std::string& monitor_name, int32_t time);
         void AppendVideoRecvGap(const std::string& monitor_name, int32_t time);
-        void AppendDataSize(int size);
+        void AppendRecvDataSize(int size);
         void AppendNetTimeDelay(int32_t delay);
-
+        void AppendSentDataSize(int size);
         void TickVideoRecvFps(const std::string& monitor_name);
         void TickFrameRenderFps(const std::string& monitor_name);
         void UpdateFrameSize(const std::string& monitor_name, int width, int height);
@@ -60,8 +60,17 @@ namespace tc
         std::map<std::string, std::vector<float>> video_recv_gaps_;
         std::map<std::string, std::vector<float>> video_recv_fps_;
         std::map<std::string, SdkStatFrameSize> frames_size_;
-        std::atomic_int64_t recv_data_ = 0;
-        std::atomic_int64_t last_recv_data_ = 0;
+        // recv data
+        std::atomic_int64_t recv_data_size_ = 0;
+        std::atomic_int64_t last_recv_data_size_ = 0;
+        // in MB/S
+        std::vector<float> recv_data_speeds_;
+
+        // send data
+        std::atomic_int64_t send_data_size_ = 0;
+        std::atomic_int64_t last_send_data_size_ = 0;
+        // in MB/S
+        std::vector<float> send_data_speeds_;
 
         // h264 / hevc ...
         std::string video_format_;
@@ -71,9 +80,6 @@ namespace tc
 
         //
         std::string video_decoder_;
-
-        // in MB/S
-        std::vector<float> data_speeds_;
 
         // in ms
         std::vector<float> net_delays_;
