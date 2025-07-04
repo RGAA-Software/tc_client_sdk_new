@@ -105,7 +105,7 @@ namespace tc
             this->ParseMessage(data);
 
             // statistics
-            this->stat_->AppendDataSize(data.size());
+            this->stat_->AppendRecvDataSize(data.size());
         });
 
         media_conn_->Start();
@@ -113,7 +113,7 @@ namespace tc
             ft_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
                 this->ParseMessage(data);
                 // statistics
-                this->stat_->AppendDataSize(data.size());
+                this->stat_->AppendRecvDataSize(data.size());
             });
             ft_conn_->Start();
         }
@@ -124,11 +124,11 @@ namespace tc
                 this->ParseMessage(msg);
 
                 // statistics
-                this->stat_->AppendDataSize(msg.size());
+                this->stat_->AppendRecvDataSize(msg.size());
             });
             rtc_conn_->SetOnFtMessageCallback([=, this](const std::string& msg) {
                 this->ParseMessage(msg);
-                this->stat_->AppendDataSize(msg.size());
+                this->stat_->AppendRecvDataSize(msg.size());
             });
             rtc_conn_->Start();
         }
@@ -289,6 +289,8 @@ namespace tc
                 media_conn_->PostBinaryMessage(msg);
             }
         }
+
+        stat_->AppendSentDataSize(msg.size());
     }
 
     void NetClient::PostFileTransferMessage(const std::string& msg) {
@@ -326,6 +328,8 @@ namespace tc
                 ft_conn_->PostBinaryMessage(msg);
             }
         }
+
+        stat_->AppendSentDataSize(msg.size());
     }
 
     void NetClient::SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk) {
