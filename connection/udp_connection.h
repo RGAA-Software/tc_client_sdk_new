@@ -21,7 +21,7 @@ namespace tc
         UdpConnection(const std::shared_ptr<ThunderSdkParams>& params, const std::shared_ptr<MessageNotifier>& notifier, const std::string& host, int port);
         void Start() override;
         void Stop() override;
-        void PostBinaryMessage(const std::string& msg) override;
+        void PostBinaryMessage(std::shared_ptr<Data> msg) override;
 
     private:
         std::string host_;

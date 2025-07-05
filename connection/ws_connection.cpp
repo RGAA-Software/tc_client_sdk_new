@@ -77,11 +77,11 @@ namespace tc
         }
     }
 
-    void WsConnection::PostBinaryMessage(const std::string& msg) {
+    void WsConnection::PostBinaryMessage(std::shared_ptr<Data> msg) {
         if (client_ && client_->is_started()) {
             client_->ws_stream().binary(true);
             queuing_message_count_++;
-            client_->async_send(msg, [this]() {
+            client_->async_send(msg->DataAddr(), msg->Size(), [this]() {
                 queuing_message_count_--;
             });
         }

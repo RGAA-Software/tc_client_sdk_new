@@ -17,7 +17,7 @@
 #include "connection/webrtc_connection.h"
 #include "tc_common_new/time_util.h"
 #include "sdk_statistics.h"
-
+#include "tc_message_new/proto_converter.h"
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
 
@@ -244,7 +244,7 @@ namespace tc
         }
     }
 
-    void NetClient::PostMediaMessage(const std::string& msg) {
+    void NetClient::PostMediaMessage(std::shared_ptr<Data> msg) {
         if (sdk_params_->enable_p2p_ && rtc_conn_ && rtc_conn_->IsMediaChannelReady()) {
             auto queuing_msg_count = rtc_conn_->GetQueuingMediaMsgCount();
             auto has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingMediaMessages();
@@ -279,10 +279,10 @@ namespace tc
             }
         }
 
-        stat_->AppendSentDataSize(msg.size());
+        stat_->AppendSentDataSize(msg->Size());
     }
 
-    void NetClient::PostFileTransferMessage(const std::string& msg) {
+    void NetClient::PostFileTransferMessage(std::shared_ptr<Data> msg) {
         if (sdk_params_->enable_p2p_ && rtc_conn_ && rtc_conn_->IsFtChannelReady()) {
             auto queuing_msg_count = rtc_conn_->GetQueuingFtMsgCount();
             auto has_enough_buffer = rtc_conn_->HasEnoughBufferForQueuingFtMessages();
@@ -318,7 +318,7 @@ namespace tc
             }
         }
 
-        stat_->AppendSentDataSize(msg.size());
+        stat_->AppendSentDataSize(msg->Size());
     }
 
     void NetClient::SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk) {
@@ -374,8 +374,10 @@ namespace tc
         hb->set_index(hb_idx_++);
         hb->set_timestamp((int64_t)TimeUtil::GetCurrentTimestamp());
         auto proto_msg = msg->SerializeAsString();
-        this->PostMediaMessage(proto_msg);
-        this->PostFileTransferMessage(proto_msg);
+        if (auto buffer = tc::ProtoAsData(msg); buffer) {
+            this->PostMediaMessage(buffer);
+            this->PostFileTransferMessage(buffer);
+        }
     }
 
     int64_t NetClient::GetQueuingMediaMsgCount() {

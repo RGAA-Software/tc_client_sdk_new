@@ -36,10 +36,10 @@ namespace tc
         void Start() override;
         void Stop() override;
         // @see PostMediaMessage
-        void PostBinaryMessage(const std::string& msg) override;
+        void PostBinaryMessage(std::shared_ptr<Data> msg) override;
 
-        void PostMediaMessage(const std::string& msg);
-        void PostFtMessage(const std::string& msg);
+        void PostMediaMessage(std::shared_ptr<Data> msg);
+        void PostFtMessage(std::shared_ptr<Data> msg);
         //
         void SetOnMediaMessageCallback(const std::function<void(std::shared_ptr<Data>)>&);
         void SetOnFtMessageCallback(const std::function<void(std::shared_ptr<Data>)>&);

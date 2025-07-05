@@ -27,7 +27,7 @@ namespace tc
         ~WsConnection();
         void Start() override;
         void Stop() override;
-        void PostBinaryMessage(const std::string& msg) override;
+        void PostBinaryMessage(std::shared_ptr<Data> msg) override;
         void PostTextMessage(const std::string& msg) override;
 
     private:

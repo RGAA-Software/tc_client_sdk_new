@@ -111,7 +111,7 @@ namespace tc
         }
     }
 
-    void RelayConnection::PostBinaryMessage(const std::string& msg) {
+    void RelayConnection::PostBinaryMessage(std::shared_ptr<Data> msg) {
         if (relay_sdk_) {
             relay_sdk_->RelayProtoMessage(msg);
         }

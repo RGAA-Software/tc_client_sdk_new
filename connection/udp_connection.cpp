@@ -72,10 +72,10 @@ namespace tc
         }
     }
 
-    void UdpConnection::PostBinaryMessage(const std::string& msg) {
+    void UdpConnection::PostBinaryMessage(std::shared_ptr<Data> msg) {
         if (udp_client_ && udp_client_->is_started()) {
             queuing_message_count_++;
-            udp_client_->async_send(msg, [this]() {
+            udp_client_->async_send(msg->CStr(), msg->Size(), [this]() {
                 queuing_message_count_--;
             });
         }
