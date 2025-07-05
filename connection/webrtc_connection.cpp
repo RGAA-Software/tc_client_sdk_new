@@ -3,10 +3,10 @@
 //
 
 #include "webrtc_connection.h"
-#include "tc_common_new/log.h"
 #include "tc_message.pb.h"
-#include "tc_common_new/thread.h"
 #include "tc_common_new/log.h"
+#include "tc_common_new/data.h"
+#include "tc_common_new/thread.h"
 #include "tc_webrtc_client/rtc_client_interface.h"
 #include "tc_common_new/message_notifier.h"
 #include "tc_client_sdk_new/sdk_messages.h"
@@ -139,7 +139,7 @@ namespace tc
         return rtc_client_;
     }
 
-    void WebRtcConnection::PostMediaMessage(const std::string& msg) {
+    void WebRtcConnection::PostMediaMessage(std::shared_ptr<Data> msg) {
         RunInRtcThread([=, this]() {
             if (rtc_client_) {
                 rtc_client_->PostMediaMessage(msg);
@@ -147,7 +147,7 @@ namespace tc
         });
     }
 
-    void WebRtcConnection::PostFtMessage(const std::string& msg) {
+    void WebRtcConnection::PostFtMessage(std::shared_ptr<Data> msg) {
         if (!rtc_client_) {
             return;
         }
@@ -155,7 +155,7 @@ namespace tc
         // test beg //
         if (false) {
             tc::Message pt_msg;
-            if (pt_msg.ParseFromString(msg)) {
+            if (pt_msg.ParseFromArray(msg->CStr(), msg->Size())) {
                 if (pt_msg.type() == tc::kFileTransDataPacket) {
                     auto pkt = pt_msg.file_trans_data_packet();
                     LOGI("Send Ft pkt index: {}", pkt.index());
@@ -215,7 +215,9 @@ namespace tc
         auto sub = pt_msg.mutable_sig_offer_sdp();
         sub->set_device_id(sdk_params_->device_id_);
         sub->set_sdp(sdp);
-        relay_conn_->PostBinaryMessage(pt_msg.SerializeAsString());
+        auto buffer = Data::Make(nullptr, pt_msg.ByteSizeLong());
+        pt_msg.SerializeToArray(buffer->DataAddr(), buffer->Size());
+        relay_conn_->PostBinaryMessage(buffer);
     }
 
     void WebRtcConnection::SendIceToRemote(const std::string& ice, const std::string& mid, int sdp_mline_index) {
@@ -229,10 +231,12 @@ namespace tc
         sub->set_ice(ice);
         sub->set_mid(mid);
         sub->set_sdp_mline_index(sdp_mline_index);
-        relay_conn_->PostBinaryMessage(pt_msg.SerializeAsString());
+        auto buffer = Data::Make(nullptr, pt_msg.ByteSizeLong());
+        pt_msg.SerializeToArray(buffer->DataAddr(), buffer->Size());
+        relay_conn_->PostBinaryMessage(buffer);
     }
 
-    void WebRtcConnection::PostBinaryMessage(const std::string& msg) {
+    void WebRtcConnection::PostBinaryMessage(std::shared_ptr<Data> msg) {
         this->PostMediaMessage(msg);
     }
 

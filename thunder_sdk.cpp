@@ -18,6 +18,7 @@
 #include "sdk_net_client.h"
 #include "sdk_cast_receiver.h"
 #include "sdk_video_decoder_factory.h"
+#include "tc_message_new/proto_converter.h"
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
 #endif
@@ -250,13 +251,13 @@ namespace tc
         msg_notifier_->SendAppMessage(msg);
     }
 
-    void ThunderSdk::PostMediaMessage(const std::string& msg) {
-        if(net_client_) {
+    void ThunderSdk::PostMediaMessage(std::shared_ptr<Data> msg) {
+        if(net_client_ && msg) {
             net_client_->PostMediaMessage(msg);
         }
     }
 
-    void ThunderSdk::PostFileTransferMessage(const std::string& msg) {
+    void ThunderSdk::PostFileTransferMessage(std::shared_ptr<Data> msg) {
         if(net_client_) {
             net_client_->PostFileTransferMessage(msg);
         }
@@ -305,7 +306,9 @@ namespace tc
         hello->set_client_type(sdk_params_->client_type_);
         hello->set_enable_controller(sdk_params_->enable_controller_);
         hello->set_device_name(sdk_params_->device_name_);
-        net_client_->PostMediaMessage(msg.SerializeAsString());
+        if (auto buffer = tc::ProtoAsData(&msg); buffer) {
+            net_client_->PostMediaMessage(buffer);
+        }
     }
 
     void ThunderSdk::RequestIFrame() {
@@ -318,7 +321,9 @@ namespace tc
         msg.set_stream_id(sdk_params_->stream_id_);
         auto ack = msg.mutable_ack();
         ack->set_type(MessageType::kInsertKeyFrame);
-        net_client_->PostMediaMessage(msg.SerializeAsString());
+        if (auto buffer = tc::ProtoAsData(&msg); buffer) {
+            net_client_->PostMediaMessage(buffer);
+        }
     }
 
     void ThunderSdk::PostVideoTask(std::function<void()>&& task) {

@@ -31,7 +31,7 @@ namespace tc
                         const std::string& room_type);
         void Start() override;
         void Stop() override;
-        void PostBinaryMessage(const std::string& msg) override;
+        void PostBinaryMessage(std::shared_ptr<Data> msg) override;
         int64_t GetQueuingMsgCount() override;
         void RequestPauseStream() override;
         void RequestResumeStream() override;

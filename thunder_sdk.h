@@ -54,8 +54,8 @@ namespace tc
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
         void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
-        void PostMediaMessage(const std::string& msg);
-        void PostFileTransferMessage(const std::string& msg);
+        void PostMediaMessage(std::shared_ptr<Data> msg);
+        void PostFileTransferMessage(std::shared_ptr<Data> msg);
         void PostVideoTask(std::function<void()>&& task);
         void PostAudioTask(std::function<void()>&& task);
         // !! @Deprecated

@@ -58,8 +58,8 @@ namespace tc
         void Start();
         void Exit();
 
-        void PostMediaMessage(const std::string& msg);
-        void PostFileTransferMessage(const std::string& msg);
+        void PostMediaMessage(std::shared_ptr<Data> msg);
+        void PostFileTransferMessage(std::shared_ptr<Data> msg);
 
         void SetOnVideoFrameMsgCallback(OnVideoFrameMsgCallback&& cbk);
         void SetOnAudioFrameMsgCallback(OnAudioFrameMsgCallback&& cbk);
