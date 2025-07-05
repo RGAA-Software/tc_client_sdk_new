@@ -17,12 +17,12 @@ namespace tc
 
     }
 
-    int VideoDecoder::Decode(const std::shared_ptr<Data>& frame, DecodedCallback&& cbk) {
-        return this->Decode((uint8_t*)frame->CStr(), frame->Size(), std::move(cbk));
+    Result<std::shared_ptr<RawImage>, int> VideoDecoder::Decode(const std::shared_ptr<Data>& frame) {
+        return this->Decode((uint8_t*)frame->CStr(), frame->Size());
     }
 
-    int VideoDecoder::Decode(const std::string& frame, DecodedCallback&& cbk) {
-        return this->Decode((uint8_t*)frame.data(), frame.size(), std::move(cbk));
+    Result<std::shared_ptr<RawImage>, int> VideoDecoder::Decode(const std::string& frame) {
+        return this->Decode((uint8_t*)frame.data(), frame.size());
     }
 
     void VideoDecoder::Release() {

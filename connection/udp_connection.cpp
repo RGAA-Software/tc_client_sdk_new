@@ -4,17 +4,12 @@
 
 #include "udp_connection.h"
 #include "tc_common_new/log.h"
+#include "tc_common_new/data.h"
 #include <asio2/asio2.hpp>
 #include <asio2/udp/udp_client.hpp>
 
 namespace tc
 {
-
-    struct UdpMessagePack {
-        uint32_t magic_ = 0;
-        uint32_t length_ = 0;
-        // data below...
-    };
 
     UdpConnection::UdpConnection(const std::shared_ptr<ThunderSdkParams>& params,
                                  const std::shared_ptr<MessageNotifier>& notifier,
@@ -49,9 +44,8 @@ namespace tc
 
         }).bind_recv([&](std::string_view data) {
             if (msg_cbk_) {
-                std::string cpy_data(data.data(), data.size());
-                //LOGI("udp data size: {} bytes", cpy_data.size());
-                msg_cbk_(std::move(cpy_data));
+                auto cpy_data = Data::Make(data.data(), data.size());
+                msg_cbk_(cpy_data);
             }
 
         }).bind_handshake([&]() {

@@ -86,13 +86,13 @@ namespace tc
                 this->SendIceToRemote(ice, mid, sdp_mline_index);
             });
 
-            rtc_client_->SetMediaMessageCallback([=, this](const std::string& msg) {
+            rtc_client_->SetMediaMessageCallback([=, this](std::shared_ptr<Data> msg) {
                 if (media_msg_cbk_) {
                     media_msg_cbk_(msg);
                 }
             });
 
-            rtc_client_->SetFtMessageCallback([=, this](const std::string& msg) {
+            rtc_client_->SetFtMessageCallback([=, this](std::shared_ptr<Data> msg) {
                 if (ft_msg_cbk_) {
                     ft_msg_cbk_(msg);
                 }
@@ -175,11 +175,11 @@ namespace tc
         return rtc_client_ ? rtc_client_->GetQueuingFtMsgCount() : -1;
     }
 
-    void WebRtcConnection::SetOnMediaMessageCallback(const std::function<void(const std::string&)>& cbk) {
+    void WebRtcConnection::SetOnMediaMessageCallback(const std::function<void(std::shared_ptr<Data>)>& cbk) {
         media_msg_cbk_ = cbk;
     }
 
-    void WebRtcConnection::SetOnFtMessageCallback(const std::function<void(const std::string&)>& cbk) {
+    void WebRtcConnection::SetOnFtMessageCallback(const std::function<void(std::shared_ptr<Data>)>& cbk) {
         ft_msg_cbk_ = cbk;
     }
 

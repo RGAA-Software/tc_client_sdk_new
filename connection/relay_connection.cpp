@@ -3,9 +3,10 @@
 //
 
 #include "relay_connection.h"
+#include "relay_message.pb.h"
+#include "tc_common_new/data.h"
 #include "tc_relay_client/relay_client_sdk.h"
 #include "tc_relay_client/relay_net_client.h"
-#include "relay_message.pb.h"
 #include "tc_common_new/message_notifier.h"
 #include "tc_client_sdk_new/sdk_messages.h"
 
@@ -42,8 +43,8 @@ namespace tc
                 auto sub = rl_msg->relay();
                 auto relay_msg_index = sub.relay_msg_index();
                 if (msg_cbk_) {
-                    auto payload = std::string(sub.payload());
-                    msg_cbk_(std::move(payload));
+                    auto payload = Data::From(sub.payload());
+                    msg_cbk_(payload);
                 }
             }
         });

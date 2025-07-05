@@ -19,17 +19,17 @@ namespace tc
 
     constexpr uint32_t kMaxQueuingFtMessages = 256;
 
-    using OnVideoFrameMsgCallback = std::function<void(const VideoFrame& frame)>;
-    using OnAudioFrameMsgCallback = std::function<void(const AudioFrame& frame)>;
-    using OnCursorInfoSyncMsgCallback = std::function<void(const CursorInfoSync& cursor_info)>;
-    using OnAudioSpectrumCallback = std::function<void(const tc::RendererAudioSpectrum&)>;
+    using OnRawMessageCallback = std::function<void(std::shared_ptr<tc::Message>)>;
+    using OnVideoFrameMsgCallback = std::function<void(std::shared_ptr<tc::Message>)>;
+    using OnAudioFrameMsgCallback = std::function<void(std::shared_ptr<tc::Message>)>;
+    using OnCursorInfoSyncMsgCallback = std::function<void(std::shared_ptr<tc::Message>)>;
+    using OnAudioSpectrumCallback = std::function<void(std::shared_ptr<tc::Message>)>;
     using OnConnectedCallback = std::function<void()>;
     using OnDisconnectedCallback = std::function<void()>;
-    using OnHeartBeatInfoCallback = std::function<void(const tc::OnHeartBeat&)>;
+    using OnHeartBeatInfoCallback = std::function<void(std::shared_ptr<tc::Message>)>;
     using OnClipboardInfoCallback = std::function<void(std::shared_ptr<tc::Message>)>;
-    using OnConfigCallback = std::function<void(const tc::ServerConfiguration&)>;
-    using OnMonitorSwitchedCallback = std::function<void(const tc::MonitorSwitched&)>;
-    using OnRawMessageCallback = std::function<void(const std::shared_ptr<tc::Message>&)>;
+    using OnConfigCallback = std::function<void(std::shared_ptr<tc::Message>)>;
+    using OnMonitorSwitchedCallback = std::function<void(std::shared_ptr<tc::Message>)>;
 
     class Data;
     class Thread;
@@ -82,7 +82,7 @@ namespace tc
         void RetryConnection();
 
     private:
-        void ParseMessage(const std::string& msg);
+        void ParseMessage(std::shared_ptr<Data> msg);
         void HeartBeat();
 
     private:

@@ -163,9 +163,9 @@ namespace tc
     }
 #endif
 
-    int FFmpegVideoDecoder::Decode(const uint8_t* data, int size, DecodedCallback&& cbk) {
+    Result<std::shared_ptr<RawImage>, int> FFmpegVideoDecoder::Decode(const uint8_t* data, int size) {
         if (!codec_context || !av_frame || stop_) {
-            return -1;
+            return TRError(-1);
         }
         std::lock_guard<std::mutex> guard(decode_mtx_);
 
@@ -178,11 +178,11 @@ namespace tc
         int ret = avcodec_send_packet(codec_context, packet);
         if (ret == AVERROR(EAGAIN)) {
             LOGW("EAGAIN...");
-            return ret;
+            return TRError(0);
         }
         else if (ret != 0) {
             LOGE("avcodec_send_packet err: {}", ret);
-            return ret;
+            return TRError(ret);
         }
 
         bool has_received_frame = false;
@@ -290,7 +290,7 @@ namespace tc
                     auto end = TimeUtil::GetCurrentTimestamp();
                     SdkStatistics::Instance()->AppendDecodeDuration(monitor_name_, end-beg);
                     //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
-                    cbk(decoded_image_);
+                    return decoded_image_;
                 }
             }
 
@@ -298,7 +298,7 @@ namespace tc
             av_frame_unref(av_frame);
         }
         av_packet_unref(packet);
-        return last_result;
+        return TRError(last_result);
     }
 
     void FFmpegVideoDecoder::Release() {

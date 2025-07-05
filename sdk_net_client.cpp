@@ -101,34 +101,35 @@ namespace tc
             }
         });
 
-        media_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
-            this->ParseMessage(data);
-
+        media_conn_->RegisterOnMessageCallback([=, this](std::shared_ptr<Data> data) {
             // statistics
-            this->stat_->AppendRecvDataSize(data.size());
+            this->stat_->AppendRecvDataSize(data->Size());
+            // parse
+            this->ParseMessage(data);
         });
 
         media_conn_->Start();
         if (ft_conn_) {
-            ft_conn_->RegisterOnMessageCallback([=, this](std::string&& data) {
-                this->ParseMessage(data);
+            ft_conn_->RegisterOnMessageCallback([=, this](std::shared_ptr<Data> data) {
                 // statistics
-                this->stat_->AppendRecvDataSize(data.size());
+                this->stat_->AppendRecvDataSize(data->Size());
+                // parse
+                this->ParseMessage(data);
             });
             ft_conn_->Start();
         }
 
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
-            rtc_conn_->SetOnMediaMessageCallback([=, this](const std::string& msg) {
+            rtc_conn_->SetOnMediaMessageCallback([=, this](std::shared_ptr<Data> msg) {
                 //LOGI("OnMediaMessageCallback, : {}", msg.size());
                 this->ParseMessage(msg);
 
                 // statistics
-                this->stat_->AppendRecvDataSize(msg.size());
+                this->stat_->AppendRecvDataSize(msg->Size());
             });
-            rtc_conn_->SetOnFtMessageCallback([=, this](const std::string& msg) {
+            rtc_conn_->SetOnFtMessageCallback([=, this](std::shared_ptr<Data> msg) {
                 this->ParseMessage(msg);
-                this->stat_->AppendRecvDataSize(msg.size());
+                this->stat_->AppendRecvDataSize(msg->Size());
             });
             rtc_conn_->Start();
         }
@@ -148,9 +149,9 @@ namespace tc
         LOGI("WS has exited...");
     }
 
-    void NetClient::ParseMessage(const std::string& msg) {
+    void NetClient::ParseMessage(std::shared_ptr<Data> msg) {
         auto net_msg = std::make_shared<tc::Message>();
-        bool ok = net_msg->ParseFromArray(msg.data(), msg.size());
+        bool ok = net_msg->ParsePartialFromArray(msg->CStr(), msg->Size());
         if (!ok) {
             LOGE("Sdk ParseMessage failed.");
             return;
@@ -161,41 +162,32 @@ namespace tc
         }
 
         if (net_msg->type() == tc::kVideoFrame) {
-            const auto& video_frame = net_msg->video_frame();
-            if (video_frame.key()) {
-                //LOGI("video frame index: {}, {}x{}, key: {}", video_frame.frame_index(),
-                //     video_frame.frame_width(), video_frame.frame_height(), video_frame.key());
-            }
             if (video_frame_cbk_) {
-                video_frame_cbk_(video_frame);
+                video_frame_cbk_(net_msg);
             }
-
         }
         else if (net_msg->type() == tc::kAudioFrame) {
-            const auto& audio_frame = net_msg->audio_frame();
             if (audio_frame_cbk_) {
-                audio_frame_cbk_(audio_frame);
+                audio_frame_cbk_(net_msg);
             }
         }
         else if (net_msg->type() == tc::kCursorInfoSync) {
-            const auto& cursor_info = net_msg->cursor_info_sync();
             if(cursor_info_sync_cbk_) {
-                cursor_info_sync_cbk_(cursor_info);
+                cursor_info_sync_cbk_(net_msg);
             }
         }
         else if (net_msg->type() == tc::kRendererAudioSpectrum) {
-            const auto& spectrum = net_msg->renderer_audio_spectrum();
             if (audio_spectrum_cbk_) {
-                audio_spectrum_cbk_(spectrum);
+                audio_spectrum_cbk_(net_msg);
             }
         }
         else if (net_msg->type() == tc::kOnHeartBeat) {
-            const auto& hb = net_msg->on_heartbeat();
             if (hb_cbk_) {
-                hb_cbk_(hb);
+                hb_cbk_(net_msg);
             }
 
             // calculate network delay
+            const auto& hb = net_msg->on_heartbeat();
             auto send_timestamp = hb.timestamp();
             auto current_timestamp = TimeUtil::GetCurrentTimestamp();
             auto diff = current_timestamp - send_timestamp;
@@ -215,7 +207,6 @@ namespace tc
             stat_->remote_desktop_name_ = hb.desktop_name();
             stat_->remote_hd_info_ = hb.device_info();
             stat_->remote_os_name_ = hb.os_name();
-
         }
         else if (net_msg->type() == tc::kClipboardInfo) {
             if (clipboard_cbk_) {
@@ -223,15 +214,13 @@ namespace tc
             }
         }
         else if (net_msg->type() == tc::kServerConfiguration) {
-            const auto& config = net_msg->config();
             if (config_cbk_) {
-                config_cbk_(config);
+                config_cbk_(net_msg);
             }
         }
         else if (net_msg->type() == tc::kMonitorSwitched) {
-            const auto& monitor_switched = net_msg->monitor_switched();
             if (monitor_switched_cbk_) {
-                monitor_switched_cbk_(monitor_switched);
+                monitor_switched_cbk_(net_msg);
             }
         }
         else if (net_msg->type() == tc::kChangeMonitorResolutionResult) {
