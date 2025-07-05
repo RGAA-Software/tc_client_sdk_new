@@ -10,8 +10,10 @@
 #include <cstdint>
 #include <string>
 #include <atomic>
-#include "tc_common_new/fps_stat.h"
 #include "tc_message.pb.h"
+#include "tc_common_new/fps_stat.h"
+#include "tc_common_new/concurrent_vector.h"
+#include "tc_common_new/concurrent_hashmap.h"
 
 namespace tc
 {
@@ -45,32 +47,43 @@ namespace tc
         // By one second
         void CalculateDataSpeed();
         void CalculateVideoFrameFps();
+        void UpdateIsolatedMonitorStatisticsInfoInRender(const std::string& mon_name, const IsolatedMonitorStatisticsInfoInRender& info);
 
-        std::string AsProtoMessage(const std::string& device_id, const std::string& stream_id);
-
-        void Dump();
+        // Get
+        std::vector<float> GetRecvDataSpeeds();
+        std::vector<float> GetSendDataSpeeds();
+        std::vector<float> GetNetDelays();
+        std::map<std::string, std::vector<float>> GetDecodeDurations();
+        std::map<std::string, std::vector<float>> GetVideoRecvGaps();
+        std::map<std::string, std::vector<float>> GetVideoRecvFps();
+        std::map<std::string, SdkStatFrameSize> GetFramesSize();
+        std::map<std::string, IsolatedMonitorStatisticsInfoInRender> GetRenderMonitorsStat();
 
     private:
-        std::map<std::string, std::shared_ptr<FpsStat>> fps_video_recv_;
-        std::map<std::string, std::shared_ptr<FpsStat>> fps_render_;
+        tc::ConcurrentHashMap<std::string, std::shared_ptr<FpsStat>> fps_video_recv_;
+        tc::ConcurrentHashMap<std::string, std::shared_ptr<FpsStat>> fps_render_;
+        // in MB/S
+        tc::ConcurrentVector<float> recv_data_speeds_;
+        // in MB/S
+        tc::ConcurrentVector<float> send_data_speeds_;
+        // in ms
+        tc::ConcurrentVector<float> net_delays_;
+        // monitor name <==> value
+        tc::ConcurrentHashMap<std::string, std::vector<float>> decode_durations_;
+        tc::ConcurrentHashMap<std::string, std::vector<float>> video_recv_gaps_;
+        tc::ConcurrentHashMap<std::string, std::vector<float>> video_recv_fps_;
+        tc::ConcurrentHashMap<std::string, SdkStatFrameSize> frames_size_;
+        //
+        tc::ConcurrentHashMap<std::string, IsolatedMonitorStatisticsInfoInRender> render_monitor_stat_;
 
     public:
-        // monitor name <==> value
-        std::map<std::string, std::vector<float>> decode_durations_;
-        std::map<std::string, std::vector<float>> video_recv_gaps_;
-        std::map<std::string, std::vector<float>> video_recv_fps_;
-        std::map<std::string, SdkStatFrameSize> frames_size_;
         // recv data
         std::atomic_int64_t recv_data_size_ = 0;
         std::atomic_int64_t last_recv_data_size_ = 0;
-        // in MB/S
-        std::vector<float> recv_data_speeds_;
 
         // send data
         std::atomic_int64_t send_data_size_ = 0;
         std::atomic_int64_t last_send_data_size_ = 0;
-        // in MB/S
-        std::vector<float> send_data_speeds_;
 
         // h264 / hevc ...
         std::string video_format_;
@@ -80,12 +93,6 @@ namespace tc
 
         //
         std::string video_decoder_;
-
-        // in ms
-        std::vector<float> net_delays_;
-
-        //
-        std::map<std::string, IsolatedMonitorStatisticsInfoInRender> render_monitor_stat_;
 
         // DXGI / GDI
         std::string video_capture_type_;

@@ -196,7 +196,7 @@ namespace tc
             // save render statistics
             auto& monitors_info = hb.monitors_info();
             for (const auto& [monitor_name, info] : monitors_info) {
-                stat_->render_monitor_stat_[monitor_name] = info;
+                stat_->UpdateIsolatedMonitorStatisticsInfoInRender(monitor_name, info);
             }
 
             stat_->video_capture_type_ = hb.video_capture_type();

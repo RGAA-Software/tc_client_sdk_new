@@ -179,7 +179,7 @@ namespace tc
                     RequestIFrame();
                     LOGE("decode error: {}, will request Key Frame", ret.error());
                 }
-                if (exit_) {
+                if (exit_ || !ret.has_value()) {
                     return;
                 }
                 auto raw_image = ret.value();
