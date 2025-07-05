@@ -12,6 +12,7 @@
 #include <atomic>
 #include "tc_message.pb.h"
 #include "tc_common_new/fps_stat.h"
+#include "tc_common_new/concurrent_type.h"
 #include "tc_common_new/concurrent_vector.h"
 #include "tc_common_new/concurrent_hashmap.h"
 
@@ -86,34 +87,34 @@ namespace tc
         std::atomic_int64_t last_send_data_size_ = 0;
 
         // h264 / hevc ...
-        std::string video_format_;
+        ConcurrentString video_format_;
 
         // 4:2:0 / 4:4:4
-        std::string video_color_;
+        ConcurrentString video_color_;
 
         //
-        std::string video_decoder_;
+        ConcurrentString video_decoder_;
 
         // DXGI / GDI
-        std::string video_capture_type_;
+        ConcurrentString video_capture_type_;
 
         // WASAPI / Inner[HOOK]
-        std::string audio_capture_type_;
+        ConcurrentString audio_capture_type_;
 
         // OPUS / ...
-        std::string audio_encode_type_;
+        ConcurrentString audio_encode_type_;
 
         // remote pc info
-        std::string remote_pc_info_;
+        ConcurrentString remote_pc_info_;
 
         // remote desktop name
-        std::string remote_desktop_name_;
+        ConcurrentString remote_desktop_name_;
 
         // remote os name
-        std::string remote_os_name_;
+        ConcurrentString remote_os_name_;
 
         // remote detailed hardware information
-        tc::RdHardwareInfo remote_hd_info_;
+        ConcurrentType<tc::RdHardwareInfo> remote_hd_info_;
     };
 
 }
