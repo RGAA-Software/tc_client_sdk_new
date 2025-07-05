@@ -72,13 +72,13 @@ namespace tc
         AVCodecID codec_id = AV_CODEC_ID_NONE;
         if (codec_type == VideoType::kNetH264) {
             codec_id = AV_CODEC_ID_H264;
-            sdk_stat_->video_format_ = "H264";
-            sdk_stat_->video_decoder_ = "X264";
+            sdk_stat_->video_format_.Update("H264");
+            sdk_stat_->video_decoder_.Update("X264");
         }
         else if (codec_type == VideoType::kNetHevc) {
             codec_id = AV_CODEC_ID_H265;
-            sdk_stat_->video_format_ = "HEVC";
-            sdk_stat_->video_decoder_ = "X265";
+            sdk_stat_->video_format_.Update("HEVC");
+            sdk_stat_->video_decoder_.Update("X265");
         }
         /*else if (codec_type == VideoType::kVp9) {
             codec_id = AV_CODEC_ID_VP9;
@@ -212,7 +212,7 @@ namespace tc
 
      
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
-                sdk_stat_->video_color_ = "4:2:0";
+                sdk_stat_->video_color_.Update("4:2:0");
                 frame_width_ = width; //std::max(frame_width_, width);
                 frame_height_ = height; //std::max(frame_height_, height);
                 if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
@@ -238,7 +238,7 @@ namespace tc
                 }
             }
             else if (format == AVPixelFormat::AV_PIX_FMT_YUV444P) {
-                sdk_stat_->video_color_ = "4:4:4";
+                sdk_stat_->video_color_.Update("4:4:4");
                 frame_width_ = width; 
                 frame_height_ = height;
                 if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
