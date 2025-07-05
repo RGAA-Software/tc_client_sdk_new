@@ -29,8 +29,8 @@ namespace tc
     class SdkStatistics;
 
     // callbacks
-    using OnVideoFrameDecodedCallback = std::function<void(const std::shared_ptr<RawImage>&, const SdkCaptureMonitorInfo&)>;
-    using OnAudioFrameDecodedCallback = std::function<void(const std::shared_ptr<Data>&, int samples, int channels, int bits)>;
+    using OnVideoFrameDecodedCallback = std::function<void(std::shared_ptr<RawImage>, const SdkCaptureMonitorInfo&)>;
+    using OnAudioFrameDecodedCallback = std::function<void(std::shared_ptr<Data>, int samples, int channels, int bits)>;
 
     class ThunderSdk {
     public:
@@ -70,7 +70,7 @@ namespace tc
         void RetryConnection();
 
     private:
-        void SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const SdkCaptureMonitorInfo& info);
+        void SendFirstFrameMessage(std::shared_ptr<RawImage> image, const SdkCaptureMonitorInfo& info);
         void RegisterEventListeners();
         void SendHelloMessage();
         void RequestIFrame();

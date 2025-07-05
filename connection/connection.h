@@ -14,11 +14,12 @@
 namespace tc
 {
 
+    class Data;
+    class MessageNotifier;
+
     using OnConnectedCallback = std::function<void()>;
     using OnDisConnectedCallback = std::function<void()>;
-    using OnMessageCallback = std::function<void(std::string&&)>;
-
-    class MessageNotifier;
+    using OnMessageCallback = std::function<void(std::shared_ptr<Data>)>;
 
     class Connection {
     public:

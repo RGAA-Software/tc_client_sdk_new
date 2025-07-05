@@ -6,6 +6,7 @@
 #include <asio2/websocket/wss_client.hpp>
 #include <asio2/asio2.hpp>
 #include "tc_common_new/log.h"
+#include "tc_common_new/data.h"
 
 namespace tc
 {
@@ -58,8 +59,8 @@ namespace tc
             }
         }).bind_recv([=, this](std::string_view data) {
             if (msg_cbk_) {
-                std::string cpy_data(data.data(), data.size());
-                msg_cbk_(std::move(cpy_data));
+                auto cpy_data = Data::Make(data.data(), data.size());
+                msg_cbk_(cpy_data);
             }
         });
 

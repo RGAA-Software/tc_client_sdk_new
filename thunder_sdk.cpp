@@ -104,9 +104,10 @@ namespace tc
             this->ClearFirstFrameState();
         });
 
-        net_client_->SetOnVideoFrameMsgCallback([=, this](const VideoFrame& frame) {
+        net_client_->SetOnVideoFrameMsgCallback([=, this](std::shared_ptr<tc::Message> msg) {
             if (exit_) { return; }
             this->PostVideoTask([=, this]() {
+                auto frame = msg->video_frame();
                 const auto& monitor_name = frame.mon_name();
                 std::shared_ptr<VideoDecoder> video_decoder = nullptr;
                 if (video_decoders_.contains(monitor_name)) {
@@ -172,33 +173,34 @@ namespace tc
                 }
                 last_frame_index = frame.frame_index();
 
-                auto ret = video_decoder->Decode(frame.data(), [=, this](const auto& raw_image) {
-                    if (exit_) {
-                        return;
-                    }
-                    if (!raw_image) {
-                        return;
-                    }
-                    //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
-                    if (video_frame_cbk_) {
-                        video_frame_cbk_(raw_image, cap_mon_info);
-                    }
-
-                    if (!has_video_frame_msg_) {
-                        has_video_frame_msg_ = true;
-                        SendFirstFrameMessage(raw_image, cap_mon_info);
-                    }
-                });
-                if (ret != 0) {
+                auto ret = video_decoder->Decode(frame.data());
+                if (!ret.has_value() && ret.error() != 0) {
                     RequestIFrame();
-                    LOGE("decode error: {}, will request Key Frame", ret);
+                    LOGE("decode error: {}, will request Key Frame", ret.error());
+                }
+                if (exit_) {
+                    return;
+                }
+                auto raw_image = ret.value();
+                if (!raw_image) {
+                    return;
+                }
+                //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
+                if (video_frame_cbk_) {
+                    video_frame_cbk_(raw_image, cap_mon_info);
+                }
+
+                if (!has_video_frame_msg_) {
+                    has_video_frame_msg_ = true;
+                    SendFirstFrameMessage(raw_image, cap_mon_info);
                 }
             });
         });
 
-        net_client_->SetOnAudioFrameMsgCallback([=, this](const AudioFrame& frame) {
+        net_client_->SetOnAudioFrameMsgCallback([=, this](std::shared_ptr<tc::Message> msg) {
             if (exit_) { return; }
             this->PostAudioTask([=, this]() {
+                auto frame = msg->audio_frame();
                 auto beg = TimeUtil::GetCurrentTimestamp();
                 if (!audio_decoder_) {
                     audio_decoder_ = std::make_shared<OpusAudioDecoder>(frame.samples(), frame.channels());
@@ -219,11 +221,11 @@ namespace tc
             });
         });
 
-        net_client_->SetOnAudioSpectrumCallback([=, this](const tc::RendererAudioSpectrum& spectrum) {
+        net_client_->SetOnAudioSpectrumCallback([=, this](std::shared_ptr<tc::Message> msg) {
             if (exit_) { return; }
             this->PostAudioSpectrumTask([=, this]() {
                 if (audio_spectrum_cbk_) {
-                    audio_spectrum_cbk_(spectrum);
+                    audio_spectrum_cbk_(msg);
                 }
             });
         });
@@ -241,7 +243,7 @@ namespace tc
 
     }
 
-    void ThunderSdk::SendFirstFrameMessage(const std::shared_ptr<RawImage>& image, const SdkCaptureMonitorInfo& info) {
+    void ThunderSdk::SendFirstFrameMessage(std::shared_ptr<RawImage> image, const SdkCaptureMonitorInfo& info) {
         SdkMsgFirstVideoFrameDecoded msg;
         msg.raw_image_ = image;
         msg.mon_info_ = info;
@@ -355,9 +357,8 @@ namespace tc
 
     void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
         if (net_client_) {
-            net_client_->SetOnServerConfigurationCallback([=, this](const tc::ServerConfiguration& cfg) {
-                cbk(cfg);
-
+            net_client_->SetOnServerConfigurationCallback([=, this](std::shared_ptr<tc::Message>&& msg) {
+                cbk(std::move(msg));
                 if (!has_config_msg_) {
                     has_config_msg_ = true;
                     msg_notifier_->SendAppMessage(SdkMsgFirstConfigInfoCallback());

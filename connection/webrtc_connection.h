@@ -17,12 +17,13 @@
 namespace tc
 {
 
+    class Data;
+    class Thread;
+    class Message;
     // we need relay to exchange signaling messages
     class RelayConnection;
-    class Thread;
     class MessageNotifier;
     class RtcClientInterface;
-    class Message;
     class MessageListener;
 
     class WebRtcConnection : public Connection {
@@ -40,8 +41,8 @@ namespace tc
         void PostMediaMessage(const std::string& msg);
         void PostFtMessage(const std::string& msg);
         //
-        void SetOnMediaMessageCallback(const std::function<void(const std::string&)>&);
-        void SetOnFtMessageCallback(const std::function<void(const std::string&)>&);
+        void SetOnMediaMessageCallback(const std::function<void(std::shared_ptr<Data>)>&);
+        void SetOnFtMessageCallback(const std::function<void(std::shared_ptr<Data>)>&);
 
         RtcClientInterface* GetRtcClient();
 
@@ -87,8 +88,8 @@ namespace tc
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
 
-        std::function<void(const std::string&)> media_msg_cbk_;
-        std::function<void(const std::string&)> ft_msg_cbk_;
+        std::function<void(std::shared_ptr<Data>)> media_msg_cbk_;
+        std::function<void(std::shared_ptr<Data>)> ft_msg_cbk_;
 
     };
 
