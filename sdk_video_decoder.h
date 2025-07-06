@@ -15,10 +15,11 @@ namespace tc
     class Data;
     class RawImage;
     class SdkStatistics;
+    class ThunderSdk;
 
     class VideoDecoder {
     public:
-        VideoDecoder();
+        VideoDecoder(const std::shared_ptr<ThunderSdk>& sdk);
         virtual ~VideoDecoder();
 
         virtual int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) = 0;
@@ -40,6 +41,7 @@ namespace tc
         std::mutex decode_mtx_;
         std::string monitor_name_;
         SdkStatistics* sdk_stat_ = nullptr;
+        std::shared_ptr<ThunderSdk> sdk_ = nullptr;
     };
 
 }

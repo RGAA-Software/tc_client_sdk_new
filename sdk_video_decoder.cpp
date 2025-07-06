@@ -9,7 +9,8 @@
 namespace tc
 {
 
-    VideoDecoder::VideoDecoder() {
+    VideoDecoder::VideoDecoder(const std::shared_ptr<ThunderSdk>& sdk) {
+        sdk_ = sdk;
         sdk_stat_ = SdkStatistics::Instance();
     }
 

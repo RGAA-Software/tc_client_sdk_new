@@ -16,12 +16,14 @@ namespace tc
         kMediaCodec
     };
 
+    class ThunderSdk;
+
     class VideoDecoderFactory {
     public:
 
-        static std::shared_ptr<VideoDecoder> Make(const SupportedCodec& codec) {
+        static std::shared_ptr<VideoDecoder> Make(const std::shared_ptr<ThunderSdk>& sdk, const SupportedCodec& codec) {
             if (codec == SupportedCodec::kFFmpeg) {
-                return FFmpegVideoDecoder::Make();
+                return std::make_shared<FFmpegVideoDecoder>(sdk);
             }
 #ifdef ANDROID
             if (codec == SupportedCodec::kMediaCodec) {

@@ -23,10 +23,7 @@ namespace tc
 
     class FFmpegVideoDecoder : public VideoDecoder {
     public:
-
-        static std::shared_ptr<FFmpegVideoDecoder> Make();
-
-        explicit FFmpegVideoDecoder();
+        explicit FFmpegVideoDecoder(const std::shared_ptr<ThunderSdk>& sdk);
         ~FFmpegVideoDecoder() override;
 
         int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) override;
@@ -39,16 +36,12 @@ namespace tc
         void ListCodecs();
 
     private:
-
         AVCodecContext* codec_context = nullptr;
         AVCodec* codec = nullptr;
         AVPacket* packet = nullptr;
         AVFrame* av_frame = nullptr;
-
-        std::shared_ptr<RawImage> decoded_image_ = nullptr;
-
         bool cvt_to_rgb_ = false;
-
+        std::shared_ptr<RawImage> decoded_image_ = nullptr;
     };
 
 }
