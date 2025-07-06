@@ -27,7 +27,7 @@ namespace tc
             }
 #ifdef ANDROID
             if (codec == SupportedCodec::kMediaCodec) {
-                return MediacodecVideoDecoder::Make();
+                return std::make_shared<MediacodecVideoDecoder>(sdk);
             }
 #endif
             return nullptr;
