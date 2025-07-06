@@ -41,11 +41,7 @@ namespace tc
         return now.tv_sec*1000*1000 +(int64_t)now.tv_nsec/(1000);
     }
 
-    std::shared_ptr<MediacodecVideoDecoder> MediacodecVideoDecoder::Make() {
-        return std::make_shared<MediacodecVideoDecoder>();
-    }
-
-    MediacodecVideoDecoder::MediacodecVideoDecoder() {
+    MediacodecVideoDecoder::MediacodecVideoDecoder(const std::shared_ptr<ThunderSdk>& sdk) : VideoDecoder(sdk) {
 
     }
 
@@ -151,11 +147,11 @@ namespace tc
         return AMEDIA_OK;
     }
 
-    int MediacodecVideoDecoder::Decode(const uint8_t *in_data, int in_size, DecodedCallback &&cbk) {
+    Result<std::shared_ptr<RawImage>, int> MediacodecVideoDecoder::Decode(const uint8_t *in_data, int in_size) {
         auto beg = TimeUtil::GetCurrentTimestamp();
         if (!media_codec_ || !in_data || in_size <= 0) {
             LOGE("param valid...");
-            return -1;
+            return TRError(-1);
         }
         ssize_t buf_idx = AMediaCodec_dequeueInputBuffer(media_codec_, 2000);
         if (buf_idx >= 0) {
@@ -163,7 +159,7 @@ namespace tc
             uint8_t* buf = AMediaCodec_getInputBuffer(media_codec_, buf_idx, &buf_size);
             if (buf_size <= 0) {
                 LOGE("getInputBuffer failed.");
-                return -1;
+                return TRError(-1);
             }
             memcpy(buf, in_data, in_size);
             uint64_t presentationTimeUs = getTimeUsec();
@@ -208,13 +204,10 @@ namespace tc
 
                 // only callback frame info
                 auto image = RawImage::Make(nullptr, 0, width, height, -1, RawImageFormat::kRawImageNV12);
-                cbk(image);
-
                 AMediaCodec_releaseOutputBuffer(media_codec_, buf_idx, true);
-
                 auto end = TimeUtil::GetCurrentTimestamp();
                 SdkStatistics::Instance()->AppendDecodeDuration(monitor_name_, end-beg);
-
+                return image;
             } else if (buf_idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
                 int width, height;
                 auto format = AMediaCodec_getOutputFormat(media_codec_);
@@ -229,7 +222,7 @@ namespace tc
             }
         } while (buf_idx > 0);
 
-        return 0;
+        return TRError(0);
     }
 
     void MediacodecVideoDecoder::Release() {
