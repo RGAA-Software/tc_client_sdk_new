@@ -92,8 +92,8 @@ namespace tc
         video_thread_->Poll();
         audio_thread_ = Thread::Make("audio", 16);
         audio_thread_->Poll();
-        audio_spectrum_thread_ = Thread::Make("bg", 32);
-        audio_spectrum_thread_->Poll();
+        misc_thread_ = Thread::Make("misc", 32);
+        misc_thread_->Poll();
 
         net_client_->SetOnConnectCallback([=, this]() {
             this->SendHelloMessage();
@@ -131,7 +131,8 @@ namespace tc
                         video_decoders_.clear();
                     }
 #endif
-                    video_decoder = VideoDecoderFactory::Make((drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg);
+                    auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
+                    video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
                     bool ready = video_decoder->Ready();
                     if (!ready) {
                         auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
@@ -152,9 +153,11 @@ namespace tc
                 auto diff = current_time - last_received_video_timestamps_[monitor_name];
                 last_received_video_timestamps_[monitor_name] = current_time;
 
-                statistics_->AppendVideoRecvGap(frame.mon_name(), diff);
-                statistics_->TickVideoRecvFps(frame.mon_name());
-                statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
+                this->PostMiscTask([=, this]() {
+                    statistics_->AppendVideoRecvGap(frame.mon_name(), diff);
+                    statistics_->TickVideoRecvFps(frame.mon_name());
+                    statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
+                });
 
                 SdkCaptureMonitorInfo cap_mon_info {
                     .mon_name_ = frame.mon_name(),
@@ -224,7 +227,7 @@ namespace tc
 
         net_client_->SetOnAudioSpectrumCallback([=, this](std::shared_ptr<tc::Message> msg) {
             if (exit_) { return; }
-            this->PostAudioSpectrumTask([=, this]() {
+            this->PostMiscTask([=, this]() {
                 if (audio_spectrum_cbk_) {
                     audio_spectrum_cbk_(msg);
                 }
@@ -272,18 +275,19 @@ namespace tc
         });
 
         msg_listener_->Listen<SdkMsgTimer100>([=, this](const auto& msg) {
-            //auto m = statistics_->AsProtoMessage(sdk_params_->device_id_, sdk_params_->stream_id_);
-            //this->PostMediaMessage(m);
+
         });
 
         msg_listener_->Listen<SdkMsgTimer1000>([=, this](const auto& msg) {
-            statistics_->CalculateDataSpeed();
-            statistics_->CalculateVideoFrameFps();
-            this->ReportStatistics();
+            PostMiscTask([this]() {
+                statistics_->CalculateDataSpeed();
+                statistics_->CalculateVideoFrameFps();
+                this->ReportStatistics();
+            });
         });
 
         msg_listener_->Listen<SdkMsgTimer2000>([=, this](const auto& msg) {
-            //this->statistics_->Dump();
+
         });
 
         // remote device offline
@@ -334,8 +338,8 @@ namespace tc
         audio_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 
-    void ThunderSdk::PostAudioSpectrumTask(std::function<void()>&& task) {
-        audio_spectrum_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    void ThunderSdk::PostMiscTask(std::function<void()>&& task) {
+        misc_thread_->Post(SimpleThreadTask::Make(std::move(task)));
     }
 
     void ThunderSdk::SetOnAudioSpectrumCallback(OnAudioSpectrumCallback&& cbk) {
@@ -472,8 +476,8 @@ namespace tc
             audio_thread_->Exit();
         }
         LOGI("Will exit audio_spectrum_thread thread");
-        if (audio_spectrum_thread_) {
-            audio_spectrum_thread_->Exit();
+        if (misc_thread_) {
+            misc_thread_->Exit();
         }
 
         LOGI("ThunderSdk exited");

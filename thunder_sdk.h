@@ -32,7 +32,7 @@ namespace tc
     using OnVideoFrameDecodedCallback = std::function<void(std::shared_ptr<RawImage>, const SdkCaptureMonitorInfo&)>;
     using OnAudioFrameDecodedCallback = std::function<void(std::shared_ptr<Data>, int samples, int channels, int bits)>;
 
-    class ThunderSdk {
+    class ThunderSdk : public std::enable_shared_from_this<ThunderSdk> {
     public:
 
         static std::shared_ptr<ThunderSdk> Make(const std::shared_ptr<MessageNotifier>& notifier);
@@ -58,8 +58,7 @@ namespace tc
         void PostFileTransferMessage(std::shared_ptr<Data> msg);
         void PostVideoTask(std::function<void()>&& task);
         void PostAudioTask(std::function<void()>&& task);
-        // !! @Deprecated
-        void PostAudioSpectrumTask(std::function<void()>&& task);
+        void PostMiscTask(std::function<void()>&& task);
 
         int GetProgressSteps() const;
         std::shared_ptr<ThunderSdkParams> GetSdkParams();
@@ -104,8 +103,7 @@ namespace tc
         SdkStatistics* statistics_ = nullptr;
         std::shared_ptr<Thread> video_thread_ = nullptr;
         std::shared_ptr<Thread> audio_thread_ = nullptr;
-        // !! @Deprecated
-        std::shared_ptr<Thread> audio_spectrum_thread_ = nullptr;
+        std::shared_ptr<Thread> misc_thread_ = nullptr;
 
         std::map<std::string, uint64_t> last_received_video_timestamps_ ;
 

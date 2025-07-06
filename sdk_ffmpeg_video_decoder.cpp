@@ -15,16 +15,13 @@
 #endif
 #include <iostream>
 #include <thread>
+#include "thunder_sdk.h"
 #include "sdk_statistics.h"
 
 namespace tc
 {
 
-    std::shared_ptr<FFmpegVideoDecoder> FFmpegVideoDecoder::Make() {
-        return std::make_shared<FFmpegVideoDecoder>();
-    }
-
-    FFmpegVideoDecoder::FFmpegVideoDecoder() : VideoDecoder() {
+    FFmpegVideoDecoder::FFmpegVideoDecoder(const std::shared_ptr<ThunderSdk>& sdk) : VideoDecoder(sdk) {
 
     }
 
@@ -288,7 +285,9 @@ namespace tc
                 }
                 else {
                     auto end = TimeUtil::GetCurrentTimestamp();
-                    SdkStatistics::Instance()->AppendDecodeDuration(monitor_name_, end-beg);
+                    sdk_->PostMiscTask([=, this]() {
+                        sdk_stat_->AppendDecodeDuration(monitor_name_, end-beg);
+                    });
                     //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
                     return decoded_image_;
                 }
