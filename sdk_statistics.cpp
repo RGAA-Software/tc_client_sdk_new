@@ -189,7 +189,7 @@ namespace tc
 
     std::vector<float> SdkStatistics::GetNetDelays() {
         std::vector<float> delays;
-        send_data_speeds_.Visit([&](auto delay) {
+        net_delays_.Visit([&](auto delay) {
             delays.push_back(delay);
         });
         return delays;
