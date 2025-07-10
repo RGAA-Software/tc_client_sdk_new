@@ -44,6 +44,8 @@ namespace tc
 
         // device name
         std::string device_name_;
+
+        int titlebar_color_ = -1;
     };
 
 }
