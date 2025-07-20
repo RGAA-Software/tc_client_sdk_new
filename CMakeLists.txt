@@ -18,12 +18,12 @@ if(MSVC)
     add_compile_options("/bigobj")
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/)
-include_directories(${CMAKE_SOURCE_DIR}/tc_message_new)
-include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/)
-include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/eventbus/src)
-include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/asio2/include)
-include_directories(${CMAKE_SOURCE_DIR}/tc_3rdparty/asio2/3rd)
+include_directories(${GR_PROJECT_PATH}/)
+include_directories(${GR_PROJECT_PATH}/tc_message_new)
+include_directories(${GR_PROJECT_PATH}/tc_3rdparty/)
+include_directories(${GR_PROJECT_PATH}/tc_3rdparty/eventbus/src)
+include_directories(${GR_PROJECT_PATH}/tc_3rdparty/asio2/include)
+include_directories(${GR_PROJECT_PATH}/tc_3rdparty/asio2/3rd)
 
 set(WEBRTC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../tc_webrtc_client/6167)
 include_directories(${WEBRTC_ROOT}/)
@@ -70,7 +70,7 @@ if (ANDROID)
 else ()
     target_link_libraries(tc_sdk PRIVATE libprotobuf tc_relay_client)
 
-    set(FFMPEG_LIB_PATH ${CMAKE_SOURCE_DIR}/deps/tc_3rdparty/ffmpeg/lib/x64)
+    set(FFMPEG_LIB_PATH ${GR_PROJECT_PATH}/deps/tc_3rdparty/ffmpeg/lib/x64)
     link_directories(${FFMPEG_LIB_PATH})
     target_link_libraries(tc_sdk PRIVATE
             Qt6::Widgets Qt6::Core Qt6::OpenGL Qt6::OpenGLWidgets
