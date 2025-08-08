@@ -10,7 +10,7 @@
 #include <memory>
 
 namespace asio2 {
-    class ws_client;
+    class wss_client;
     class timer;
 }
 
@@ -34,7 +34,7 @@ namespace tc
         std::string host_;
         int port_ = 0;
         std::string path_;
-        std::shared_ptr<asio2::ws_client> client_ = nullptr;
+        std::shared_ptr<asio2::wss_client> client_ = nullptr;
 
     };
 
