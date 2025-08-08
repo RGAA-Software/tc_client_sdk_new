@@ -3,7 +3,7 @@
 //
 
 #include "ws_connection.h"
-#include <asio2/websocket/wss_client.hpp>
+#include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
 #include "tc_common_new/log.h"
 #include "tc_common_new/data.h"
@@ -26,7 +26,7 @@ namespace tc
     }
 
     void WsConnection::Start() {
-        client_ = std::make_shared<asio2::wss_client>();
+        client_ = std::make_shared<asio2::ws_client>();
         client_->set_auto_reconnect(true);
         client_->set_timeout(std::chrono::milliseconds(2000));
 
