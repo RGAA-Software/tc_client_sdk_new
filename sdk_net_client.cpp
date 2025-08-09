@@ -13,6 +13,7 @@
 #include "sdk_messages.h"
 #include "connection/udp_connection.h"
 #include "connection/ws_connection.h"
+#include "connection/wss_connection.h"
 #include "connection/relay_connection.h"
 #include "connection/webrtc_connection.h"
 #include "tc_common_new/time_util.h"
@@ -62,11 +63,17 @@ namespace tc
 
     void NetClient::Start() {
         if (network_type_ == ClientNetworkType::kWebsocket) {
-            LOGI("Will connect by Websocket:");
+            LOGI("Will connect by Websocket, ssl : {}", sdk_params_->ssl_);
             LOGI("media: {}", media_path_);
             LOGI("file transfer: {}", ft_path_);
-            media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, media_path_);
-            ft_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_path_);
+            if (sdk_params_->ssl_) {
+                media_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, ip_, port_, media_path_);
+                ft_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_path_);
+            }
+            else {
+                media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, media_path_);
+                ft_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_path_);
+            }
         }
         else if (network_type_ == ClientNetworkType::kUdpKcp) {
             LOGI("Will connect by UDP");
