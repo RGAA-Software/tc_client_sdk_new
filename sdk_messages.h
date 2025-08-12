@@ -31,6 +31,7 @@ namespace tc
         int mon_bottom_ = 0;
         int frame_width_ = -1;
         int frame_height_ = -1;
+        uint64_t update_time_ = 0;
     };
 
     //

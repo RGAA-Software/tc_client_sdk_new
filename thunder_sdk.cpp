@@ -22,6 +22,7 @@
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
 #endif
+#include "tc_common_new/time_util"
 
 namespace tc
 {
@@ -159,7 +160,7 @@ namespace tc
                     statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
                 });
 
-                SdkCaptureMonitorInfo cap_mon_info {
+                SdkCaptureMonitorInfo cap_mon_info{
                     .mon_name_ = frame.mon_name(),
                     .mon_index_ = frame.mon_index(),
                     .mon_left_ = frame.mon_left(),
@@ -168,6 +169,7 @@ namespace tc
                     .mon_bottom_ = frame.mon_bottom(),
                     .frame_width_ = frame.frame_width(),
                     .frame_height_ = frame.frame_height(),
+                    .update_time_ = TimeUtil::GetCurrentTimestamp()
                 };
 
                 static auto last_frame_index = frame.frame_index();
