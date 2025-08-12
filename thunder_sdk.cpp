@@ -22,7 +22,6 @@
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
 #endif
-#include "tc_common_new/time_util"
 
 namespace tc
 {
