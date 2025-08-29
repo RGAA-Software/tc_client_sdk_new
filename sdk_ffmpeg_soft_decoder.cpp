@@ -2,7 +2,7 @@
 // Created by RGAA on 2023/8/11.
 //
 
-#include "sdk_ffmpeg_video_decoder.h"
+#include "sdk_ffmpeg_soft_decoder.h"
 
 #include "tc_common_new/data.h"
 #include "tc_message.pb.h"
@@ -56,7 +56,7 @@ namespace tc
         #endif
         });
 
-        //ListCodecs();
+        // ListCodecs();
 
         auto format_num = [](int val) -> int {
             auto t = val % 2;
@@ -136,7 +136,6 @@ namespace tc
         const AVCodec *codec = NULL;
         void *opaque = NULL;
 
-        // 使用 av_codec_iterate 遍历所有编解码器
         LOGI("Available codecs:");
         while ((codec = av_codec_iterate(&opaque)) != NULL) {
             if (codec->type == AVMEDIA_TYPE_VIDEO || codec->type == AVMEDIA_TYPE_AUDIO) {

@@ -18,6 +18,8 @@
 #include "sdk_net_client.h"
 #include "sdk_cast_receiver.h"
 #include "sdk_video_decoder_factory.h"
+#include "sdk_ffmpeg_soft_decoder.h"
+#include "sdk_ffmpeg_d3d11va_decoder.h"
 #include "tc_message_new/proto_converter.h"
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
@@ -133,6 +135,9 @@ namespace tc
 #endif
                     auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
                     video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
+                    auto test_decoder = std::make_shared<FFmpegD3D11VADecoder>(shared_from_this());
+                    test_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+
                     bool ready = video_decoder->Ready();
                     if (!ready) {
                         auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
