@@ -14,7 +14,11 @@
 #include <thread>
 #include "thunder_sdk.h"
 #include "sdk_statistics.h"
-
+#include <d3d11.h>
+#include <dxgi1_2.h>
+#include <windows.h>
+#include <atlbase.h>
+#include <iostream>
 #if 000
 #include <libyuv.h>
 #endif
@@ -24,17 +28,13 @@ static AVBufferRef *hw_device_ctx = NULL;
 static enum AVPixelFormat hw_pix_fmt;
 static FILE *output_file = NULL;
 
-static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type)
-{
+static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type) {
     int err = 0;
-
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
-                                      NULL, NULL, 0)) < 0) {
-        fprintf(stderr, "Failed to create specified HW device.\n");
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+        LOGE("Failed to create specified HW device: {}", err);
         return err;
     }
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
-
     return err;
 }
 
@@ -189,6 +189,7 @@ namespace tc
                 if (config->device_type == AV_HWDEVICE_TYPE_D3D11VA) {
                     LOGI("Found the D3D11VA");
                     found_target_codec = true;
+                    decoder_ = const_cast<AVCodec*>(codec);
                     break;
                 }
             }
@@ -236,7 +237,7 @@ namespace tc
 //            }
 //        }
 
-        m_VideoDecoderCtx = avcodec_alloc_context3(decoder);
+        m_VideoDecoderCtx = avcodec_alloc_context3(decoder_);
         if (!m_VideoDecoderCtx) {
 //            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 //                         "Unable to allocate video decoder context");
@@ -291,7 +292,7 @@ namespace tc
 //        SDL_assert(m_VideoDecoderCtx->opaque == nullptr);
         m_VideoDecoderCtx->opaque = this;
 
-        int err = avcodec_open2(m_VideoDecoderCtx, decoder, &options);
+        int err = avcodec_open2(m_VideoDecoderCtx, decoder_, &options);
         av_dict_free(&options);
         if (err < 0) {
 //            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -299,6 +300,13 @@ namespace tc
 //                         params->videoFormat);
             return false;
         }
+
+        if (hw_decoder_init(m_VideoDecoderCtx, AV_HWDEVICE_TYPE_D3D11VA) != 0) {
+
+        }
+
+        packet = av_packet_alloc();
+        av_frame = av_frame_alloc();
 
         return 0;
     }
@@ -328,8 +336,86 @@ namespace tc
 #endif
 
     Result<std::shared_ptr<RawImage>, int> FFmpegD3D11VADecoder::Decode(const uint8_t* data, int size) {
+        if (!m_VideoDecoderCtx || !av_frame || stop_) {
+            return TRError(-1);
+        }
+        std::lock_guard<std::mutex> guard(decode_mtx_);
 
-        return TRError(0);
+        auto beg = TimeUtil::GetCurrentTimestamp();
+        av_frame_unref(av_frame);
+
+        packet->data = (uint8_t*)data;//frame->CStr();
+        packet->size = size;//frame->Size();
+
+        int ret = avcodec_send_packet(m_VideoDecoderCtx, packet);
+        if (ret == AVERROR(EAGAIN)) {
+            LOGW("EAGAIN...");
+            return TRError(0);
+        }
+        else if (ret != 0) {
+            LOGE("avcodec_send_packet err: {}", ret);
+            return TRError(ret);
+        }
+
+        bool has_received_frame = false;
+        auto last_result = 0;
+        while (true) {
+            ret = avcodec_receive_frame(m_VideoDecoderCtx, av_frame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                last_result = has_received_frame ? 0 : ret;
+                break;
+            } else if (ret != 0) {
+                LOGE("avcodec_receive_frame error: {}", ret);
+                last_result = ret;
+                break;
+            }
+            has_received_frame = true;
+
+            auto width = av_frame->width;
+            auto height = av_frame->height;
+
+            auto x1 = av_frame->linesize[0];
+            auto x2 = av_frame->linesize[1];
+            auto x3 = av_frame->linesize[2];
+            //width = x1;
+            //LOGI("frame width: {}, x1: {}", av_frame->width, x1);
+
+            auto format = m_VideoDecoderCtx->pix_fmt;
+
+            auto resource = (ID3D11Resource*)av_frame->data[0];
+            auto d = (int)(intptr_t)av_frame->data[1];
+            LOGI("resources: {:p}, index: {}", (void*)resource, d);
+
+            D3D11_RESOURCE_DIMENSION type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+            resource->GetType(&type);
+            if (D3D11_RESOURCE_DIMENSION_TEXTURE2D != type) {
+                return TRError(ERROR_NOT_SUPPORTED);
+            }
+
+            CComPtr<ID3D11Texture2D> acquired_texture;
+            HRESULT hr = resource->QueryInterface(IID_PPV_ARGS(&acquired_texture));
+            if (FAILED(hr)) {
+                return TRError(hr);
+            }
+
+            D3D11_TEXTURE2D_DESC desc;
+            acquired_texture->GetDesc(&desc);
+            LOGI("resources size: {}x{}, format: {}", desc.Width, desc.Height, (int)desc.Format);
+
+            if (decoded_image_ && !stop_) {
+                auto end = TimeUtil::GetCurrentTimestamp();
+                sdk_->PostMiscTask([=, this]() {
+                    sdk_stat_->AppendDecodeDuration(monitor_name_, end-beg);
+                });
+                //LOGI("FFmpeg decode YUV420p(I420) used : {}ms, {}x{}", (end-beg), frame_width_, frame_height_);
+                return decoded_image_;
+            }
+
+            //
+            av_frame_unref(av_frame);
+        }
+        av_packet_unref(packet);
+        return TRError(last_result);
     }
 
     void FFmpegD3D11VADecoder::Release() {
@@ -349,13 +435,16 @@ namespace tc
 //            codec_context = nullptr;
 //        }
 //
-//        if (av_frame != nullptr) {
-//            av_packet_unref(packet);
-//            av_free(av_frame);
-//            av_frame = nullptr;
-//        }
-//
-//        av_packet_free(&packet);
+//av_packet_unref(packet);
+        if (av_frame != nullptr) {
+            av_free(av_frame);
+            av_frame = nullptr;
+        }
+
+        if (packet != nullptr) {
+            av_packet_free(&packet);
+            packet = nullptr;
+        }
         LOGI("FFmpeg video decoder release.");
     }
 

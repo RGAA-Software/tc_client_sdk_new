@@ -41,8 +41,9 @@ namespace tc
     private:
         AVStream *video = NULL;
         AVCodecContext *m_VideoDecoderCtx = NULL;
-        AVCodec *decoder = NULL;
-        AVPacket packet;
+        AVCodec* decoder_ = NULL;
+        AVPacket* packet = nullptr;
+        AVFrame* av_frame = nullptr;
         enum AVHWDeviceType type;
 
         std::shared_ptr<RawImage> decoded_image_ = nullptr;

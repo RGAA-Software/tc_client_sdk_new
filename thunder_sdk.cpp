@@ -135,8 +135,10 @@ namespace tc
 #endif
                     auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
                     video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
-                    auto test_decoder = std::make_shared<FFmpegD3D11VADecoder>(shared_from_this());
-                    test_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+#if TEST_D3D11VA
+                    test_decoder_ = std::make_shared<FFmpegD3D11VADecoder>(shared_from_this());
+                    test_decoder_->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+#endif
 
                     bool ready = video_decoder->Ready();
                     if (!ready) {
@@ -182,6 +184,14 @@ namespace tc
                     LOGI("Video frame came, index: {}, diff: {}", frame.frame_index(), frame_diff);
                 }
                 last_frame_index = frame.frame_index();
+
+#if TEST_D3D11VA
+                // test // beg
+                if (test_decoder_) {
+                    test_decoder_->Decode(frame.data());
+                }
+                // test // end
+#endif
 
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {

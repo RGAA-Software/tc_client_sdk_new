@@ -14,6 +14,8 @@
 #include "sdk_net_client.h"
 #include "sdk_decoder_render_type.h"
 
+#define TEST_D3D11VA 0
+
 namespace tc
 {
     class Data;
@@ -81,6 +83,9 @@ namespace tc
         std::shared_ptr<ThunderSdkParams> sdk_params_;
         std::shared_ptr<NetClient> net_client_ = nullptr;
         std::map<std::string, std::shared_ptr<VideoDecoder>> video_decoders_;
+#if TEST_D3D11VA
+        std::shared_ptr<VideoDecoder> test_decoder_ = nullptr;
+#endif
 
         // for android
         void* render_surface_ = nullptr;
