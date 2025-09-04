@@ -28,6 +28,15 @@ namespace tc
 		return std::make_shared<RawImage>(data, size, width, height, -1, RawImageFormat::kRawImageI444);
 	}
 
+#ifdef WIN32
+    std::shared_ptr<RawImage> RawImage::MakeD3D11Texture(CComPtr<ID3D11Texture2D> texture, int src_subresource) {
+        auto image = std::make_shared<RawImage>(nullptr, 0, 0, 0, 0, RawImageFormat::kRawImageD3D11Texture);
+        image->texture_ = texture;
+        image->src_subresource_ = src_subresource;
+        return image;
+    }
+#endif
+
 	RawImage::RawImage(char* data, int size, int width, int height, int ch, RawImageFormat format) {
         if (size > 0) {
             img_buf = (char *) malloc(size);

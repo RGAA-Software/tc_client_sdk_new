@@ -60,7 +60,7 @@ set(GL_SRCS
 
 if (WIN32)
     list(APPEND SDK_SRCS
-        sdk_ffmpeg_d3d11va_decoder.cpp)
+        sdk_ffmpeg_decoder.cpp)
 endif ()
 
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})

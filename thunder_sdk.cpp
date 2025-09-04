@@ -19,7 +19,7 @@
 #include "sdk_cast_receiver.h"
 #include "sdk_video_decoder_factory.h"
 #include "sdk_ffmpeg_soft_decoder.h"
-#include "sdk_ffmpeg_d3d11va_decoder.h"
+#include "sdk_ffmpeg_decoder.h"
 #include "tc_message_new/proto_converter.h"
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
@@ -134,21 +134,32 @@ namespace tc
                     }
 #endif
                     auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
-                    video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
-#if TEST_D3D11VA
-                    test_decoder_ = std::make_shared<FFmpegD3D11VADecoder>(shared_from_this());
-                    test_decoder_->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+                    //video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
+#if WIN32
+                    // from now on, it's for d3d11va decoder
+                    // we'll combine decoders into the same decoder class in the future
+                    video_decoder = std::make_shared<FFmpegDecoder>(shared_from_this());
+                    auto r = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+                    if (r != 0) {
+                        LOGE("Init D3D11VA decoder failed, will try software decoder");
+                        video_decoder->Release();
+                        video_decoder.reset();
+                    }
 #endif
 
-                    bool ready = video_decoder->Ready();
-                    if (!ready) {
-                        auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
-                        if (result != 0) {
-                            LOGE("Video decoder init failed, mon name: {}, frame type: {}, frame width: {}, frame height: {}, format: {}",
-                                 frame.mon_name(), (int)frame.type(), frame.frame_width(), frame.frame_height(), (int)frame.image_format());
-                            return;
+                    if (!video_decoder) {
+                        video_decoder = std::make_shared<FFmpegVideoDecoder>(shared_from_this());
+                        bool ready = video_decoder->Ready();
+                        if (!ready) {
+                            auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(),
+                                                              frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+                            if (result != 0) {
+                                LOGE("Video decoder init failed, mon name: {}, frame type: {}, frame width: {}, frame height: {}, format: {}",
+                                     frame.mon_name(), (int) frame.type(), frame.frame_width(), frame.frame_height(), (int) frame.image_format());
+                                return;
+                            }
+                            LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int) frame.type());
                         }
-                        LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
                     }
                     video_decoders_[monitor_name] = video_decoder;
                 }
@@ -185,24 +196,18 @@ namespace tc
                 }
                 last_frame_index = frame.frame_index();
 
-#if TEST_D3D11VA
-                // test // beg
-                if (test_decoder_) {
-                    test_decoder_->Decode(frame.data());
-                }
-                // test // end
-#endif
-
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {
                     RequestIFrame();
                     LOGE("decode error: {}, will request Key Frame", ret.error());
                 }
                 if (exit_ || !ret.has_value()) {
+                    LOGE("Don't have value, exit? {}", exit_);
                     return;
                 }
                 auto raw_image = ret.value();
                 if (!raw_image) {
+                    LOGE("Don't have decoded image");
                     return;
                 }
                 //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);

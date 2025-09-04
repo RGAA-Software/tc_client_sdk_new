@@ -7,6 +7,10 @@
 
 #include "tc_message.pb.h"
 
+#ifdef WIN32
+#include "tc_common_new/win32/d3d11_wrapper.h"
+#endif
+
 namespace tc
 {
 
@@ -39,13 +43,14 @@ namespace tc
         std::string display_name_;
         std::string display_remote_name_;
 
-        //语言种类, 切换语言的时候会用到
         int language_id_ = 0;
 
         // device name
         std::string device_name_;
 
         int titlebar_color_ = -1;
+
+        std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
     };
 
 }

@@ -18,6 +18,7 @@ extern "C"
     #include <libavutil/hwcontext.h>
     #include <libavutil/avassert.h>
 }
+#include <libavutil/hwcontext_d3d11va.h>
 
 #include <set>
 #include "sdk_video_decoder.h"
@@ -25,18 +26,21 @@ extern "C"
 namespace tc
 {
 
-    class FFmpegD3D11VADecoder : public VideoDecoder {
+    class FFmpegDecoder : public VideoDecoder {
     public:
-        explicit FFmpegD3D11VADecoder(const std::shared_ptr<ThunderSdk>& sdk);
-        ~FFmpegD3D11VADecoder() override;
+        explicit FFmpegDecoder(const std::shared_ptr<ThunderSdk>& sdk);
+        ~FFmpegDecoder() override;
 
         int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) override;
         Result<std::shared_ptr<RawImage>, int> Decode(const uint8_t* data, int size) override;
         void Release() override;
         bool Ready() override;
 
+        static enum AVPixelFormat ffGetFormat(AVCodecContext* context, const enum AVPixelFormat* pixFmts);
+
     private:
         int GetAVCodecCapabilities(const AVCodec *codec);
+        bool IsHardwareAccelerated();
 
     private:
         AVStream *video = NULL;
@@ -44,9 +48,12 @@ namespace tc
         AVCodec* decoder_ = NULL;
         AVPacket* packet = nullptr;
         AVFrame* av_frame = nullptr;
-        enum AVHWDeviceType type;
+        //enum AVHWDeviceType type;
 
-        std::shared_ptr<RawImage> decoded_image_ = nullptr;
+        AVBufferRef* m_HwDeviceContext;
+        AVBufferRef* m_HwFramesContext;
+        AVCodecHWConfig* m_HwDecodeCfg;
+
         std::set<const AVCodec*> terminallyFailedHardwareDecoders;
 
     };
