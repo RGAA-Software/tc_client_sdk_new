@@ -40,6 +40,7 @@ namespace tc
         AVCodec* codec = nullptr;
         AVPacket* packet = nullptr;
         AVFrame* av_frame = nullptr;
+        AVPixelFormat last_format_ = AV_PIX_FMT_NONE;
         bool cvt_to_rgb_ = false;
         std::shared_ptr<RawImage> decoded_image_ = nullptr;
     };
