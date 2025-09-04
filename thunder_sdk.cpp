@@ -120,7 +120,7 @@ namespace tc
                         video_decoder->Release();
                         video_decoders_.erase(monitor_name);
                         video_decoder = nullptr;
-                        LOGI("Rebuild video decoder, type: {}, {}x{}", (int)frame.type(), frame.frame_width(), frame.frame_height());
+                        LOGI("Rebuild video decoder, type: {}, {}x{}, image_format: {}", (int)frame.type(), frame.frame_width(), frame.frame_height(), (int)frame.image_format());
                     }
                 }
                 if (!video_decoder) {

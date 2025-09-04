@@ -203,16 +203,21 @@ namespace tc
             auto x3 = av_frame->linesize[2];
             //width = x1;
             //LOGI("frame width: {}, x1: {}", av_frame->width, x1);
-
-            auto format = codec_context->pix_fmt;
-
+           
+            bool format_change = false;
+            auto format = (AVPixelFormat)codec_context->pix_fmt;
+            if (last_format_ != format) {
+                LOGI("format : {} change to : {}", last_format_, format);
+                last_format_ = format;
+                format_change = true;
+            }
      
             if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
                 sdk_stat_->video_color_.Update("4:2:0");
                 frame_width_ = width; //std::max(frame_width_, width);
                 frame_height_ = height; //std::max(frame_height_, height);
                 if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
-                    frame_height_ != decoded_image_->img_height) {
+                    frame_height_ != decoded_image_->img_height || format_change) {
                     decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5,
                                                         frame_width_, frame_height_);
                 }
@@ -235,10 +240,10 @@ namespace tc
             }
             else if (format == AVPixelFormat::AV_PIX_FMT_YUV444P) {
                 sdk_stat_->video_color_.Update("4:4:4");
-                frame_width_ = width; 
+                frame_width_ = width;
                 frame_height_ = height;
                 if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
-                    frame_height_ != decoded_image_->img_height) {
+                    frame_height_ != decoded_image_->img_height || format_change) {
                     decoded_image_ = RawImage::MakeI444(nullptr, frame_width_ * frame_height_ * 3, frame_width_, frame_height_);
                 }
                 char* buffer = decoded_image_->Data();
@@ -255,7 +260,6 @@ namespace tc
                 for (int k = 0; k < frame_height_; k++) {
                     memcpy(buffer + yu_offset + (frame_width_ * k), av_frame->data[2] + x3 * k, frame_width_);
                 }
-
 
 #if 0           // save yuv file
                 static int index = 0;
