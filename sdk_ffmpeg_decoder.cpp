@@ -540,6 +540,12 @@ namespace tc
                 decoded_image = RawImage::MakeD3D11Texture(acquired_texture, src_subresource);
                 decoded_image->img_width = desc.Width;
                 decoded_image->img_height = desc.Height;
+
+                auto end = TimeUtil::GetCurrentTimestamp();
+                sdk_->PostMiscTask([=, this]() {
+                    sdk_stat_->AppendDecodeDuration(monitor_name_, end - beg);
+                });
+
             }
             else if (av_frame_->format == AV_PIX_FMT_VULKAN) {
 
@@ -612,11 +618,6 @@ namespace tc
                     return decoded_image_;
 
                 }
-
-                auto end = TimeUtil::GetCurrentTimestamp();
-                sdk_->PostMiscTask([=, this]() {
-                    sdk_stat_->AppendDecodeDuration(monitor_name_, end - beg);
-                });
 
                 break;
             }
