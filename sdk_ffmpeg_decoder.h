@@ -18,10 +18,15 @@ extern "C"
     #include <libavutil/hwcontext.h>
     #include <libavutil/avassert.h>
 }
+
+#ifdef WIN32
 #include <libavutil/hwcontext_d3d11va.h>
+#endif
 
 #include <set>
 #include "sdk_video_decoder.h"
+
+#define TEST_HW_DECODER 0
 
 namespace tc
 {
@@ -43,19 +48,17 @@ namespace tc
         bool IsHardwareAccelerated();
 
     private:
-        AVStream *video = NULL;
-        AVCodecContext *m_VideoDecoderCtx = NULL;
-        AVCodec* decoder_ = NULL;
-        AVPacket* packet = nullptr;
-        AVFrame* av_frame = nullptr;
-        //enum AVHWDeviceType type;
+        AVCodecContext* decoder_context_ = nullptr;
+        AVCodec* decoder_ = nullptr;
+        AVPacket* packet_ = nullptr;
+        AVFrame* av_frame_ = nullptr;
 
-        AVBufferRef* m_HwDeviceContext;
-        AVBufferRef* m_HwFramesContext;
-        AVCodecHWConfig* m_HwDecodeCfg;
+        AVBufferRef* hw_device_context_ = nullptr;
+        AVBufferRef* hw_frames_context_ = nullptr;
+        AVCodecHWConfig* hw_decode_config = nullptr;
 
-        std::set<const AVCodec*> terminallyFailedHardwareDecoders;
-
+        AVPixelFormat last_format_ = AV_PIX_FMT_NONE;
+        std::shared_ptr<RawImage> decoded_image_ = nullptr;
     };
 
 }

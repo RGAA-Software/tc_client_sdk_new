@@ -38,6 +38,7 @@ add_subdirectory(connection)
 set(SDK_SRCS
     thunder_sdk.cpp
     sdk_video_decoder.cpp
+    sdk_ffmpeg_decoder.cpp
     sdk_ffmpeg_soft_decoder.cpp
     sdk_mediacodec_video_decoder.cpp
     sdk_net_client.cpp
@@ -57,11 +58,6 @@ set(GL_SRCS
     gl/sprite.cpp
     gl/raw_image.cpp
 )
-
-if (WIN32)
-    list(APPEND SDK_SRCS
-        sdk_ffmpeg_decoder.cpp)
-endif ()
 
 add_library(tc_sdk ${SDK_SRCS} ${GL_SRCS})
 target_link_libraries(tc_sdk PRIVATE Opus::opus glm::glm)#websocketpp::websocketpp
