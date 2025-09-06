@@ -56,6 +56,8 @@ namespace tc
 		RawImageFormat img_format;
 
 #ifdef WIN32
+        ComPtr<ID3D11Device> device_ = nullptr;
+        ComPtr<ID3D11DeviceContext> device_context_ = nullptr;
         CComPtr<ID3D11Texture2D> texture_ = nullptr;
         int src_subresource_ = 0;
 #endif

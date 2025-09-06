@@ -21,9 +21,6 @@
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "tc_common_new/win32/d3d11_wrapper.h"
 #include "tc_common_new/win32/d3d_debug_helper.h"
-#if 000
-#include <libyuv.h>
-#endif
 
 namespace tc
 {
@@ -42,30 +39,27 @@ namespace tc
         ComPtr<IDXGIDevice> dxgiDevice;
         HRESULT hr = device.As(&dxgiDevice);
         if (FAILED(hr)) {
-            std::cerr << "Failed to get IDXGIDevice" << std::endl;
+            LOGE("Failed to get IDXGIDevice");
             return "";
         }
 
         ComPtr<IDXGIAdapter> adapter;
         hr = dxgiDevice->GetAdapter(&adapter);
         if (FAILED(hr)) {
-            std::cerr << "Failed to get IDXGIAdapter" << std::endl;
+            LOGE("Failed to get IDXGIAdapter");
             return "";
         }
 
         DXGI_ADAPTER_DESC desc;
         hr = adapter->GetDesc(&desc);
         if (FAILED(hr)) {
-            std::cerr << "Failed to get adapter desc" << std::endl;
+            LOGE("Failed to get adapter desc");
             return "";
         }
 
         std::stringstream ss;
         ss << "VendorId: " << desc.VendorId << ", DeviceId: " << desc.DeviceId << std::endl;
         ss << "SubSysId: " << desc.SubSysId << ", Revision: " << desc.Revision << std::endl;
-
-        // 你可以用 VendorId+DeviceId/SubSysId/Revision 组合成唯一的 Adapter UID
-        // 或者直接使用 Adapter LUID（Windows 8+）
         ss << "LUID: "<< desc.AdapterLuid.HighPart << ":" << desc.AdapterLuid.LowPart << std::endl;
         return ss.str();
     }
@@ -100,6 +94,20 @@ namespace tc
         bool found_target_codec = false;
         const AVCodec* decoder = NULL;
         void* opaque = NULL;
+
+        auto fnGetPreferredPixelFormat = [] (int format) -> AVPixelFormat {
+            // if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
+            //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
+            //            AV_PIX_FMT_YUV444P10 : // 10-bit 3-plane YUV 4:4:4
+            //            AV_PIX_FMT_P010;       // 10-bit 2-plane YUV 4:2:0
+            // }
+            // else {
+            //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
+            //            AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
+            //            AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
+            // }
+            return format == 0 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
+        };
 
 #if TEST_HW_DECODER
         LOGI("Available codecs:");
@@ -171,7 +179,7 @@ namespace tc
         }
 #endif
         if (decoder_ && found_target_codec) {
-            LOGI("Found codec, name: {}, id: {}, long name: {}", decoder_->name, (int)decoder_->id, decoder_->long_name);
+            LOGI("Found HW codec, name: {}, id: {}, long name: {}", decoder_->name, (int)decoder_->id, decoder_->long_name);
 
             this->codec_type_ = codec_type;
             this->frame_width_ = width;
@@ -226,20 +234,6 @@ namespace tc
                 decoder_context_->thread_count = 1;
             }
 
-            auto fnGetPreferredPixelFormat = [] (int format) -> AVPixelFormat {
-                // if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
-                //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
-                //            AV_PIX_FMT_YUV444P10 : // 10-bit 3-plane YUV 4:4:4
-                //            AV_PIX_FMT_P010;       // 10-bit 2-plane YUV 4:2:0
-                // }
-                // else {
-                //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
-                //            AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
-                //            AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
-                // }
-                return format == 0 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
-            };
-
             // Setup decoding parameters
             decoder_context_->width = width;
             decoder_context_->height = height;
@@ -255,13 +249,13 @@ namespace tc
                 return err;
             }
 
-#ifdef WIN32
-            hw_device_context_ = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
+            hw_device_context_ = av_hwdevice_ctx_alloc(hw_decode_config->device_type);
             if (!hw_device_context_) {
                 LOGE("Failed to create D3D11VA device context");
                 return -1;
             }
 
+#ifdef WIN32
             auto hw_ctx = (AVHWDeviceContext*)hw_device_context_->data;
             auto d3d11ctx = (AVD3D11VADeviceContext*)hw_ctx->hwctx;
 
@@ -308,7 +302,7 @@ namespace tc
 
             // Surfaces must be 16 pixel aligned for H.264 and 128 pixel aligned for everything else
             // https://github.com/FFmpeg/FFmpeg/blob/a234e5cd80224c95a205c1f3e297d8c04a1374c3/libavcodec/dxva2.c#L609-L616
-            auto m_TextureAlignment = /*(params->videoFormat & VIDEO_FORMAT_MASK_H264)*/true ? 16 : 128;
+            auto m_TextureAlignment = img_format == 0 ? 16 : 128;
 
             framesContext->width = FFALIGN(width, m_TextureAlignment);
             framesContext->height = FFALIGN(height, m_TextureAlignment);
@@ -368,7 +362,7 @@ namespace tc
             }
 
             decoder_context_ = avcodec_alloc_context3(decoder);
-            if (decoder_context_ == NULL) {
+            if (decoder_context_ == nullptr) {
                 LOGE("Could not alloc video context!");
                 return -1;
             }
@@ -388,7 +382,7 @@ namespace tc
             decoder_context_->thread_count = std::min(8, (int)std::thread::hardware_concurrency());
             decoder_context_->thread_type = FF_THREAD_SLICE;
 
-            if (avcodec_open2(decoder_context_, decoder, NULL) < 0) {
+            if (avcodec_open2(decoder_context_, decoder, nullptr) < 0) {
                 LOGE("Failed to open decoder");
                 Release();
                 return -1;
@@ -415,7 +409,7 @@ namespace tc
         const AVPixelFormat *p;
         AVPixelFormat desiredFmt;
 
-        if (decoder->hw_decode_config) {
+        if (decoder && decoder->hw_decode_config) {
             desiredFmt = decoder->hw_decode_config->pix_fmt;
         }
         // else if (decoder->m_RequiredPixelFormat != AV_PIX_FMT_NONE) {
@@ -449,17 +443,6 @@ namespace tc
 
         return AV_PIX_FMT_NONE;
     }
-
-#if 000
-    static void I420ToRGB24(unsigned char* yuv_data, unsigned char* rgb24, int width, int height) {
-        unsigned char* y = yuv_data;
-        unsigned char* u = &yuv_data[width * height];
-        unsigned char* v = &yuv_data[width * height * 5 / 4];
-        libyuv::I420ToRGB24(y, width, u, width / 2, v, width / 2,
-                            rgb24,
-                            width * 3, width, height);
-    }
-#endif
 
     Result<std::shared_ptr<RawImage>, int> FFmpegDecoder::Decode(const uint8_t* data, int size) {
         if (!decoder_context_ || !av_frame_ || stop_) {
@@ -506,7 +489,7 @@ namespace tc
             auto x3 = av_frame_->linesize[2];
 
             if (av_frame_->key_frame) {
-                LOGI("key frame!!!!!!!");
+                LOGI("key frame!!!!!!! AV frame format: {}", av_frame_->format);
             }
 
             // ONLY D3D11 NOW
@@ -537,9 +520,12 @@ namespace tc
                 acquired_texture->GetDesc(&desc);
                 //LOGI("resources size: {}x{}, dxgi format: {}, pix format: {}, D3D11: {}, Usage: {}", desc.Width, desc.Height, (int)desc.Format, (int)pix_format, AV_PIX_FMT_D3D11, desc.Usage);
 
+                auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
                 decoded_image = RawImage::MakeD3D11Texture(acquired_texture, src_subresource);
                 decoded_image->img_width = desc.Width;
                 decoded_image->img_height = desc.Height;
+                decoded_image->device_ = d3d11_wrapper->d3d11_device_;
+                decoded_image->device_context_ = d3d11_wrapper->d3d11_device_context_;
 
                 auto end = TimeUtil::GetCurrentTimestamp();
                 sdk_->PostMiscTask([=, this]() {
@@ -561,12 +547,16 @@ namespace tc
 
                 if (format == AVPixelFormat::AV_PIX_FMT_YUV420P || format == AVPixelFormat::AV_PIX_FMT_NV12) {
                     sdk_stat_->video_color_.Update("4:2:0");
-                    frame_width_ = width; //std::max(frame_width_, width);
-                    frame_height_ = height; //std::max(frame_height_, height);
+                    frame_width_ = width;
+                    frame_height_ = height;
                     if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                         frame_height_ != decoded_image_->img_height || format_change) {
-                        decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5,
-                                                            frame_width_, frame_height_);
+                        decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5, frame_width_, frame_height_);
+#ifdef WIN32
+                        auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
+                        decoded_image_->device_ = d3d11_wrapper->d3d11_device_;
+                        decoded_image_->device_context_ = d3d11_wrapper->d3d11_device_context_;
+#endif
                     }
                     char *buffer = decoded_image_->Data();
                     for (int i = 0; i < frame_height_; i++) {
@@ -574,24 +564,33 @@ namespace tc
                     }
 
                     int y_offset = frame_width_ * frame_height_;
-                    for (int j = 0; j < frame_height_ / 2; j++) {
-                        memcpy(buffer + y_offset + (frame_width_ / 2 * j),
-                               av_frame_->data[1] + x1 / 2 * j, frame_width_ / 2);
+//                    for (int j = 0; j < frame_height_ / 2; j++) {
+//                        memcpy(buffer + y_offset + (frame_width_ / 2 * j), av_frame_->data[1] + x1 / 2 * j, frame_width_ / 2);
+//                    }
+                    for (int j = 0; j < frame_height_ / 4; j++) {
+                        memcpy(buffer + y_offset + (frame_width_ * j), av_frame_->data[1] + x1 * j, frame_width_);
                     }
 
                     int yu_offset = y_offset + (frame_width_ / 2) * (frame_height_ / 2);
-                    for (int k = 0; k < frame_height_ / 2; k++) {
-                        memcpy(buffer + yu_offset + (frame_width_ / 2 * k),
-                               av_frame_->data[2] + x1 / 2 * k, frame_width_ / 2);
+//                    for (int k = 0; k < frame_height_ / 2; k++) {
+//                        memcpy(buffer + yu_offset + (frame_width_ / 2 * k), av_frame_->data[2] + x1 / 2 * k, frame_width_ / 2);
+//                    }
+                    for (int k = 0; k < frame_height_ / 4; k++) {
+                        memcpy(buffer + yu_offset + (frame_width_ * k), av_frame_->data[2] + x1 * k, frame_width_);
                     }
-                } else if (format == AVPixelFormat::AV_PIX_FMT_YUV444P) {
+                }
+                else if (format == AVPixelFormat::AV_PIX_FMT_YUV444P) {
                     sdk_stat_->video_color_.Update("4:4:4");
                     frame_width_ = width;
                     frame_height_ = height;
                     if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                         frame_height_ != decoded_image_->img_height || format_change) {
-                        decoded_image_ = RawImage::MakeI444(nullptr, frame_width_ * frame_height_ * 3, frame_width_,
-                                                            frame_height_);
+                        decoded_image_ = RawImage::MakeI444(nullptr, frame_width_ * frame_height_ * 3, frame_width_, frame_height_);
+#ifdef WIN32
+                        auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
+                        decoded_image_->device_ = d3d11_wrapper->d3d11_device_;
+                        decoded_image_->device_context_ = d3d11_wrapper->d3d11_device_context_;
+#endif
                     }
                     char *buffer = decoded_image_->Data();
                     for (int i = 0; i < frame_height_; i++) {
