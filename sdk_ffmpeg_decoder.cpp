@@ -109,7 +109,6 @@ namespace tc
             return format == 0 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
-#if TEST_HW_DECODER
         LOGI("Available codecs:");
         while ((decoder = av_codec_iterate(&opaque)) != NULL) {
             if (decoder->type != AVMEDIA_TYPE_VIDEO) {
@@ -177,7 +176,7 @@ namespace tc
                 }
             }
         }
-#endif
+
         if (decoder_ && found_target_codec) {
             LOGI("Found HW codec, name: {}, id: {}, long name: {}", decoder_->name, (int)decoder_->id, decoder_->long_name);
 

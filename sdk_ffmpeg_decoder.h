@@ -26,8 +26,6 @@ extern "C"
 #include <set>
 #include "sdk_video_decoder.h"
 
-#define TEST_HW_DECODER 1
-
 namespace tc
 {
 
