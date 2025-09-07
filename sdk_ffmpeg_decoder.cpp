@@ -528,6 +528,7 @@ namespace tc
 
                 auto end = TimeUtil::GetCurrentTimestamp();
                 sdk_->PostMiscTask([=, this]() {
+                    sdk_stat_->video_color_.Update("4:2:0");
                     sdk_stat_->AppendDecodeDuration(monitor_name_, end - beg);
                 });
 
