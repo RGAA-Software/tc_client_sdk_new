@@ -29,7 +29,7 @@ namespace tc
 	}
 
 #ifdef WIN32
-    std::shared_ptr<RawImage> RawImage::MakeD3D11Texture(CComPtr<ID3D11Texture2D> texture, int src_subresource) {
+    std::shared_ptr<RawImage> RawImage::MakeD3D11Texture(ComPtr<ID3D11Texture2D> texture, int src_subresource) {
         auto image = std::make_shared<RawImage>(nullptr, 0, 0, 0, 0, RawImageFormat::kRawImageD3D11Texture);
         image->texture_ = texture;
         image->src_subresource_ = src_subresource;

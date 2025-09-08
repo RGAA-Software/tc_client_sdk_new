@@ -501,8 +501,8 @@ namespace tc
                 auto src_subresource = (int)(intptr_t)av_frame_->data[1];
                 //LOGI("resources: {:p}, index: {}", (void*)resource, src_subresource);
 
-                CComPtr<ID3D11Texture2D> acquired_texture = nullptr;
-                HRESULT hr = resource->QueryInterface(IID_PPV_ARGS(&acquired_texture));
+                ComPtr<ID3D11Texture2D> acquired_texture = nullptr;
+                HRESULT hr = resource->QueryInterface(IID_PPV_ARGS(acquired_texture.GetAddressOf()));
                 if (FAILED(hr)) {
                     LOGE("Not a d3d11 texture");
                     break;
