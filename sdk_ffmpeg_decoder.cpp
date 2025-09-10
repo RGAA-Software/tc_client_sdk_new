@@ -540,7 +540,7 @@ namespace tc
                 bool format_change = false;
                 auto format = (AVPixelFormat) decoder_context_->pix_fmt;
                 if (last_format_ != format) {
-                    LOGI("format : {} change to : {}", last_format_, format);
+                    LOGI("format : {} change to : {}", (int)last_format_, (int)format);
                     last_format_ = format;
                     format_change = true;
                 }
@@ -636,26 +636,27 @@ namespace tc
         std::lock_guard<std::mutex> guard(decode_mtx_);
         stop_ = true;
 
-//        while (true) {
-//            auto ret = avcodec_receive_frame(decoder_context_, av_frame_);
-//            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-//                break;
-//            }
-//        }
-//
-//        if (decoder_context_ != nullptr) {
-//            avcodec_close(decoder_context_);
-//            avcodec_free_context(&decoder_context_);
-//            decoder_context_ = nullptr;
-//        }
-//
-//av_packet_unref(packet_);
+        while (true) {
+            auto ret = avcodec_receive_frame(decoder_context_, av_frame_);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                break;
+            }
+        }
+
+        if (decoder_context_ != nullptr) {
+            avcodec_close(decoder_context_);
+            avcodec_free_context(&decoder_context_);
+            decoder_context_ = nullptr;
+        }
+
         if (av_frame_ != nullptr) {
+            av_frame_unref(av_frame_);
             av_free(av_frame_);
             av_frame_ = nullptr;
         }
 
         if (packet_ != nullptr) {
+            av_packet_unref(packet_);
             av_packet_free(&packet_);
             packet_ = nullptr;
         }
