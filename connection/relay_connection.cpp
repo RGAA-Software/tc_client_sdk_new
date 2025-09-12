@@ -36,6 +36,7 @@ namespace tc
             .remote_device_id_ = remote_device_id,
             .stream_id_ = params->stream_id_,
             .device_name_ = params->device_name_,
+            .appkey_ = params->appkey_,
         });
 
         relay_sdk_->SetOnRelayProtoMessageCallback([=, this](const std::shared_ptr<RelayMessage>& rl_msg) {
