@@ -71,11 +71,11 @@ if (ANDROID)
 else ()
     target_link_libraries(tc_sdk PRIVATE libprotobuf tc_relay_client)
 
-    set(FFMPEG_LIB_PATH ${GR_PROJECT_PATH}/deps/tc_3rdparty/ffmpeg/lib/x64)
-    link_directories(${FFMPEG_LIB_PATH})
+    link_directories(${FFMPEG_ROOT}/lib)
+
     target_link_libraries(tc_sdk PRIVATE
             Qt6::Widgets Qt6::Core Qt6::OpenGL Qt6::OpenGLWidgets
-            ${FFMPEG_LIB_PATH}/avcodec.lib ${FFMPEG_LIB_PATH}/avutil.lib ${FFMPEG_LIB_PATH}/avformat.lib
-            ${FFMPEG_LIB_PATH}/swresample.lib ${FFMPEG_LIB_PATH}/swscale.lib ${FFMPEG_LIB_PATH}/avfilter.lib
+            ${FFMPEG_ROOT}/lib/avcodec.lib ${FFMPEG_ROOT}/lib/avutil.lib ${FFMPEG_ROOT}/lib/avformat.lib
+            ${FFMPEG_ROOT}/lib/swresample.lib ${FFMPEG_ROOT}/lib/swscale.lib ${FFMPEG_ROOT}/lib/avfilter.lib
     )
 endif ()

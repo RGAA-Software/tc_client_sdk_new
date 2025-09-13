@@ -106,7 +106,7 @@ namespace tc
             //            AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
             //            AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
             // }
-            return format == 0 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
+            return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
         LOGI("Available codecs:");
@@ -117,6 +117,21 @@ namespace tc
             if (!av_codec_is_decoder(decoder)) {
                 continue;
             }
+
+
+            {
+                LOGI("============================0");
+                for (int i = 0;; i++) {
+                    const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
+                    if (!config) {
+                        break;
+                    }
+                    LOGI(" ==> HW device type: {}, pix format: {}", (int)config->device_type, (int)config->pix_fmt);
+
+                }
+                LOGI("============================1");
+            }
+
 
             if (GetAVCodecCapabilities(decoder) & AV_CODEC_CAP_HARDWARE) {
                 continue;
@@ -146,28 +161,28 @@ namespace tc
                 LOGI(" ==> HW device type: {}, pix format: {}", (int)config->device_type, (int)config->pix_fmt);
                 if (config->device_type == AV_HWDEVICE_TYPE_D3D11VA) {
                     LOGI("Found the D3D11VA, Codec name: {}", decoder->name);
-                    if ((img_format == 0 && config->pix_fmt == AV_PIX_FMT_D3D11)) {
+                    if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_D3D11)) {
                         found_target_codec = true;
                         decoder_ = const_cast<AVCodec*>(decoder);
                         hw_decode_config = const_cast<AVCodecHWConfig*>(config);
-                        LOGI("D3D11VA support image format: {}", (img_format == 0 ? "YUV420" : "YUV444"));
+                        LOGI("D3D11VA support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
                         break;
                     }
                     else {
-                        LOGW("D3D11VA doesn't support image format: {}", (img_format == 0 ? "YUV420" : "YUV444"));
+                        LOGW("D3D11VA doesn't support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
                     }
                 }
 #endif
                 if (config->device_type == AV_HWDEVICE_TYPE_VULKAN) {
                     LOGI("Found the VULKAN");
-                    if ((img_format == 0 && config->pix_fmt == AV_PIX_FMT_VULKAN)) {
+                    if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_VULKAN)) {
                         found_target_codec = true;
                         decoder_ = const_cast<AVCodec*>(decoder);
                         hw_decode_config = const_cast<AVCodecHWConfig*>(config);
-                        LOGW("VULKAN support image format: {}", (img_format == 0 ? "YUV420" : "YUV444"));
+                        LOGW("VULKAN support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
                     }
                     else {
-                        LOGW("VULKAN doesn't support image format: {}", (img_format == 0 ? "YUV420" : "YUV444"));
+                        LOGW("VULKAN doesn't support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
                     }
                 }
 
@@ -297,11 +312,11 @@ namespace tc
             //                               AV_PIX_FMT_VUYX : AV_PIX_FMT_NV12;
             //}
             // todo: Fix the 444 format
-            framesContext->sw_format = img_format == 0 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NONE;
+            framesContext->sw_format = img_format == EImageFormat::kI420 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NONE;
 
             // Surfaces must be 16 pixel aligned for H.264 and 128 pixel aligned for everything else
             // https://github.com/FFmpeg/FFmpeg/blob/a234e5cd80224c95a205c1f3e297d8c04a1374c3/libavcodec/dxva2.c#L609-L616
-            auto m_TextureAlignment = img_format == 0 ? 16 : 128;
+            auto m_TextureAlignment = img_format == EImageFormat::kI420 ? 16 : 128;
 
             framesContext->width = FFALIGN(width, m_TextureAlignment);
             framesContext->height = FFALIGN(height, m_TextureAlignment);
