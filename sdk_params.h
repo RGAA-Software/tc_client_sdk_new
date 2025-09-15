@@ -51,6 +51,8 @@ namespace tc
         int titlebar_color_ = -1;
         // appkey
         std::string appkey_;
+        // decoder
+        std::string decoder_;
 
         std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
     };

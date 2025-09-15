@@ -71,6 +71,7 @@ namespace tc
         if (inited_) {
             return 0;
         }
+        auto sdk_params = sdk_->GetSdkParams();
         monitor_name_ = mon_name;
         img_format_ = img_format;
         av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
@@ -109,85 +110,89 @@ namespace tc
             return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
-        LOGI("Available codecs:");
-        while ((decoder = av_codec_iterate(&opaque)) != NULL) {
-            if (decoder->type != AVMEDIA_TYPE_VIDEO) {
-                continue;
-            }
-            if (!av_codec_is_decoder(decoder)) {
-                continue;
-            }
+        LOGI("Decoder prefer: {}", sdk_params->decoder_);
+        if (sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware") {
+            LOGI("Available codecs:");
+            while ((decoder = av_codec_iterate(&opaque)) != NULL) {
+                if (decoder->type != AVMEDIA_TYPE_VIDEO) {
+                    continue;
+                }
+                if (!av_codec_is_decoder(decoder)) {
+                    continue;
+                }
 
 
-            {
-                LOGI("============================0");
+                {
+                    LOGI("============================0");
+                    for (int i = 0;; i++) {
+                        const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
+                        if (!config) {
+                            break;
+                        }
+                        LOGI(" ==> HW device type: {}, pix format: {}", (int) config->device_type,
+                             (int) config->pix_fmt);
+
+                    }
+                    LOGI("============================1");
+                }
+
+
+                if (GetAVCodecCapabilities(decoder) & AV_CODEC_CAP_HARDWARE) {
+                    continue;
+                }
+
+                if (codec_type == VideoType::kNetH264) {
+                    if (decoder->id != AV_CODEC_ID_H264) {
+                        continue;
+                    }
+                } else if (codec_type == VideoType::kNetHevc) {
+                    if (decoder->id != AV_CODEC_ID_HEVC) {
+                        continue;
+                    }
+                } else {
+                    // AV_CODEC_ID_AV1
+                }
+
                 for (int i = 0;; i++) {
                     const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
                     if (!config) {
                         break;
                     }
-                    LOGI(" ==> HW device type: {}, pix format: {}", (int)config->device_type, (int)config->pix_fmt);
-
-                }
-                LOGI("============================1");
-            }
-
-
-            if (GetAVCodecCapabilities(decoder) & AV_CODEC_CAP_HARDWARE) {
-                continue;
-            }
-
-            if (codec_type == VideoType::kNetH264) {
-                if (decoder->id != AV_CODEC_ID_H264) {
-                    continue;
-                }
-            }
-            else if (codec_type == VideoType::kNetHevc) {
-                if (decoder->id != AV_CODEC_ID_HEVC) {
-                    continue;
-                }
-            }
-            else {
-                // AV_CODEC_ID_AV1
-            }
-
-            for (int i = 0;; i++) {
-                const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
-                if (!config) {
-                    break;
-                }
 
 #ifdef WIN32
-                LOGI(" ==> HW device type: {}, pix format: {}", (int)config->device_type, (int)config->pix_fmt);
-                if (config->device_type == AV_HWDEVICE_TYPE_D3D11VA) {
-                    LOGI("Found the D3D11VA, Codec name: {}", decoder->name);
-                    if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_D3D11)) {
-                        found_target_codec = true;
-                        decoder_ = const_cast<AVCodec*>(decoder);
-                        hw_decode_config = const_cast<AVCodecHWConfig*>(config);
-                        LOGI("D3D11VA support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
+                    LOGI(" ==> HW device type: {}, pix format: {}", (int) config->device_type, (int) config->pix_fmt);
+                    if (config->device_type == AV_HWDEVICE_TYPE_D3D11VA) {
+                        LOGI("Found the D3D11VA, Codec name: {}", decoder->name);
+                        if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_D3D11)) {
+                            found_target_codec = true;
+                            decoder_ = const_cast<AVCodec *>(decoder);
+                            hw_decode_config = const_cast<AVCodecHWConfig *>(config);
+                            LOGI("D3D11VA support image format: {}",
+                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
+                            break;
+                        } else {
+                            LOGW("D3D11VA doesn't support image format: {}",
+                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
+                        }
+                    }
+#endif
+                    if (config->device_type == AV_HWDEVICE_TYPE_VULKAN) {
+                        LOGI("Found the VULKAN");
+                        if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_VULKAN)) {
+                            found_target_codec = true;
+                            decoder_ = const_cast<AVCodec *>(decoder);
+                            hw_decode_config = const_cast<AVCodecHWConfig *>(config);
+                            LOGW("VULKAN support image format: {}",
+                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
+                        } else {
+                            LOGW("VULKAN doesn't support image format: {}",
+                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
+                        }
+                    }
+
+                    if (found_target_codec) {
                         break;
                     }
-                    else {
-                        LOGW("D3D11VA doesn't support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                    }
-                }
-#endif
-                if (config->device_type == AV_HWDEVICE_TYPE_VULKAN) {
-                    LOGI("Found the VULKAN");
-                    if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_VULKAN)) {
-                        found_target_codec = true;
-                        decoder_ = const_cast<AVCodec*>(decoder);
-                        hw_decode_config = const_cast<AVCodecHWConfig*>(config);
-                        LOGW("VULKAN support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                    }
-                    else {
-                        LOGW("VULKAN doesn't support image format: {}", (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                    }
-                }
-
-                if (found_target_codec) {
-                    break;
                 }
             }
         }
