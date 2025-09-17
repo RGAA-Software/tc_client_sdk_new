@@ -19,10 +19,10 @@ namespace tc
 
     class VideoDecoder {
     public:
-        VideoDecoder(const std::shared_ptr<ThunderSdk>& sdk);
+        explicit VideoDecoder(const std::shared_ptr<ThunderSdk>& sdk);
         virtual ~VideoDecoder();
 
-        virtual int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) = 0;
+        virtual int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format, bool ignore_hw);
         virtual Result<std::shared_ptr<RawImage>, int> Decode(const std::shared_ptr<Data>& frame);
         virtual Result<std::shared_ptr<RawImage>, int> Decode(const std::string& frame);
         virtual Result<std::shared_ptr<RawImage>, int> Decode(const uint8_t* data, int size) = 0;
@@ -42,6 +42,7 @@ namespace tc
         std::string monitor_name_;
         SdkStatistics* sdk_stat_ = nullptr;
         std::shared_ptr<ThunderSdk> sdk_ = nullptr;
+        bool ignore_hw_decoder_ = false;
     };
 
 }

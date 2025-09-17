@@ -75,12 +75,19 @@ namespace tc
         void RequestIFrame();
         void ReportStatistics();
         void ClearFirstFrameState();
+        void IncreaseDecodeFailedCount(const std::string& mon_name);
+        int GetDecodeFailedCount(const std::string& mon_name);
+        void ResetDecodeFailedCount(const std::string& mon_name);
+        void DisableHardwareDecoder(const std::string& mon_name);
+        bool IsDisabledHardwareDecoder(const std::string& mon_name);
 
     private:
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
         std::shared_ptr<ThunderSdkParams> sdk_params_;
         std::shared_ptr<NetClient> net_client_ = nullptr;
         std::map<std::string, std::shared_ptr<VideoDecoder>> video_decoders_;
+        std::map<std::string, int> decode_failed_counts_;
+        std::map<std::string, bool> hw_disabled_states_;
 
         // for android
         void* render_surface_ = nullptr;

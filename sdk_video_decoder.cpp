@@ -18,6 +18,11 @@ namespace tc
 
     }
 
+    int VideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format, bool ignore_hw) {
+        ignore_hw_decoder_ = ignore_hw;
+        return 0;
+    }
+
     Result<std::shared_ptr<RawImage>, int> VideoDecoder::Decode(const std::shared_ptr<Data>& frame) {
         return this->Decode((uint8_t*)frame->CStr(), frame->Size());
     }

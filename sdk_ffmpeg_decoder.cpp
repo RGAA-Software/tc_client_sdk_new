@@ -67,7 +67,8 @@ namespace tc
     // img_format:
     // kI420 = 0,
     // kI444 = 1,
-    int FFmpegDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
+    int FFmpegDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format, bool ignore_hw) {
+        VideoDecoder::Init(mon_name, codec_type, width, height, frame, surface, img_format, ignore_hw);
         if (inited_) {
             return 0;
         }
@@ -110,8 +111,8 @@ namespace tc
             return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
-        LOGI("Decoder prefer: {}", sdk_params->decoder_);
-        if (sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware") {
+        LOGI("Decoder prefer: {}, ignore hw? {}", sdk_params->decoder_, ignore_hw_decoder_);
+        if ((sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware") && !ignore_hw_decoder_) {
             LOGI("Available codecs:");
             while ((decoder = av_codec_iterate(&opaque)) != NULL) {
                 if (decoder->type != AVMEDIA_TYPE_VIDEO) {
@@ -122,7 +123,7 @@ namespace tc
                 }
 
 
-                {
+                if (false) {
                     LOGI("============================0");
                     for (int i = 0;; i++) {
                         const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);

@@ -138,12 +138,20 @@ namespace tc
 #if WIN32
                     // from now on, it's for d3d11va decoder
                     // we'll combine decoders into the same decoder class in the future
+                    LOGI("We will try hardware decoder.");
                     video_decoder = std::make_shared<FFmpegDecoder>(shared_from_this());
-                    auto r = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+                    auto r = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format(),
+                                                 IsDisabledHardwareDecoder(frame.mon_name()));
                     if (r != 0) {
                         LOGE("Init D3D11VA decoder failed, will try software decoder");
                         video_decoder->Release();
                         video_decoder.reset();
+                    }
+
+                    if (!IsDisabledHardwareDecoder(frame.mon_name())) {
+                    }
+                    else {
+                        LOGI("Hardware decoder for: {} is disabled, use software.", frame.mon_name());
                     }
 #endif
 
@@ -152,7 +160,7 @@ namespace tc
                         bool ready = video_decoder->Ready();
                         if (!ready) {
                             auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(),
-                                                              frame.frame_height(), frame.data(), render_surface_, frame.image_format());
+                                                              frame.frame_height(), frame.data(), render_surface_, frame.image_format(), false);
                             if (result != 0) {
                                 LOGE("Video decoder init failed, mon name: {}, frame type: {}, frame width: {}, frame height: {}, format: {}",
                                      frame.mon_name(), (int) frame.type(), frame.frame_width(), frame.frame_height(), (int) frame.image_format());
@@ -177,7 +185,7 @@ namespace tc
                     statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
                 });
 
-                SdkCaptureMonitorInfo cap_mon_info{
+                SdkCaptureMonitorInfo cap_mon_info {
                     .mon_name_ = frame.mon_name(),
                     .mon_index_ = frame.mon_index(),
                     .mon_left_ = frame.mon_left(),
@@ -198,9 +206,40 @@ namespace tc
 
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {
-                    RequestIFrame();
-                    LOGE("decode error: {}, will request Key Frame", ret.error());
+                    IncreaseDecodeFailedCount(frame.mon_name());
+                    if (GetDecodeFailedCount(frame.mon_name()) > 15) {
+                        ResetDecodeFailedCount(frame.mon_name());
+                        DisableHardwareDecoder(frame.mon_name());
+                        LOGE("decode error: {}, will recreate the decoder", ret.error());
+                        video_decoder->Release();
+                        video_decoders_.erase(frame.mon_name());
+                        LOGW("Video decoder for : {} is released.", frame.mon_name());
+                    }
+                    else if (GetDecodeFailedCount(frame.mon_name()) > 5) {
+                        RequestIFrame();
+                        LOGE("decode error: {}, will request Key Frame", ret.error());
+                    }
                 }
+
+                // test
+                // if
+                if (false) {
+                    static bool recreate_destroy_decoder = false;
+                    IncreaseDecodeFailedCount(frame.mon_name());
+                    if (!recreate_destroy_decoder) {
+                        if (GetDecodeFailedCount(frame.mon_name()) > 150) {
+                            recreate_destroy_decoder = true;
+                            ResetDecodeFailedCount(frame.mon_name());
+                            DisableHardwareDecoder(frame.mon_name());
+                            LOGE("decode error: {}, will recreate the decoder", ret.error());
+                            video_decoder->Release();
+                            video_decoders_.erase(frame.mon_name());
+                            LOGW("Video decoder for : {} is released.", frame.mon_name());
+                        }
+                    }
+                }
+                // test
+
                 if (exit_ || !ret.has_value()) {
                     LOGE("Don't have value, exit? {}", exit_);
                     return;
@@ -210,6 +249,7 @@ namespace tc
                     LOGE("Don't have decoded image");
                     return;
                 }
+
                 //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
                 if (video_frame_cbk_) {
                     video_frame_cbk_(raw_image, cap_mon_info);
@@ -462,6 +502,33 @@ namespace tc
     void ThunderSdk::ClearFirstFrameState() {
         has_config_msg_ = false;
         has_video_frame_msg_ = false;
+    }
+
+    void ThunderSdk::IncreaseDecodeFailedCount(const std::string& mon_name) {
+        auto count = decode_failed_counts_[mon_name];
+        decode_failed_counts_[mon_name] = count + 1;
+    }
+
+    int ThunderSdk::GetDecodeFailedCount(const std::string& mon_name) {
+        if (decode_failed_counts_.contains(mon_name)) {
+            return decode_failed_counts_[mon_name];
+        }
+        return 0;
+    }
+
+    void ThunderSdk::ResetDecodeFailedCount(const std::string& mon_name) {
+        decode_failed_counts_[mon_name] = 0;
+    }
+
+    void ThunderSdk::DisableHardwareDecoder(const std::string& mon_name) {
+        hw_disabled_states_[mon_name] = true;
+    }
+
+    bool ThunderSdk::IsDisabledHardwareDecoder(const std::string& mon_name) {
+        if (hw_disabled_states_.contains(mon_name)) {
+            return hw_disabled_states_[mon_name];
+        }
+        return false;
     }
 
     void ThunderSdk::Exit() {

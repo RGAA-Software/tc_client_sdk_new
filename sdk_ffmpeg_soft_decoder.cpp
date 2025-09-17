@@ -29,7 +29,8 @@ namespace tc
 
     }
 
-    int FFmpegVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
+    int FFmpegVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format, bool ignore_hw) {
+        VideoDecoder::Init(mon_name, codec_type, width, height, frame, surface, img_format, ignore_hw);
         if (inited_) {
             return 0;
         }

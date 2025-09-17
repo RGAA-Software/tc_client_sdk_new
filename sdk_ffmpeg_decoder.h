@@ -34,7 +34,7 @@ namespace tc
         explicit FFmpegDecoder(const std::shared_ptr<ThunderSdk>& sdk);
         ~FFmpegDecoder() override;
 
-        int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) override;
+        int Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format, bool ignore_hw) override;
         Result<std::shared_ptr<RawImage>, int> Decode(const uint8_t* data, int size) override;
         void Release() override;
         bool Ready() override;
