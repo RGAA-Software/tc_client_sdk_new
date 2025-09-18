@@ -22,6 +22,7 @@ namespace tc
 		kRawImageI420,
 		kRawImageI444,
         kRawImageD3D11Texture,
+		kRawImageVulkan,
 	};
 
 	class RawImage {
