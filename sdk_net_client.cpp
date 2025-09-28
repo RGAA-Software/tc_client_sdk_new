@@ -19,6 +19,7 @@
 #include "tc_common_new/time_util.h"
 #include "sdk_statistics.h"
 #include "tc_message_new/proto_converter.h"
+#include "tc_message_new/proto_message_maker.h"
 #include <asio2/websocket/ws_client.hpp>
 #include <asio2/asio2.hpp>
 
@@ -112,7 +113,11 @@ namespace tc
             // statistics
             this->stat_->AppendRecvDataSize(data->Size());
             // parse
-            this->ParseMessage(data);
+            if (auto m = this->ParseMessage(data); m) {
+                // ack
+                auto ack = ProtoMessageMaker::MakeAck(m->device_id(), m->stream_id(), m->send_time(), m->type());
+                media_conn_->PostBinaryMessage(ack);
+            }
         });
 
         media_conn_->Start();
@@ -121,7 +126,11 @@ namespace tc
                 // statistics
                 this->stat_->AppendRecvDataSize(data->Size());
                 // parse
-                this->ParseMessage(data);
+                if (auto m = this->ParseMessage(data); m) {
+                    // ack
+                    auto ack = ProtoMessageMaker::MakeAck(m->device_id(), m->stream_id(), m->send_time(), m->type());
+                    ft_conn_->PostBinaryMessage(ack);
+                }
             });
             ft_conn_->Start();
         }
@@ -129,13 +138,20 @@ namespace tc
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->SetOnMediaMessageCallback([=, this](std::shared_ptr<Data> msg) {
                 //LOGI("OnMediaMessageCallback, : {}", msg.size());
-                this->ParseMessage(msg);
+                if (auto m = this->ParseMessage(msg); m) {
+                    auto ack = ProtoMessageMaker::MakeAck(m->device_id(), m->stream_id(), m->send_time(), m->type());
+                    rtc_conn_->PostMediaMessage(ack);
+                }
 
                 // statistics
                 this->stat_->AppendRecvDataSize(msg->Size());
             });
             rtc_conn_->SetOnFtMessageCallback([=, this](std::shared_ptr<Data> msg) {
-                this->ParseMessage(msg);
+                if (auto m = this->ParseMessage(msg); m) {
+                    auto ack = ProtoMessageMaker::MakeAck(m->device_id(), m->stream_id(), m->send_time(), m->type());
+                    rtc_conn_->PostFtMessage(ack);
+                }
+
                 this->stat_->AppendRecvDataSize(msg->Size());
             });
             rtc_conn_->Start();
@@ -156,12 +172,12 @@ namespace tc
         LOGI("WS has exited...");
     }
 
-    void NetClient::ParseMessage(std::shared_ptr<Data> msg) {
+    std::shared_ptr<Message> NetClient::ParseMessage(std::shared_ptr<Data> msg) {
         auto net_msg = std::make_shared<tc::Message>();
         bool ok = net_msg->ParsePartialFromArray(msg->CStr(), msg->Size());
         if (!ok) {
             LOGE("Sdk ParseMessage failed.");
-            return;
+            return nullptr;
         }
 
         if (raw_msg_cbk_) {
@@ -249,6 +265,7 @@ namespace tc
                 .ice_ = sub,
             });
         }
+        return net_msg;
     }
 
     void NetClient::PostMediaMessage(std::shared_ptr<Data> msg) {
@@ -304,7 +321,7 @@ namespace tc
                 wait_count++;
             }
             if (wait_count > 0) {
-                LOGI("===> [File] wait for {}ms", wait_count);
+                LOGI("===> [RTC File] wait for {}ms", wait_count);
             }
 
             rtc_conn_->PostFtMessage(msg);
@@ -319,7 +336,9 @@ namespace tc
                 queuing_msg_count = this->GetQueuingFtMsgCount();
                 wait_count++;
             }
-
+            if (wait_count > 0) {
+                LOGI("===> [WS File] wait for {}ms", wait_count);
+            }
             if (ft_conn_) {
                 ft_conn_->PostBinaryMessage(msg);
             }

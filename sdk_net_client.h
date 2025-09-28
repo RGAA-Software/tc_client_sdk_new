@@ -82,7 +82,7 @@ namespace tc
         void RetryConnection();
 
     private:
-        void ParseMessage(std::shared_ptr<Data> msg);
+        std::shared_ptr<tc::Message> ParseMessage(std::shared_ptr<Data> msg);
         void HeartBeat();
 
     private:
