@@ -7,6 +7,10 @@
 
 #include "tc_message.pb.h"
 
+extern "C" {
+    #include <libavutil/buffer.h>
+}
+
 #ifdef WIN32
 #include "tc_common_new/win32/d3d11_wrapper.h"
 #endif
@@ -55,6 +59,9 @@ namespace tc
         std::string decoder_;
 
         std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
+
+        // Device context used for hwaccel decoders (vulkan use)
+        AVBufferRef* vulkan_hw_device_ctx_ = nullptr;
     };
 
 }

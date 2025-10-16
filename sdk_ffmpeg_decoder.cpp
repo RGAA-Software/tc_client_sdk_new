@@ -153,7 +153,7 @@ namespace tc
                     // AV_CODEC_ID_AV1
                 }
 
-                for (int i = 0;; i++) {
+                for (int i = 0; ; i++) {
                     const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
                     if (!config) {
                         break;
@@ -165,8 +165,8 @@ namespace tc
                         LOGI("Found the D3D11VA, Codec name: {}", decoder->name);
                         if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_D3D11)) {
                             found_target_codec = true;
-                            decoder_ = const_cast<AVCodec *>(decoder);
-                            hw_decode_config = const_cast<AVCodecHWConfig *>(config);
+                                decoder_ = const_cast<AVCodec*>(decoder);
+                                hw_decode_config = const_cast<AVCodecHWConfig*>(config);
                             LOGI("D3D11VA support image format: {}",
                                  (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
                             break;
@@ -317,7 +317,7 @@ namespace tc
             //                               AV_PIX_FMT_VUYX : AV_PIX_FMT_NV12;
             //}
             // todo: Fix the 444 format
-            framesContext->sw_format = img_format == EImageFormat::kI420 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NONE;
+            framesContext->sw_format = img_format == EImageFormat::kI420 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_VUYX;
 
             // Surfaces must be 16 pixel aligned for H.264 and 128 pixel aligned for everything else
             // https://github.com/FFmpeg/FFmpeg/blob/a234e5cd80224c95a205c1f3e297d8c04a1374c3/libavcodec/dxva2.c#L609-L616
