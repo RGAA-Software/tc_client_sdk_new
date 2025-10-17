@@ -689,6 +689,12 @@ namespace tc
             av_buffer_unref(&hw_frames_context_);
         }
         if (hw_device_context_) {
+            auto hw_ctx = (AVHWDeviceContext*)hw_device_context_->data;
+            auto d3d11ctx = (AVD3D11VADeviceContext*)hw_ctx->hwctx;
+            if (d3d11ctx) {
+                d3d11ctx->device = nullptr;
+                d3d11ctx->device_context = nullptr;
+            }
             av_buffer_unref(&hw_device_context_);
         }
 
