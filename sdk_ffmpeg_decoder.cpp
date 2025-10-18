@@ -542,7 +542,7 @@ namespace tc
                 auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
                 decoded_image = RawImage::MakeD3D11Texture(acquired_texture, src_subresource);
                 decoded_image->img_width = desc.Width;
-                decoded_image->img_height = desc.Height;
+                decoded_image->img_height = height;//desc.Height;
                 decoded_image->device_ = d3d11_wrapper->d3d11_device_;
                 decoded_image->device_context_ = d3d11_wrapper->d3d11_device_context_;
 
