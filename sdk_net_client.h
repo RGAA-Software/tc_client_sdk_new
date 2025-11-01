@@ -103,8 +103,6 @@ namespace tc
 
         std::shared_ptr<ThunderSdkParams> sdk_params_;
 
-        std::string ip_{};
-        int port_{};
         std::string media_path_{};
         std::string ft_path_;
         ClientNetworkType network_type_;

@@ -43,8 +43,6 @@ namespace tc
 
         this->sdk_params_ = params;
         this->msg_notifier_ = notifier;
-        this->ip_ = ip;
-        this->port_ = port;
         this->media_path_ = media_path;
         this->ft_path_ = ft_path;
         this->network_type_ = nt_type;
@@ -68,24 +66,22 @@ namespace tc
             LOGI("media: {}", media_path_);
             LOGI("file transfer: {}", ft_path_);
             if (sdk_params_->ssl_) {
-                media_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, ip_, port_, media_path_);
-                ft_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_path_);
+                media_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, media_path_);
+                ft_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, ft_path_);
             }
             else {
-                media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, media_path_);
-                ft_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_path_);
+                media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, media_path_);
+                ft_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, ft_path_);
             }
         }
         else if (network_type_ == ClientNetworkType::kUdpKcp) {
             LOGI("Will connect by UDP");
-            media_conn_ = std::make_shared<UdpConnection>(sdk_params_, msg_notifier_, ip_, port_);
+            media_conn_ = std::make_shared<UdpConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_);
         }
         else if (network_type_ == ClientNetworkType::kRelay) {
             auto auto_relay = !sdk_params_->enable_p2p_;
-            media_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_,ip_, port_,device_id_,remote_device_id_,
-                                                            auto_relay, kRoomTypeMedia);
-            ft_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_, ip_, port_, ft_device_id_, ft_remote_device_id_,
-                                                         auto_relay, kRoomTypeFileTransfer);
+            media_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_, sdk_params_->relay_host_, sdk_params_->relay_port_, device_id_,remote_device_id_, auto_relay, kRoomTypeMedia);
+            ft_conn_ = std::make_shared<RelayConnection>(sdk_params_, msg_notifier_, sdk_params_->relay_host_, sdk_params_->relay_port_, ft_device_id_, ft_remote_device_id_, auto_relay, kRoomTypeFileTransfer);
 
             if (sdk_params_->enable_p2p_) {
                 auto relay_conn = std::dynamic_pointer_cast<RelayConnection>(media_conn_);

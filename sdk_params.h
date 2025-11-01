@@ -58,6 +58,11 @@ namespace tc
         // decoder
         std::string decoder_;
 
+        // relay server info
+        std::string relay_host_;
+        int relay_port_ = 0;
+        std::string relay_appkey_;
+
         std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
 
         // Device context used for hwaccel decoders (vulkan use)
