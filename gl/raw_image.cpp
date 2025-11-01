@@ -37,6 +37,10 @@ namespace tc
     }
 #endif
 
+	std::shared_ptr<RawImage> RawImage::MakeVulkanAVFrame(AVFrame* av_frame) {
+		return std::make_shared<RawImage>(av_frame);
+	}
+
 	RawImage::RawImage(char* data, int size, int width, int height, int ch, RawImageFormat format) {
         if (size > 0) {
             img_buf = (char *) malloc(size);
@@ -49,6 +53,10 @@ namespace tc
 		img_height = height;
 		img_ch = ch;
 		img_format = format;
+	}
+
+	RawImage::RawImage(AVFrame* av_frame) : vulkan_av_frame_(av_frame) {
+		img_format = kRawImageVulkanAVFrame;
 	}
 
 	RawImage::~RawImage() {

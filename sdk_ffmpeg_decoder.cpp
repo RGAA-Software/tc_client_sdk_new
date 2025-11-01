@@ -26,7 +26,7 @@ namespace tc
 {
 
     FFmpegDecoder::FFmpegDecoder(const std::shared_ptr<ThunderSdk>& sdk) : VideoDecoder(sdk) {
-
+        
     }
 
     FFmpegDecoder::~FFmpegDecoder() {

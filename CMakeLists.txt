@@ -39,6 +39,7 @@ set(SDK_SRCS
     thunder_sdk.cpp
     sdk_video_decoder.cpp
     sdk_ffmpeg_decoder.cpp
+    sdk_ffmpeg_vulkan_decoder.cpp
     sdk_ffmpeg_soft_decoder.cpp
     sdk_mediacodec_video_decoder.cpp
     sdk_net_client.cpp

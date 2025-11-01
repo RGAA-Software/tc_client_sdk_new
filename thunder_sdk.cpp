@@ -20,6 +20,7 @@
 #include "sdk_video_decoder_factory.h"
 #include "sdk_ffmpeg_soft_decoder.h"
 #include "sdk_ffmpeg_decoder.h"
+#include "sdk_ffmpeg_vulkan_decoder.h"
 #include "tc_message_new/proto_converter.h"
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
@@ -139,7 +140,13 @@ namespace tc
                     // from now on, it's for d3d11va decoder
                     // we'll combine decoders into the same decoder class in the future
                     LOGI("We will try hardware decoder.");
-                    video_decoder = std::make_shared<FFmpegDecoder>(shared_from_this());
+
+                    if (sdk_params_->support_vulkan_) {
+                        video_decoder = std::make_shared<FFmpegVulkanDecoder>(shared_from_this());
+                    }
+                    else {
+                        video_decoder = std::make_shared<FFmpegDecoder>(shared_from_this());
+                    }
                     auto r = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format(),
                                                  IsDisabledHardwareDecoder(frame.mon_name()));
                     if (r != 0) {
@@ -203,7 +210,7 @@ namespace tc
                     LOGI("Video frame came, index: {}, diff: {}", frame.frame_index(), frame_diff);
                 }
                 last_frame_index = frame.frame_index();
-
+               
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {
                     IncreaseDecodeFailedCount(frame.mon_name());

@@ -62,6 +62,8 @@ namespace tc
 
         // Device context used for hwaccel decoders (vulkan use)
         AVBufferRef* vulkan_hw_device_ctx_ = nullptr;
+
+        bool support_vulkan_ = false;
     };
 
 }
