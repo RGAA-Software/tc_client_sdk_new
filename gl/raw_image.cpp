@@ -1,4 +1,5 @@
 ﻿#include "raw_image.h"
+#include <fstream>
 #include "tc_common_new/log.h"
 
 namespace tc
@@ -87,4 +88,51 @@ namespace tc
 		}
 	}
 
+	void RawImage::SaveYUV444ToFile(const std::string& filename) {
+		uint8_t* yuv_data = reinterpret_cast<uint8_t*>(img_buf);
+		int width = img_width;
+		int height = img_height;
+
+		// 计算YUV数据的大小（Y + U + V）
+		int dataSize = width * height * 3;  // Y + U + V
+
+		// 打开文件以二进制写入
+		std::ofstream outFile(filename, std::ios::binary);
+		if (!outFile.is_open()) {
+			std::cerr << "Failed to open file for writing: " << filename << std::endl;
+			return;
+		}
+
+		// 假设内存中的数据已经是顺序排列：YUV
+		// 依次读取 Y、U、V 数据
+		outFile.write(reinterpret_cast<const char*>(yuv_data), width * height);       // 写入Y
+		outFile.write(reinterpret_cast<const char*>(yuv_data + width * height), width * height);  // 写入U
+		outFile.write(reinterpret_cast<const char*>(yuv_data + 2 * width * height), width * height);  // 写入V
+
+		outFile.close();
+	}
+
+	void RawImage::AppendYUV444ToFile(const std::string& filename) {
+		uint8_t* yuv_data = reinterpret_cast<uint8_t*>(img_buf);
+		int width = img_width;
+		int height = img_height;
+
+		// 计算YUV数据的大小（Y + U + V）
+		int dataSize = width * height * 3;  // Y + U + V
+
+		// 打开文件以二进制写入
+		std::ofstream outFile(filename, std::ios::binary | std::ios::app);
+		if (!outFile.is_open()) {
+			std::cerr << "Failed to open file for writing: " << filename << std::endl;
+			return;
+		}
+
+		// 假设内存中的数据已经是顺序排列：YUV
+		// 依次读取 Y、U、V 数据
+		outFile.write(reinterpret_cast<const char*>(yuv_data), width * height);       // 写入Y
+		outFile.write(reinterpret_cast<const char*>(yuv_data + width * height), width * height);  // 写入U
+		outFile.write(reinterpret_cast<const char*>(yuv_data + 2 * width * height), width * height);  // 写入V
+
+		outFile.close();
+	}
 }

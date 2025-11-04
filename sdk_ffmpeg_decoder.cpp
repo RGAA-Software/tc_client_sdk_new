@@ -98,16 +98,18 @@ namespace tc
         void* opaque = NULL;
 
         auto fnGetPreferredPixelFormat = [] (int format) -> AVPixelFormat {
-            // if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
-            //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
-            //            AV_PIX_FMT_YUV444P10 : // 10-bit 3-plane YUV 4:4:4
-            //            AV_PIX_FMT_P010;       // 10-bit 2-plane YUV 4:2:0
-            // }
-            // else {
-            //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
-            //            AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
-            //            AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
-            // }
+#if 0
+            if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
+                return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
+                       AV_PIX_FMT_YUV444P10 : // 10-bit 3-plane YUV 4:4:4
+                       AV_PIX_FMT_P010;       // 10-bit 2-plane YUV 4:2:0
+            }
+            else {
+                return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
+                       AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
+                       AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
+            }
+#endif
             return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
@@ -398,6 +400,8 @@ namespace tc
                 LOGE("Source codec context is NULL.");
                 return -1;
             }
+            auto pix_format = img_format_ == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
+            decoder_context_->pix_fmt = pix_format;
             decoder_context_->thread_count = std::min(8, (int)std::thread::hardware_concurrency());
             decoder_context_->thread_type = FF_THREAD_SLICE;
 

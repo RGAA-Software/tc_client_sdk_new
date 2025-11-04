@@ -54,6 +54,9 @@ namespace tc
 		std::shared_ptr<RawImage> Clone();
 		void CopyTo(const std::shared_ptr<RawImage>& target);
 
+		// 保存到单个文件
+		void SaveYUV444ToFile(const std::string& filename);
+		void AppendYUV444ToFile(const std::string& filename);
 	public:
 
 		char* img_buf = nullptr;
