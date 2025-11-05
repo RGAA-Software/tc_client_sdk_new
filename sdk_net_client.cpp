@@ -181,6 +181,15 @@ namespace tc
         }
 
         if (net_msg->type() == tc::kVideoFrame) {
+            {
+#if 0           //save file
+                tc::VideoFrame frame = net_msg->video_frame();
+                std::string name = frame.mon_name().substr(3);
+                std::string t =  TimeUtil::FormatTimestamp2(TimeUtil::GetCurrentTimestamp());
+                static auto f = File::OpenForWriteB(std::format(".\\{}_{}_recv_video.h265", name, t));
+                f->Append(frame.data());
+#endif
+            }
             if (video_frame_cbk_) {
                 video_frame_cbk_(net_msg);
             }

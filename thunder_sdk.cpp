@@ -91,9 +91,9 @@ namespace tc
         statistics_ = SdkStatistics::Instance();
 
         // threads
-        video_thread_ = Thread::Make("video", 16);
+        video_thread_ = Thread::Make("video", 512);
         video_thread_->Poll();
-        audio_thread_ = Thread::Make("audio", 16);
+        audio_thread_ = Thread::Make("audio", 32);
         audio_thread_->Poll();
         misc_thread_ = Thread::Make("misc", 32);
         misc_thread_->Poll();
@@ -111,7 +111,7 @@ namespace tc
         net_client_->SetOnVideoFrameMsgCallback([=, this](std::shared_ptr<tc::Message> msg) {
             if (exit_) { return; }
             this->PostVideoTask([=, this]() {
-                auto frame = msg->video_frame();
+                tc::VideoFrame frame = msg->video_frame();
                 const auto& monitor_name = frame.mon_name();
                 std::shared_ptr<VideoDecoder> video_decoder = nullptr;
                 if (video_decoders_.contains(monitor_name)) {
