@@ -89,7 +89,7 @@ namespace tc
 
     void ThunderSdk::Start() {
         statistics_ = SdkStatistics::Instance();
-
+        statistics_->render_type_.Update(sdk_params_->render_type_name_);
         // threads
         video_thread_ = Thread::Make("video", 512);
         video_thread_->Poll();

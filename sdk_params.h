@@ -69,6 +69,8 @@ namespace tc
         AVBufferRef* vulkan_hw_device_ctx_ = nullptr;
 
         bool support_vulkan_ = false;
+
+        std::string render_type_name_ = "unknow";
     };
 
 }
