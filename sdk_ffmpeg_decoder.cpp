@@ -178,20 +178,6 @@ namespace tc
                         }
                     }
 #endif
-                    if (config->device_type == AV_HWDEVICE_TYPE_VULKAN) {
-                        LOGI("Found the VULKAN");
-                        if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_VULKAN)) {
-                            found_target_codec = true;
-                            decoder_ = const_cast<AVCodec *>(decoder);
-                            hw_decode_config = const_cast<AVCodecHWConfig *>(config);
-                            LOGW("VULKAN support image format: {}",
-                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                        } else {
-                            LOGW("VULKAN doesn't support image format: {}",
-                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                        }
-                    }
-
                     if (found_target_codec) {
                         break;
                     }

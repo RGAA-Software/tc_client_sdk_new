@@ -44,7 +44,7 @@ namespace tc
 
         AVBufferRef* hw_device_context_ = nullptr;
 
-        AVPixelFormat last_format_ = AV_PIX_FMT_NONE;
+        AVPixelFormat pix_format_ = AV_PIX_FMT_NONE;
         //std::shared_ptr<RawImage> decoded_image_ = nullptr;
     };
 

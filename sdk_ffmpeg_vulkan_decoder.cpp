@@ -20,12 +20,28 @@
 
 namespace tc
 {
-    enum AVPixelFormat vulkanFFGetFormat(AVCodecContext* context, const enum AVPixelFormat* pixFmts) {
+    enum AVPixelFormat VulkanFFGetFormat(AVCodecContext* context, const enum AVPixelFormat* pixFmts) {
         for (const AVPixelFormat* p = pixFmts; *p != AV_PIX_FMT_NONE; p++) {
             if (*p == AV_PIX_FMT_VULKAN)
                 return *p;
         }
         return AV_PIX_FMT_NONE; // 如果 Vulkan 不在候选中，直接失败
+    }
+
+    enum AVPixelFormat YUV420FFGetFormat(AVCodecContext* context, const enum AVPixelFormat* pixFmts) {
+        for (const AVPixelFormat* p = pixFmts; *p != AV_PIX_FMT_NONE; p++) {
+            if (*p == AV_PIX_FMT_YUV420P)
+                return *p;
+        }
+        return AV_PIX_FMT_NONE;
+    }
+
+    enum AVPixelFormat YUV444FFGetFormat(AVCodecContext* context, const enum AVPixelFormat* pixFmts) {
+        for (const AVPixelFormat* p = pixFmts; *p != AV_PIX_FMT_NONE; p++) {
+            if (*p == AV_PIX_FMT_YUV444P)
+                return *p;
+        }
+        return AV_PIX_FMT_NONE; 
     }
 
     FFmpegVulkanDecoder::FFmpegVulkanDecoder(const std::shared_ptr<ThunderSdk>& sdk) : VideoDecoder(sdk) {
@@ -130,13 +146,25 @@ namespace tc
         // runs out of output buffers.
         decoder_context_->err_recognition = AV_EF_EXPLODE;
 
-        decoder_context_->pix_fmt = AV_PIX_FMT_VULKAN;// 表示 解码输出的像素格式
-        decoder_context_->get_format = vulkanFFGetFormat;// 是 FFmpeg 解码器在解码初始化阶段调用的回调函数，用来由你（应用层）选择最终的输出像素格式
-
         auto params = sdk_->GetSdkParams();
+        if (params->decoder_ == "Auto" || params->decoder_ == "Hardware") { //硬解码
+            pix_format_ = decoder_context_->pix_fmt = AV_PIX_FMT_VULKAN;// 表示 解码输出的像素格式
+            decoder_context_->get_format = VulkanFFGetFormat;// 是 FFmpeg 解码器在解码初始化阶段调用的回调函数，用来由你（应用层）选择最终的输出像素格式
 
-        LOGI("params->vulkan_hw_device_ctx_ : {}", (void*)params->vulkan_hw_device_ctx_);
-        decoder_context_->hw_device_ctx = av_buffer_ref(params->vulkan_hw_device_ctx_);
+            LOGI("params->vulkan_hw_device_ctx_ : {}", (void*)params->vulkan_hw_device_ctx_);
+            decoder_context_->hw_device_ctx = av_buffer_ref(params->vulkan_hw_device_ctx_);
+            // No threading for HW decode
+            decoder_context_->thread_count = 1;
+        }
+        else {  //软解码
+            auto fnGetPreferredPixelFormat = [](int format) -> AVPixelFormat {
+                return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
+            };
+            pix_format_ = decoder_context_->pix_fmt = fnGetPreferredPixelFormat(img_format_);
+            decoder_context_->get_format = img_format_ == EImageFormat::kI420 ? YUV420FFGetFormat : YUV444FFGetFormat;;
+            decoder_context_->thread_type = FF_THREAD_SLICE;
+            decoder_context_->thread_count = std::min(8, (int)std::thread::hardware_concurrency());
+        }
 
         AVDictionary* options = nullptr;
         int err = avcodec_open2(decoder_context_, decoder_, &options);
@@ -190,9 +218,8 @@ namespace tc
                 LOGI("key frame!!!!!!! AV frame format: {}", av_frame_->format);
             }
 
-            if (av_frame_->format != AV_PIX_FMT_VULKAN) {
-                LOGE("AV frame format: {}, is not AV_PIX_FMT_VULKAN", av_frame_->format);
-
+            if (av_frame_->format != pix_format_) {
+                LOGE("AV frame format: {}, is not {}", av_frame_->format, (int)pix_format_);
                 return TRError(-2);
             }
 
