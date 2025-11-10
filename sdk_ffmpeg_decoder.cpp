@@ -75,6 +75,12 @@ namespace tc
         auto sdk_params = sdk_->GetSdkParams();
         monitor_name_ = mon_name;
         img_format_ = img_format;
+
+        SdkMsgVideoDecodeInit init_msg;
+        init_msg.width_ = width;
+        init_msg.height_ = height;
+        init_msg.format_ = (EImageFormat)img_format_;
+
         av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
             char buffer[4096] = {0};
             vsnprintf(buffer, sizeof(buffer), fmt, vl);
@@ -334,7 +340,7 @@ namespace tc
             D3D11_TEXTURE2D_DESC textureDesc;
             d3d11vaFramesContext->texture_infos->texture->GetDesc(&textureDesc);
 #endif
-
+            init_msg.hard_ware_ = true;
         }
         else {
             //
@@ -403,12 +409,15 @@ namespace tc
 
             avcodec_parameters_free(&codec_params);
             
+            init_msg.hard_ware_ = false;
         }
 
         packet_ = av_packet_alloc();
         av_frame_ = av_frame_alloc();
         
         inited_ = true;
+
+        SendInitMsg(init_msg);
 
         return 0;
     }

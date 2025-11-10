@@ -9,6 +9,7 @@
 #include <functional>
 #include <mutex>
 #include "expt/expected.h"
+#include "sdk_messages.h"
 
 namespace tc
 {
@@ -29,7 +30,7 @@ namespace tc
         virtual void Release();
         virtual bool NeedReConstruct(int codec_type, int width, int height, int img_format);
         virtual bool Ready() = 0;
-
+        void SendInitMsg(SdkMsgVideoDecodeInit msg);
     protected:
         bool inited_ = false;
         int codec_type_ = -1;

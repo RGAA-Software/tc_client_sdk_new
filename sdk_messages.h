@@ -201,6 +201,14 @@ namespace tc
     public:
 
     };
+
+    class SdkMsgVideoDecodeInit {
+    public:
+        EImageFormat format_ = EImageFormat::kI420;
+        int width_ = 0;
+        int height_ = 0;
+        bool hard_ware_ = false;
+    };
 }
 
 #endif //TC_CLIENT_ANDROID_SDK_MESSAGES_H

@@ -17,6 +17,7 @@
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "tc_common_new/win32/d3d11_wrapper.h"
 #include "tc_common_new/win32/d3d_debug_helper.h"
+#include "sdk_messages.h"
 
 namespace tc
 {
@@ -146,6 +147,11 @@ namespace tc
         // runs out of output buffers.
         decoder_context_->err_recognition = AV_EF_EXPLODE;
 
+        SdkMsgVideoDecodeInit init_msg;
+        init_msg.width_ = frame_width_;
+        init_msg.height_ = frame_height_;
+        init_msg.format_ = (EImageFormat)img_format_;
+      
         auto params = sdk_->GetSdkParams();
         if (params->decoder_ == "Auto" || params->decoder_ == "Hardware") { //硬解码
             pix_format_ = decoder_context_->pix_fmt = AV_PIX_FMT_VULKAN;// 表示 解码输出的像素格式
@@ -155,6 +161,7 @@ namespace tc
             decoder_context_->hw_device_ctx = av_buffer_ref(params->vulkan_hw_device_ctx_);
             // No threading for HW decode
             decoder_context_->thread_count = 1;
+            init_msg.hard_ware_ = true;
         }
         else {  //软解码
             auto fnGetPreferredPixelFormat = [](int format) -> AVPixelFormat {
@@ -164,6 +171,7 @@ namespace tc
             decoder_context_->get_format = img_format_ == EImageFormat::kI420 ? YUV420FFGetFormat : YUV444FFGetFormat;;
             decoder_context_->thread_type = FF_THREAD_SLICE;
             decoder_context_->thread_count = std::min(8, (int)std::thread::hardware_concurrency());
+            init_msg.hard_ware_ = false;
         }
 
         AVDictionary* options = nullptr;
@@ -172,6 +180,9 @@ namespace tc
         if (0 != err) {
             return false;
         }
+
+        SendInitMsg(init_msg);
+
         return true;
     }
 
