@@ -48,7 +48,7 @@ set(SDK_SRCS
     sdk_timer.cpp
     sdk_statistics.cpp
     sdk_errors.cpp
-
+    video_decode_thread_task.cpp
     ${CONN_SRCS}
 )
 

@@ -21,6 +21,7 @@
 #include "sdk_ffmpeg_soft_decoder.h"
 #include "sdk_ffmpeg_decoder.h"
 #include "sdk_ffmpeg_vulkan_decoder.h"
+#include "video_decode_thread_task.h"
 #include "tc_message_new/proto_converter.h"
 #ifdef WIN32
 #include "tc_common_new/hardware.h"
@@ -91,7 +92,18 @@ namespace tc
         statistics_ = SdkStatistics::Instance();
         statistics_->render_type_.Update(sdk_params_->render_type_name_);
         // threads
-        video_thread_ = Thread::Make("video", 512);
+        video_thread_ = Thread::Make("video", 256);
+        video_thread_->SetOnFrontTaskCallback([=](ThreadTaskPtr task_tr) ->void{
+            if (!task_tr) {
+                return;
+            }
+            auto video_decode_task_ptr = std::dynamic_pointer_cast<VideoDecodeThreadTask>(task_tr);
+            if (!video_decode_task_ptr) {
+                return;
+            }
+            LOGW("the video task monitor_name: {}, frame_index: {}, discarded!", video_decode_task_ptr->monitor_name_, video_decode_task_ptr->frame_index_);
+        });
+
         video_thread_->Poll();
         audio_thread_ = Thread::Make("audio", 32);
         audio_thread_->Poll();
@@ -110,8 +122,10 @@ namespace tc
 
         net_client_->SetOnVideoFrameMsgCallback([=, this](std::shared_ptr<tc::Message> msg) {
             if (exit_) { return; }
-            this->PostVideoTask([=, this]() {
-                tc::VideoFrame frame = msg->video_frame();
+            
+            tc::VideoFrame frame = msg->video_frame();
+
+            auto video_task = [=, this]() ->void {
                 const auto& monitor_name = frame.mon_name();
                 std::shared_ptr<VideoDecoder> video_decoder = nullptr;
                 if (video_decoders_.contains(monitor_name)) {
@@ -148,7 +162,7 @@ namespace tc
                         video_decoder = std::make_shared<FFmpegDecoder>(shared_from_this());
                     }
                     auto r = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(), frame.frame_height(), frame.data(), render_surface_, frame.image_format(),
-                                                 IsDisabledHardwareDecoder(frame.mon_name()));
+                        IsDisabledHardwareDecoder(frame.mon_name()));
                     if (r != 0) {
                         LOGE("Init D3D11VA decoder failed, will try software decoder");
                         video_decoder->Release();
@@ -167,13 +181,13 @@ namespace tc
                         bool ready = video_decoder->Ready();
                         if (!ready) {
                             auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(),
-                                                              frame.frame_height(), frame.data(), render_surface_, frame.image_format(), false);
+                                frame.frame_height(), frame.data(), render_surface_, frame.image_format(), false);
                             if (result != 0) {
                                 LOGE("Video decoder init failed, mon name: {}, frame type: {}, frame width: {}, frame height: {}, format: {}",
-                                     frame.mon_name(), (int) frame.type(), frame.frame_width(), frame.frame_height(), (int) frame.image_format());
+                                    frame.mon_name(), (int)frame.type(), frame.frame_width(), frame.frame_height(), (int)frame.image_format());
                                 return;
                             }
-                            LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int) frame.type());
+                            LOGI("Create decoder success {}x{}, type: {}", frame.frame_width(), frame.frame_height(), (int)frame.type());
                         }
                     }
                     video_decoders_[monitor_name] = video_decoder;
@@ -190,9 +204,9 @@ namespace tc
                     statistics_->AppendVideoRecvGap(frame.mon_name(), diff);
                     statistics_->TickVideoRecvFps(frame.mon_name());
                     statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
-                });
+                    });
 
-                SdkCaptureMonitorInfo cap_mon_info {
+                SdkCaptureMonitorInfo cap_mon_info{
                     .mon_name_ = frame.mon_name(),
                     .mon_index_ = frame.mon_index(),
                     .mon_left_ = frame.mon_left(),
@@ -210,7 +224,7 @@ namespace tc
                     LOGI("Video frame came, index: {}, diff: {}", frame.frame_index(), frame_diff);
                 }
                 last_frame_index = frame.frame_index();
-               
+
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {
                     IncreaseDecodeFailedCount(frame.mon_name());
@@ -229,7 +243,6 @@ namespace tc
                 }
 
                 // test
-                // if
                 if (false) {
                     static bool recreate_destroy_decoder = false;
                     IncreaseDecodeFailedCount(frame.mon_name());
@@ -266,7 +279,9 @@ namespace tc
                     has_video_frame_msg_ = true;
                     SendFirstFrameMessage(raw_image, cap_mon_info);
                 }
-            });
+            };
+
+            this->PostVideoTask(video_task, frame.frame_index(), frame.mon_name());
         });
 
         net_client_->SetOnAudioFrameMsgCallback([=, this](std::shared_ptr<tc::Message> msg) {
@@ -398,8 +413,11 @@ namespace tc
         }
     }
 
-    void ThunderSdk::PostVideoTask(std::function<void()>&& task) {
-        video_thread_->Post(SimpleThreadTask::Make(std::move(task)));
+    void ThunderSdk::PostVideoTask(std::function<void()>&& task, int64_t frame_index, const std::string& monitor_name) {
+        auto video_task = VideoDecodeThreadTask::Make(std::move(task));
+        video_task->frame_index_ = frame_index;
+        video_task->monitor_name_ = monitor_name;
+        video_thread_->Post(video_task);
     }
 
     void ThunderSdk::PostAudioTask(std::function<void()>&& task) {
