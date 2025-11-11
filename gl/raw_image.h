@@ -66,6 +66,7 @@ namespace tc
 		int img_ch = -1;
 		RawImageFormat img_format;
 		AVFrame* vulkan_av_frame_ = nullptr;
+		bool full_color_ = false;
 #ifdef WIN32
         ComPtr<ID3D11Device> device_ = nullptr;
         ComPtr<ID3D11DeviceContext> device_context_ = nullptr;

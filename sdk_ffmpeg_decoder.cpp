@@ -544,7 +544,7 @@ namespace tc
                 decoded_image->img_height = height;//desc.Height;
                 decoded_image->device_ = d3d11_wrapper->d3d11_device_;
                 decoded_image->device_context_ = d3d11_wrapper->d3d11_device_context_;
-
+                decoded_image->full_color_ = false;
                 auto end = TimeUtil::GetCurrentTimestamp();
                 sdk_->PostMiscTask([=, this]() {
                     sdk_stat_->video_color_.Update("4:2:0");
@@ -571,6 +571,8 @@ namespace tc
                     if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                         frame_height_ != decoded_image_->img_height || format_change) {
                         decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5, frame_width_, frame_height_);
+                        decoded_image_->full_color_ = false;
+                        
 #ifdef WIN32
                         auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
                         if (d3d11_wrapper && d3d11_wrapper->IsValid()) {
@@ -607,6 +609,7 @@ namespace tc
                     if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                         frame_height_ != decoded_image_->img_height || format_change) {
                         decoded_image_ = RawImage::MakeI444(nullptr, frame_width_ * frame_height_ * 3, frame_width_, frame_height_);
+                        decoded_image_->full_color_ = true;
 #ifdef WIN32
                         auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
                         if (d3d11_wrapper && d3d11_wrapper->IsValid()) {

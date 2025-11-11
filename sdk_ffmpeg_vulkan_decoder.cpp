@@ -255,6 +255,7 @@ namespace tc
                 sdk_stat_->AppendDecodeDuration(monitor_name_, end - beg);
             });
             decoded_image = RawImage::MakeVulkanAVFrame(av_frame_);
+            decoded_image->full_color_ = img_format_ == EImageFormat::kI444;
             break;
         }
           
