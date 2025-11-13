@@ -92,8 +92,12 @@ namespace tc
         statistics_ = SdkStatistics::Instance();
         statistics_->render_type_.Update(sdk_params_->render_type_name_);
         // threads
-        video_thread_ = Thread::Make("video", 256);
+        video_thread_ = Thread::Make("video", 128);
         video_thread_->SetOnFrontTaskCallback([=](ThreadTaskPtr task_tr) ->void{
+            if (video_frame_thread_discarded_cbk_) {
+                video_frame_thread_discarded_cbk_();
+                need_clear_video_tasks_ = true;
+            }
             if (!task_tr) {
                 return;
             }
@@ -204,7 +208,7 @@ namespace tc
                     statistics_->AppendVideoRecvGap(frame.mon_name(), diff);
                     statistics_->TickVideoRecvFps(frame.mon_name());
                     statistics_->UpdateFrameSize(frame.mon_name(), frame.frame_width(), frame.frame_height());
-                    });
+                });
 
                 SdkCaptureMonitorInfo cap_mon_info{
                     .mon_name_ = frame.mon_name(),
@@ -418,6 +422,11 @@ namespace tc
         video_task->frame_index_ = frame_index;
         video_task->monitor_name_ = monitor_name;
         video_thread_->Post(video_task);
+        if (need_clear_video_tasks_) {
+            need_clear_video_tasks_ = false;
+            RequestIFrame();
+            video_thread_->Clear();
+        }
     }
 
     void ThunderSdk::PostAudioTask(std::function<void()>&& task) {
@@ -472,6 +481,10 @@ namespace tc
         if (net_client_) {
             net_client_->SetOnRawMessageCallback(std::move(cbk));
         }
+    }
+
+    void ThunderSdk::SetOnVideoFrameDecodeThreadDiscardedCallback(OnVideoFrameDecodeThreadDiscardedCallback&& cbk) {
+        video_frame_thread_discarded_cbk_ = cbk;
     }
 
     int ThunderSdk::GetProgressSteps() const {
