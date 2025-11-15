@@ -162,6 +162,11 @@ namespace tc
             // No threading for HW decode
             decoder_context_->thread_count = 1;
             init_msg.hard_ware_ = true;
+            if (AV_CODEC_ID_H264 == codec_id) {
+                sdk_stat_->video_decoder_.Update("264(Vulkan)");
+            } else if (AV_CODEC_ID_H265 == codec_id) {
+                sdk_stat_->video_decoder_.Update("265(Vulkan)");
+            }
         }
         else {  //Èí½âÂë
             auto fnGetPreferredPixelFormat = [](int format) -> AVPixelFormat {
