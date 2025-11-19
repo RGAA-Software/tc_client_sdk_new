@@ -1,10 +1,6 @@
-#include "sdk_ffmpeg_vulkan_decoder.h"
+Ôªø#include "sdk_ffmpeg_vulkan_decoder.h"
 #include <iostream>
 #include <thread>
-#include <d3d11.h>
-#include <dxgi1_2.h>
-#include <windows.h>
-#include <atlbase.h>
 #include <fstream>
 #include "thunder_sdk.h"
 #include "sdk_statistics.h"
@@ -15,8 +11,6 @@
 #include "tc_common_new/time_util.h"
 #include "tc_common_new/string_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
-#include "tc_common_new/win32/d3d11_wrapper.h"
-#include "tc_common_new/win32/d3d_debug_helper.h"
 #include "sdk_messages.h"
 
 namespace tc
@@ -26,7 +20,7 @@ namespace tc
             if (*p == AV_PIX_FMT_VULKAN)
                 return *p;
         }
-        return AV_PIX_FMT_NONE; // »Áπ˚ Vulkan ≤ª‘⁄∫Ú—°÷–£¨÷±Ω” ß∞‹
+        return AV_PIX_FMT_NONE; // Â¶ÇÊûú Vulkan ‰∏çÂú®ÂÄôÈÄâ‰∏≠ÔºåÁõ¥Êé•Â§±Ë¥•
     }
 
     enum AVPixelFormat YUV420FFGetFormat(AVCodecContext* context, const enum AVPixelFormat* pixFmts) {
@@ -123,7 +117,7 @@ namespace tc
 
         decoder_context_ = avcodec_alloc_context3(decoder_);
         if (!decoder_context_) {
-            qDebug() << "avcodec_alloc_context3 error";
+            LOGE("avcodec_alloc_context3 error");
             return false;
         }
 
@@ -153,9 +147,9 @@ namespace tc
         init_msg.format_ = (EImageFormat)img_format_;
       
         auto params = sdk_->GetSdkParams();
-        if (params->decoder_ == "Auto" || params->decoder_ == "Hardware") { //”≤Ω‚¬Î
-            pix_format_ = decoder_context_->pix_fmt = AV_PIX_FMT_VULKAN;// ±Ì æ Ω‚¬Î ‰≥ˆµƒœÒÀÿ∏Ò Ω
-            decoder_context_->get_format = VulkanFFGetFormat;//  « FFmpeg Ω‚¬Î∆˜‘⁄Ω‚¬Î≥ı ºªØΩ◊∂Œµ˜”√µƒªÿµ˜∫Ø ˝£¨”√¿¥”…ƒ„£®”¶”√≤„£©—°‘Ò◊Ó÷’µƒ ‰≥ˆœÒÀÿ∏Ò Ω
+        if (params->decoder_ == "Auto" || params->decoder_ == "Hardware") { //Á°¨Ëß£Á†Å
+            pix_format_ = decoder_context_->pix_fmt = AV_PIX_FMT_VULKAN;// Ë°®Á§∫ Ëß£Á†ÅËæìÂá∫ÁöÑÂÉèÁ¥†Ê†ºÂºè
+            decoder_context_->get_format = VulkanFFGetFormat;// ÊòØ FFmpeg Ëß£Á†ÅÂô®Âú®Ëß£Á†ÅÂàùÂßãÂåñÈò∂ÊÆµË∞ÉÁî®ÁöÑÂõûË∞ÉÂáΩÊï∞ÔºåÁî®Êù•Áî±‰Ω†ÔºàÂ∫îÁî®Â±ÇÔºâÈÄâÊã©ÊúÄÁªàÁöÑËæìÂá∫ÂÉèÁ¥†Ê†ºÂºè
 
             LOGI("params->vulkan_hw_device_ctx_ : {}", (void*)params->vulkan_hw_device_ctx_);
             decoder_context_->hw_device_ctx = av_buffer_ref(params->vulkan_hw_device_ctx_);
@@ -168,7 +162,7 @@ namespace tc
                 sdk_stat_->video_decoder_.Update("265(Vulkan)");
             }
         }
-        else {  //»ÌΩ‚¬Î
+        else {  //ËΩØËß£Á†Å
             auto fnGetPreferredPixelFormat = [](int format) -> AVPixelFormat {
                 return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
             };
@@ -245,7 +239,7 @@ namespace tc
                 av_get_pix_fmt_name((AVPixelFormat)av_frame_->format));
             if (av_frame_->hw_frames_ctx) {
                 const AVHWFramesContext* hwfc = (const AVHWFramesContext*)av_frame_->hw_frames_ctx->data;
-                LOGI("HW device type: {}, sw_format: {}",  // œ÷‘⁄ sw_format æÕ « Vulkan ÕºœÒ‘⁄÷˜ª˙ƒ⁄¥Ê÷–µƒ∂‘”¶œÒÀÿ∏Ò Ω
+                LOGI("HW device type: {}, sw_format: {}",  // Áé∞Âú® sw_format Â∞±ÊòØ Vulkan ÂõæÂÉèÂú®‰∏ªÊú∫ÂÜÖÂ≠ò‰∏≠ÁöÑÂØπÂ∫îÂÉèÁ¥†Ê†ºÂºè
                     av_hwdevice_get_type_name(hwfc->device_ctx->type),
                     av_get_pix_fmt_name((AVPixelFormat)hwfc->sw_format));
             }

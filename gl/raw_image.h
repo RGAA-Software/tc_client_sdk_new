@@ -9,14 +9,14 @@
 #include <dxgi.h>
 #include <DXGI1_2.h>
 
-extern "C"
-{
-	#include <libavutil/frame.h>
-}
-
 using namespace Microsoft::WRL;
 
 #endif
+
+extern "C"
+{
+#include <libavutil/frame.h>
+}
 
 namespace tc
 {

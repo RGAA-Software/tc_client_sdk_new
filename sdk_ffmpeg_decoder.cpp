@@ -122,8 +122,17 @@ namespace tc
             return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
+#ifdef WIN32
         LOGI("Decoder prefer: {}, ignore hw? {}, has d3d11 device? {}", sdk_params->decoder_, ignore_hw_decoder_, sdk_params->d3d11_wrapper_ != nullptr);
-        if ((sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware") && !ignore_hw_decoder_ && sdk_params->d3d11_wrapper_) {
+#else
+        LOGI("Decoder prefer: {}, ignore hw? {}", sdk_params->decoder_, ignore_hw_decoder_);
+#endif
+
+        if ((sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware")
+            #ifdef WIN32
+            && !ignore_hw_decoder_ && sdk_params->d3d11_wrapper_
+            #endif
+            ) {
             LOGI("Available codecs:");
             while ((decoder = av_codec_iterate(&opaque)) != NULL) {
                 if (decoder->type != AVMEDIA_TYPE_VIDEO) {
@@ -694,6 +703,7 @@ namespace tc
         if (hw_frames_context_) {
             av_buffer_unref(&hw_frames_context_);
         }
+#ifdef WIN32
         if (hw_device_context_) {
             auto hw_ctx = (AVHWDeviceContext*)hw_device_context_->data;
             auto d3d11ctx = (AVD3D11VADeviceContext*)hw_ctx->hwctx;
@@ -703,7 +713,7 @@ namespace tc
             }
             av_buffer_unref(&hw_device_context_);
         }
-
+#endif
         LOGI("FFmpeg video decoder release.");
     }
 

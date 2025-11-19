@@ -93,7 +93,7 @@ namespace tc
         statistics_->render_type_.Update(sdk_params_->render_type_name_);
         // threads
         video_thread_ = Thread::Make("video", 64);
-        video_thread_->SetOnFrontTaskCallback([=](ThreadTaskPtr task_tr) ->void{
+        video_thread_->SetOnFrontTaskCallback([=, this](ThreadTaskPtr task_tr) ->void{
             if (video_frame_thread_discarded_cbk_) {
                 video_frame_thread_discarded_cbk_();
                 need_clear_video_tasks_ = true;
