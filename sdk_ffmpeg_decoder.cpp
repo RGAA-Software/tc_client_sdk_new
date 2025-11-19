@@ -5,10 +5,6 @@
 #include "sdk_ffmpeg_decoder.h"
 #include <iostream>
 #include <thread>
-#include <d3d11.h>
-#include <dxgi1_2.h>
-#include <windows.h>
-#include <atlbase.h>
 #include <fstream>
 #include "thunder_sdk.h"
 #include "sdk_statistics.h"
@@ -19,8 +15,14 @@
 #include "tc_common_new/time_util.h"
 #include "tc_common_new/string_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
+#ifdef WIN32
+#include <d3d11.h>
+#include <dxgi1_2.h>
+#include <windows.h>
+#include <atlbase.h>
 #include "tc_common_new/win32/d3d11_wrapper.h"
 #include "tc_common_new/win32/d3d_debug_helper.h"
+#endif
 
 namespace tc
 {
@@ -32,7 +34,7 @@ namespace tc
     FFmpegDecoder::~FFmpegDecoder() {
 
     }
-
+#ifdef WIN32
     static std::string PrintAdapterInfo(ComPtr<ID3D11Device> device) {
         if (!device) return "";
 
@@ -63,6 +65,7 @@ namespace tc
         ss << "LUID: "<< desc.AdapterLuid.HighPart << ":" << desc.AdapterLuid.LowPart << std::endl;
         return ss.str();
     }
+#endif
 
     // img_format:
     // kI420 = 0,
@@ -514,6 +517,7 @@ namespace tc
 
             // ONLY D3D11 NOW
             if (av_frame_->format == AV_PIX_FMT_D3D11) {
+#ifdef WIN32
                 auto resource = (ID3D11Resource*)av_frame_->data[0];
                 if (!resource) {
                     LOGE("Null texture in AVFrame!");
@@ -552,7 +556,7 @@ namespace tc
                     sdk_stat_->video_color_.Update("4:2:0");
                     sdk_stat_->AppendDecodeDuration(monitor_name_, end - beg);
                 });
-
+#endif
             }
             else if (av_frame_->format == AV_PIX_FMT_VULKAN) {
 

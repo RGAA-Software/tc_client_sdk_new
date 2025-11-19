@@ -53,8 +53,9 @@ namespace tc
         std::string appkey_;
         // decoder
         std::string decoder_;
-
+#ifdef WIN32
         std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
+#endif
     };
 
 }

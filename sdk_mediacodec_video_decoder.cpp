@@ -49,7 +49,7 @@ namespace tc
 
     }
 
-    int MediacodecVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format) {
+    int MediacodecVideoDecoder::Init(const std::string& mon_name, int codec_type, int width, int height, const std::string& frame, void* surface, int img_format, bool ignore_hw) {
         std::lock_guard<std::mutex> guard(decode_mtx_);
         monitor_name_ = mon_name;
         auto decoder_name = [&]() -> std::string {
