@@ -115,6 +115,9 @@ namespace tc
 
         // remote detailed hardware information
         ConcurrentType<tc::RdHardwareInfo> remote_hd_info_;
+
+        // render type [opengl / vulkan / d3d11] 
+        ConcurrentString render_type_;
     };
 
 }

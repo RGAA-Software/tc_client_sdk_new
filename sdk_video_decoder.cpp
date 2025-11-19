@@ -5,6 +5,8 @@
 #include "sdk_video_decoder.h"
 #include "tc_common_new/data.h"
 #include "sdk_statistics.h"
+#include "thunder_sdk.h"
+#include "tc_common_new/message_notifier.h"
 
 namespace tc
 {
@@ -40,5 +42,14 @@ namespace tc
         return codec_type != this->codec_type_ || width != this->frame_width_ || height != this->frame_height_ || img_format != this->img_format_;
     }
 
-
+    void VideoDecoder::SendInitMsg(SdkMsgVideoDecodeInit msg) {
+        if (!sdk_) {
+            return;
+        }
+        auto msg_notifier =  sdk_->GetMessageNotifier();
+        if (!msg_notifier) {
+            return;
+        }
+        msg_notifier->SendAppMessage(msg);
+    }
 }

@@ -7,6 +7,10 @@
 
 #include "tc_message.pb.h"
 
+extern "C" {
+    #include <libavutil/buffer.h>
+}
+
 #ifdef WIN32
 #include "tc_common_new/win32/d3d11_wrapper.h"
 #endif
@@ -56,6 +60,18 @@ namespace tc
 #ifdef WIN32
         std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
 #endif
+
+        // relay server info
+        std::string relay_host_;
+        int relay_port_ = 0;
+        std::string relay_appkey_;
+
+        // Device context used for hwaccel decoders (vulkan use)
+        AVBufferRef* vulkan_hw_device_ctx_ = nullptr;
+
+        bool support_vulkan_ = false;
+
+        std::string render_type_name_ = "unknow";
     };
 
 }

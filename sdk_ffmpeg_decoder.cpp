@@ -28,7 +28,7 @@ namespace tc
 {
 
     FFmpegDecoder::FFmpegDecoder(const std::shared_ptr<ThunderSdk>& sdk) : VideoDecoder(sdk) {
-
+        
     }
 
     FFmpegDecoder::~FFmpegDecoder() {
@@ -78,6 +78,12 @@ namespace tc
         auto sdk_params = sdk_->GetSdkParams();
         monitor_name_ = mon_name;
         img_format_ = img_format;
+
+        SdkMsgVideoDecodeInit init_msg;
+        init_msg.width_ = width;
+        init_msg.height_ = height;
+        init_msg.format_ = (EImageFormat)img_format_;
+
         av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
             char buffer[4096] = {0};
             vsnprintf(buffer, sizeof(buffer), fmt, vl);
@@ -101,21 +107,23 @@ namespace tc
         void* opaque = NULL;
 
         auto fnGetPreferredPixelFormat = [] (int format) -> AVPixelFormat {
-            // if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
-            //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
-            //            AV_PIX_FMT_YUV444P10 : // 10-bit 3-plane YUV 4:4:4
-            //            AV_PIX_FMT_P010;       // 10-bit 2-plane YUV 4:2:0
-            // }
-            // else {
-            //     return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
-            //            AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
-            //            AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
-            // }
+#if 0
+            if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
+                return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
+                       AV_PIX_FMT_YUV444P10 : // 10-bit 3-plane YUV 4:4:4
+                       AV_PIX_FMT_P010;       // 10-bit 2-plane YUV 4:2:0
+            }
+            else {
+                return (videoFormat & VIDEO_FORMAT_MASK_YUV444) ?
+                       AV_PIX_FMT_YUV444P : // 8-bit 3-plane YUV 4:4:4
+                       AV_PIX_FMT_YUV420P;  // 8-bit 3-plane YUV 4:2:0
+            }
+#endif
             return format == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
         };
 
-        LOGI("Decoder prefer: {}, ignore hw? {}", sdk_params->decoder_, ignore_hw_decoder_);
-        if ((sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware") && !ignore_hw_decoder_) {
+        LOGI("Decoder prefer: {}, ignore hw? {}, has d3d11 device? {}", sdk_params->decoder_, ignore_hw_decoder_, sdk_params->d3d11_wrapper_ != nullptr);
+        if ((sdk_params->decoder_ == "Auto" || sdk_params->decoder_ == "Hardware") && !ignore_hw_decoder_ && sdk_params->d3d11_wrapper_) {
             LOGI("Available codecs:");
             while ((decoder = av_codec_iterate(&opaque)) != NULL) {
                 if (decoder->type != AVMEDIA_TYPE_VIDEO) {
@@ -124,7 +132,6 @@ namespace tc
                 if (!av_codec_is_decoder(decoder)) {
                     continue;
                 }
-
 
                 if (false) {
                     LOGI("============================0");
@@ -157,7 +164,7 @@ namespace tc
                     // AV_CODEC_ID_AV1
                 }
 
-                for (int i = 0;; i++) {
+                for (int i = 0; ; i++) {
                     const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
                     if (!config) {
                         break;
@@ -169,8 +176,8 @@ namespace tc
                         LOGI("Found the D3D11VA, Codec name: {}", decoder->name);
                         if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_D3D11)) {
                             found_target_codec = true;
-                            decoder_ = const_cast<AVCodec *>(decoder);
-                            hw_decode_config = const_cast<AVCodecHWConfig *>(config);
+                                decoder_ = const_cast<AVCodec*>(decoder);
+                                hw_decode_config = const_cast<AVCodecHWConfig*>(config);
                             LOGI("D3D11VA support image format: {}",
                                  (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
                             break;
@@ -180,20 +187,6 @@ namespace tc
                         }
                     }
 #endif
-                    if (config->device_type == AV_HWDEVICE_TYPE_VULKAN) {
-                        LOGI("Found the VULKAN");
-                        if ((img_format == EImageFormat::kI420 && config->pix_fmt == AV_PIX_FMT_VULKAN)) {
-                            found_target_codec = true;
-                            decoder_ = const_cast<AVCodec *>(decoder);
-                            hw_decode_config = const_cast<AVCodecHWConfig *>(config);
-                            LOGW("VULKAN support image format: {}",
-                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                        } else {
-                            LOGW("VULKAN doesn't support image format: {}",
-                                 (img_format == EImageFormat::kI420 ? "YUV420" : "YUV444"));
-                        }
-                    }
-
                     if (found_target_codec) {
                         break;
                     }
@@ -321,7 +314,7 @@ namespace tc
             //                               AV_PIX_FMT_VUYX : AV_PIX_FMT_NV12;
             //}
             // todo: Fix the 444 format
-            framesContext->sw_format = img_format == EImageFormat::kI420 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NONE;
+            framesContext->sw_format = img_format == EImageFormat::kI420 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_VUYX;
 
             // Surfaces must be 16 pixel aligned for H.264 and 128 pixel aligned for everything else
             // https://github.com/FFmpeg/FFmpeg/blob/a234e5cd80224c95a205c1f3e297d8c04a1374c3/libavcodec/dxva2.c#L609-L616
@@ -350,7 +343,7 @@ namespace tc
             D3D11_TEXTURE2D_DESC textureDesc;
             d3d11vaFramesContext->texture_infos->texture->GetDesc(&textureDesc);
 #endif
-
+            init_msg.hard_ware_ = true;
         }
         else {
             //
@@ -402,6 +395,8 @@ namespace tc
                 LOGE("Source codec context is NULL.");
                 return -1;
             }
+            auto pix_format = img_format_ == EImageFormat::kI420 ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_YUV444P;
+            decoder_context_->pix_fmt = pix_format;
             decoder_context_->thread_count = std::min(8, (int)std::thread::hardware_concurrency());
             decoder_context_->thread_type = FF_THREAD_SLICE;
 
@@ -417,12 +412,15 @@ namespace tc
 
             avcodec_parameters_free(&codec_params);
             
+            init_msg.hard_ware_ = false;
         }
 
         packet_ = av_packet_alloc();
         av_frame_ = av_frame_alloc();
         
         inited_ = true;
+
+        SendInitMsg(init_msg);
 
         return 0;
     }
@@ -547,10 +545,10 @@ namespace tc
                 auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
                 decoded_image = RawImage::MakeD3D11Texture(acquired_texture, src_subresource);
                 decoded_image->img_width = desc.Width;
-                decoded_image->img_height = desc.Height;
+                decoded_image->img_height = height;//desc.Height;
                 decoded_image->device_ = d3d11_wrapper->d3d11_device_;
                 decoded_image->device_context_ = d3d11_wrapper->d3d11_device_context_;
-
+                decoded_image->full_color_ = false;
                 auto end = TimeUtil::GetCurrentTimestamp();
                 sdk_->PostMiscTask([=, this]() {
                     sdk_stat_->video_color_.Update("4:2:0");
@@ -577,10 +575,14 @@ namespace tc
                     if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                         frame_height_ != decoded_image_->img_height || format_change) {
                         decoded_image_ = RawImage::MakeI420(nullptr, frame_width_ * frame_height_ * 1.5, frame_width_, frame_height_);
+                        decoded_image_->full_color_ = false;
+                        
 #ifdef WIN32
                         auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
-                        decoded_image_->device_ = d3d11_wrapper->d3d11_device_;
-                        decoded_image_->device_context_ = d3d11_wrapper->d3d11_device_context_;
+                        if (d3d11_wrapper && d3d11_wrapper->IsValid()) {
+                            decoded_image_->device_ = d3d11_wrapper->d3d11_device_;
+                            decoded_image_->device_context_ = d3d11_wrapper->d3d11_device_context_;
+                        }
 #endif
                     }
                     char *buffer = decoded_image_->Data();
@@ -611,10 +613,13 @@ namespace tc
                     if (!decoded_image_ || frame_width_ != decoded_image_->img_width ||
                         frame_height_ != decoded_image_->img_height || format_change) {
                         decoded_image_ = RawImage::MakeI444(nullptr, frame_width_ * frame_height_ * 3, frame_width_, frame_height_);
+                        decoded_image_->full_color_ = true;
 #ifdef WIN32
                         auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
-                        decoded_image_->device_ = d3d11_wrapper->d3d11_device_;
-                        decoded_image_->device_context_ = d3d11_wrapper->d3d11_device_context_;
+                        if (d3d11_wrapper && d3d11_wrapper->IsValid()) {
+                            decoded_image_->device_ = d3d11_wrapper->d3d11_device_;
+                            decoded_image_->device_context_ = d3d11_wrapper->d3d11_device_context_;
+                        }
 #endif
                     }
                     char *buffer = decoded_image_->Data();
@@ -685,6 +690,20 @@ namespace tc
             av_packet_free(&packet_);
             packet_ = nullptr;
         }
+
+        if (hw_frames_context_) {
+            av_buffer_unref(&hw_frames_context_);
+        }
+        if (hw_device_context_) {
+            auto hw_ctx = (AVHWDeviceContext*)hw_device_context_->data;
+            auto d3d11ctx = (AVD3D11VADeviceContext*)hw_ctx->hwctx;
+            if (d3d11ctx) {
+                d3d11ctx->device = nullptr;
+                d3d11ctx->device_context = nullptr;
+            }
+            av_buffer_unref(&hw_device_context_);
+        }
+
         LOGI("FFmpeg video decoder release.");
     }
 

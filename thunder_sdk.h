@@ -31,6 +31,7 @@ namespace tc
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(std::shared_ptr<RawImage>, const SdkCaptureMonitorInfo&)>;
     using OnAudioFrameDecodedCallback = std::function<void(std::shared_ptr<Data>, int samples, int channels, int bits)>;
+    using OnVideoFrameDecodeThreadDiscardedCallback = std::function<void()>;
 
     class ThunderSdk : public std::enable_shared_from_this<ThunderSdk> {
     public:
@@ -53,10 +54,11 @@ namespace tc
         void SetOnServerConfigurationCallback(OnConfigCallback&& cbk);
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
         void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
+        void SetOnVideoFrameDecodeThreadDiscardedCallback(OnVideoFrameDecodeThreadDiscardedCallback&& cbk);
 
         void PostMediaMessage(std::shared_ptr<Data> msg);
         void PostFileTransferMessage(std::shared_ptr<Data> msg);
-        void PostVideoTask(std::function<void()>&& task);
+        void PostVideoTask(std::function<void()>&& task, int64_t frame_index, const std::string& monitor_name);
         void PostAudioTask(std::function<void()>&& task);
         void PostMiscTask(std::function<void()>&& task);
 
@@ -93,9 +95,10 @@ namespace tc
         void* render_surface_ = nullptr;
 
         // callbacks
-        OnVideoFrameDecodedCallback video_frame_cbk_;
-        OnAudioFrameDecodedCallback audio_frame_cbk_;
-        OnAudioSpectrumCallback audio_spectrum_cbk_;
+        OnVideoFrameDecodedCallback video_frame_cbk_ = nullptr;
+        OnAudioFrameDecodedCallback audio_frame_cbk_ = nullptr;
+        OnAudioSpectrumCallback audio_spectrum_cbk_ = nullptr;
+        OnVideoFrameDecodeThreadDiscardedCallback  video_frame_thread_discarded_cbk_ = nullptr;
 
         DecoderRenderType drt_;
         bool exit_ = false;
@@ -117,6 +120,7 @@ namespace tc
         std::atomic_bool has_config_msg_ = false;
         std::atomic_bool has_video_frame_msg_ = false;
 
+        bool need_clear_video_tasks_ = false;
     };
 
 }
