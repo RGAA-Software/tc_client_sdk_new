@@ -10,6 +10,8 @@
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "tc_common_new/time_util.h"
 #include "tc_common_new/file.h"
+#include "tc_common_new/folder_util.h"
+#include "tc_common_new/string_util.h"
 #if 000
 #include <libyuv.h>
 #endif

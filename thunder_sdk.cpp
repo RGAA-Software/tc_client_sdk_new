@@ -9,6 +9,8 @@
 #include "tc_common_new/message_notifier.h"
 #include "tc_common_new/thread.h"
 #include "tc_common_new/time_util.h"
+#include "tc_common_new/folder_util.h"
+#include "tc_common_new/string_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
 #include "tc_opus_codec_new/opus_codec.h"
 #include "tc_message.pb.h"
@@ -222,12 +224,23 @@ namespace tc
                     .update_time_ = TimeUtil::GetCurrentTimestamp()
                 };
 
-                static auto last_frame_index = frame.frame_index();
-                auto frame_diff = frame.frame_index() - last_frame_index;
+                auto mon_name = frame.mon_name();
+                if (!last_frame_indices_.contains(mon_name)) {
+                    last_frame_indices_.insert({mon_name, frame.frame_index()});
+                }
+                auto frame_diff = frame.frame_index() - last_frame_indices_[frame.mon_name()];
                 if (frame_diff > 1) {
                     LOGI("Video frame came, index: {}, diff: {}", frame.frame_index(), frame_diff);
                 }
-                last_frame_index = frame.frame_index();
+                last_frame_indices_[mon_name] = frame.frame_index();
+
+                //if (!received_files_.contains(mon_name)) {
+                //    auto display_name = mon_name.size() > 4 ? mon_name.substr(4) : mon_name;
+                //    auto file_path = StringUtil::ToUTF8(FolderUtil::GetProgramDataPath()) + "/gr_data/recv_" + display_name + ".h264";
+                //    auto recv_video_file = File::OpenForWriteB(file_path);
+                //    received_files_[mon_name] = recv_video_file;
+                //}
+                //received_files_[mon_name]->Append(frame.data());
 
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {

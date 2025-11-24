@@ -27,6 +27,7 @@ namespace tc
     class CastReceiver;
     class SdkTimer;
     class SdkStatistics;
+    class File;
 
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(std::shared_ptr<RawImage>, const SdkCaptureMonitorInfo&)>;
@@ -121,6 +122,10 @@ namespace tc
         std::atomic_bool has_video_frame_msg_ = false;
 
         bool need_clear_video_tasks_ = false;
+
+        std::map<std::string, int64_t> last_frame_indices_;
+
+        std::map<std::string, std::shared_ptr<File>> received_files_;
     };
 
 }
