@@ -232,7 +232,7 @@ namespace tc
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {
                     IncreaseDecodeFailedCount(frame.mon_name());
-                    if (GetDecodeFailedCount(frame.mon_name()) > 15) {
+                    if (GetDecodeFailedCount(frame.mon_name()) > 60) {
                         ResetDecodeFailedCount(frame.mon_name());
                         DisableHardwareDecoder(frame.mon_name());
                         LOGE("decode error: {}, will recreate the decoder", ret.error());
@@ -240,7 +240,7 @@ namespace tc
                         video_decoders_.erase(frame.mon_name());
                         LOGW("Video decoder for : {} is released.", frame.mon_name());
                     }
-                    else if (GetDecodeFailedCount(frame.mon_name()) > 5) {
+                    else if (GetDecodeFailedCount(frame.mon_name()) > 30) {
                         RequestIFrame();
                         LOGE("decode error: {}, will request Key Frame", ret.error());
                     }
