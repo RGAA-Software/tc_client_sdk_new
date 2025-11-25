@@ -518,6 +518,7 @@ namespace tc
             auto x2 = av_frame_->linesize[1];
             auto x3 = av_frame_->linesize[2];
 
+            LOGI("Frame size: {}x{}, x1,2,3 {} {} {}", width, height, x1, x2, x3);
             if (av_frame_->key_frame) {
                 LOGI("key frame!!!!!!! AV frame format: {}", av_frame_->format);
             }
@@ -594,25 +595,37 @@ namespace tc
                         }
 #endif
                     }
+
+                    int y_h = frame_height_;
+                    int uv_w = frame_width_ / 2;
+                    int uv_h = frame_height_ / 2;
+                    int y_size = frame_width_ * frame_height_;
+                    int uv_size = uv_w * uv_h;
                     char *buffer = decoded_image_->Data();
-                    for (int i = 0; i < frame_height_; i++) {
-                        memcpy(buffer + frame_width_ * i, av_frame_->data[0] + x1 * i, frame_width_);
+
+                    auto y = buffer;
+                    auto u = buffer + y_size;
+                    auto v = buffer + y_size + uv_size;
+
+                    // Y plane
+                    for (int i = 0; i < y_h; i++) {
+                        memcpy(y + i * frame_width_,
+                               av_frame_->data[0] + i * av_frame_->linesize[0],
+                               frame_width_);
                     }
 
-                    int y_offset = frame_width_ * frame_height_;
-//                    for (int j = 0; j < frame_height_ / 2; j++) {
-//                        memcpy(buffer + y_offset + (frame_width_ / 2 * j), av_frame_->data[1] + x1 / 2 * j, frame_width_ / 2);
-//                    }
-                    for (int j = 0; j < frame_height_ / 4; j++) {
-                        memcpy(buffer + y_offset + (frame_width_ * j), av_frame_->data[1] + x1 * j, frame_width_);
+                    // U plane
+                    for (int i = 0; i < uv_h; i++) {
+                        memcpy(u + i * uv_w,
+                               av_frame_->data[1] + i * av_frame_->linesize[1],
+                               uv_w);
                     }
 
-                    int yu_offset = y_offset + (frame_width_ / 2) * (frame_height_ / 2);
-//                    for (int k = 0; k < frame_height_ / 2; k++) {
-//                        memcpy(buffer + yu_offset + (frame_width_ / 2 * k), av_frame_->data[2] + x1 / 2 * k, frame_width_ / 2);
-//                    }
-                    for (int k = 0; k < frame_height_ / 4; k++) {
-                        memcpy(buffer + yu_offset + (frame_width_ * k), av_frame_->data[2] + x1 * k, frame_width_);
+                    // V plane
+                    for (int i = 0; i < uv_h; i++) {
+                        memcpy(v + i * uv_w,
+                               av_frame_->data[2] + i * av_frame_->linesize[2],
+                               uv_w);
                     }
                 }
                 else if (format == AVPixelFormat::AV_PIX_FMT_YUV444P) {
