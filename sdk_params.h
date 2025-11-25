@@ -72,6 +72,9 @@ namespace tc
         bool support_vulkan_ = false;
 
         std::string render_type_name_ = "unknow";
+
+        // debug
+        bool debug_ = false;
     };
 
 }

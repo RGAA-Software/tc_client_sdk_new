@@ -234,14 +234,15 @@ namespace tc
                 }
                 last_frame_indices_[mon_name] = frame.frame_index();
 
-                //if (!received_files_.contains(mon_name)) {
-                //    auto display_name = mon_name.size() > 4 ? mon_name.substr(4) : mon_name;
-                //    auto file_path = StringUtil::ToUTF8(FolderUtil::GetProgramDataPath()) + "/gr_data/recv_" + display_name + ".h264";
-                //    auto recv_video_file = File::OpenForWriteB(file_path);
-                //    received_files_[mon_name] = recv_video_file;
-                //}
-                //received_files_[mon_name]->Append(frame.data());
-
+                if (sdk_params_->debug_) {
+                    if (!received_files_.contains(mon_name)) {
+                        auto display_name = mon_name.size() > 4 ? mon_name.substr(4) : mon_name;
+                        auto file_path = StringUtil::ToUTF8(FolderUtil::GetProgramDataPath()) + "/gr_data/client/recv_" + display_name + ".h264";
+                        auto recv_video_file = File::OpenForWriteB(file_path);
+                        received_files_[mon_name] = recv_video_file;
+                    }
+                    received_files_[mon_name]->Append(frame.data());
+                }
                 auto ret = video_decoder->Decode(frame.data());
                 if (!ret.has_value() && ret.error() != 0) {
                     IncreaseDecodeFailedCount(frame.mon_name());

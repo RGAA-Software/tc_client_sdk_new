@@ -125,6 +125,7 @@ namespace tc
 
         std::map<std::string, int64_t> last_frame_indices_;
 
+        // save received stream
         std::map<std::string, std::shared_ptr<File>> received_files_;
     };
 
