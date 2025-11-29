@@ -518,7 +518,7 @@ namespace tc
             auto x2 = av_frame_->linesize[1];
             auto x3 = av_frame_->linesize[2];
 
-            LOGI("Frame size: {}x{}, x1,2,3 {} {} {}", width, height, x1, x2, x3);
+            //LOGI("Frame size: {}x{}, x1,2,3 {} {} {}", width, height, x1, x2, x3);
             if (av_frame_->key_frame) {
                 LOGI("key frame!!!!!!! AV frame format: {}", av_frame_->format);
             }
