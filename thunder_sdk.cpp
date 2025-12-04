@@ -464,9 +464,11 @@ namespace tc
 
     void ThunderSdk::SetOnHeartBeatCallback(tc::OnHeartBeatInfoCallback&& cbk) {
         if (net_client_) {
-            net_client_->SetOnHeartBeatCallback(std::move(cbk));
+            net_client_->SetOnHeartBeatCallback([this, callback = std::move(cbk)](auto m) {
+                last_heartbeat_callback_ = TimeUtil::GetCurrentTimestamp();
+                callback(m);
+            });
         }
-        last_heartbeat_callback_ = TimeUtil::GetCurrentTimestamp();
     }
 
     void ThunderSdk::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
