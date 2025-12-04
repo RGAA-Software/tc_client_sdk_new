@@ -71,6 +71,9 @@ namespace tc
         // retry connection
         void RetryConnection();
 
+        // last update timestamp
+        uint64_t GetLastHeartbeatTimestamp();
+
     private:
         void SendFirstFrameMessage(std::shared_ptr<RawImage> image, const SdkCaptureMonitorInfo& info);
         void RegisterEventListeners();
@@ -127,6 +130,9 @@ namespace tc
 
         // save received stream
         std::map<std::string, std::shared_ptr<File>> received_files_;
+
+        // last heartbeat callback
+        uint64_t last_heartbeat_callback_ = 0;
     };
 
 }

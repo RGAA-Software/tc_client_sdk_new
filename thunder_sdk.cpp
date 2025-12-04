@@ -48,6 +48,7 @@ namespace tc
         sdk_params_ = params;
         drt_ = drt;
         render_surface_ = surface;
+        last_heartbeat_callback_ = TimeUtil::GetCurrentTimestamp();
 
         auto fn_process_target_platform = [&]() {
             #if defined(_WIN32)
@@ -465,6 +466,7 @@ namespace tc
         if (net_client_) {
             net_client_->SetOnHeartBeatCallback(std::move(cbk));
         }
+        last_heartbeat_callback_ = TimeUtil::GetCurrentTimestamp();
     }
 
     void ThunderSdk::SetOnClipboardCallback(OnClipboardInfoCallback&& cbk) {
@@ -545,6 +547,10 @@ namespace tc
             // notify reconnecting
             msg_notifier_->SendAppMessage(SdkMsgReconnect{});
         }
+    }
+
+    uint64_t ThunderSdk::GetLastHeartbeatTimestamp() {
+        return last_heartbeat_callback_;
     }
 
     void ThunderSdk::ReportStatistics() {
