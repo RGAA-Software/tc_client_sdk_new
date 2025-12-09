@@ -37,6 +37,7 @@ namespace tc
             .stream_id_ = params->stream_id_,
             .device_name_ = params->device_name_,
             .appkey_ = params->appkey_,
+            .force_gdi_ = params->force_gdi_,
         });
 
         relay_sdk_->SetOnRelayProtoMessageCallback([=, this](const std::shared_ptr<RelayMessage>& rl_msg) {
@@ -100,6 +101,10 @@ namespace tc
                 .room_id_ = sub.room_id(),
             });
         });
+    }
+
+    RelayConnection::~RelayConnection() {
+
     }
 
     void RelayConnection::Start() {

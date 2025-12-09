@@ -24,7 +24,7 @@ namespace tc
                      const std::string& host,
                      int port,
                      const std::string& path);
-        ~WsConnection();
+        ~WsConnection() override;
         void Start() override;
         void Stop() override;
         void PostBinaryMessage(std::shared_ptr<Data> msg) override;

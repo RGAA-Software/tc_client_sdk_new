@@ -24,7 +24,8 @@ namespace tc
     class Connection {
     public:
         Connection(const std::shared_ptr<ThunderSdkParams>& params, const std::shared_ptr<MessageNotifier>& notifier);
-        ~Connection();
+
+        virtual ~Connection();
 
         void RegisterOnConnectedCallback(OnConnectedCallback&& cbk) {
             conn_cbk_ = cbk;

@@ -29,6 +29,7 @@ namespace tc
                         const std::string& remote_device_id,
                         bool auto_relay,
                         const std::string& room_type);
+        ~RelayConnection() override;
         void Start() override;
         void Stop() override;
         void PostBinaryMessage(std::shared_ptr<Data> msg) override;

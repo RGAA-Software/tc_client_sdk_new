@@ -80,9 +80,9 @@ namespace tc
     void WsConnection::PostBinaryMessage(std::shared_ptr<Data> msg) {
         if (client_ && client_->is_started()) {
             client_->ws_stream().binary(true);
-            queuing_message_count_++;
+            ++queuing_message_count_;
             client_->async_send(msg->DataAddr(), msg->Size(), [this]() {
-                queuing_message_count_--;
+                --queuing_message_count_;
             });
         }
     }
@@ -90,9 +90,9 @@ namespace tc
     void WsConnection::PostTextMessage(const std::string& msg) {
         if (client_ && client_->is_started()) {
             client_->ws_stream().text(true);
-            queuing_message_count_++;
+            ++queuing_message_count_;
             client_->async_send(msg, [this]() {
-                queuing_message_count_--;
+                --queuing_message_count_;
             });
         }
     }

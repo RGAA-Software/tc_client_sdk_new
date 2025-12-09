@@ -75,6 +75,9 @@ namespace tc
 
         // debug
         bool debug_ = false;
+
+        // force gdi
+        bool force_gdi_ = false;
     };
 
 }
