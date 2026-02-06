@@ -29,6 +29,8 @@ extern "C"
 namespace tc
 {
 
+    class D3D11DeviceWrapper;
+
     class FFmpegDecoder : public VideoDecoder {
     public:
         explicit FFmpegDecoder(const std::shared_ptr<ThunderSdk>& sdk);
@@ -57,6 +59,7 @@ namespace tc
 
         AVPixelFormat last_format_ = AV_PIX_FMT_NONE;
         std::shared_ptr<RawImage> decoded_image_ = nullptr;
+        std::shared_ptr<D3D11DeviceWrapper> d3d11_wrapper_ = nullptr;
     };
 
 }

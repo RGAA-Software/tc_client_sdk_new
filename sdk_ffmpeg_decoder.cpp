@@ -20,6 +20,7 @@
 #include <dxgi1_2.h>
 #include <windows.h>
 #include <atlbase.h>
+#include "tc_common_new/const_auto.h"
 #include "tc_common_new/win32/d3d11_wrapper.h"
 #include "tc_common_new/win32/d3d_debug_helper.h"
 #endif
@@ -281,21 +282,21 @@ namespace tc
             }
 
 #ifdef WIN32
-            auto hw_ctx = (AVHWDeviceContext*)hw_device_context_->data;
-            auto d3d11ctx = (AVD3D11VADeviceContext*)hw_ctx->hwctx;
+            cat hw_ctx = (AVHWDeviceContext*)hw_device_context_->data;
+            cat d3d11ctx = (AVD3D11VADeviceContext*)hw_ctx->hwctx;
 
-            auto d3d11_wrapper = sdk_->GetSdkParams()->d3d11_wrapper_;
-            if (!d3d11_wrapper) {
+            d3d11_wrapper_ = sdk_->GetSdkParams()->d3d11_wrapper_;
+            if (!d3d11_wrapper_) {
                 LOGE("Don't have d3d11 wrapper, failed to init d3d11va decoder.");
                 return -1;
             }
-            LOGI("d3d11device adapter uid: {}", d3d11_wrapper->adapter_uid_);
+            LOGI("d3d11device adapter uid: {}", d3d11_wrapper_->adapter_uid_);
 
             auto info = PrintAdapterInfo(d3d11ctx->device);
             LOGI("ORIGIN D3D INFO: {}", info);
 
-            d3d11ctx->device = d3d11_wrapper->d3d11_device_.Get();
-            d3d11ctx->device_context = d3d11_wrapper->d3d11_device_context_.Get();
+            d3d11ctx->device = d3d11_wrapper_->d3d11_device_.Get();
+            d3d11ctx->device_context = d3d11_wrapper_->d3d11_device_context_.Get();
 
             decoder_context_->hw_device_ctx = av_buffer_ref(hw_device_context_);
             err = av_hwdevice_ctx_init(hw_device_context_);
