@@ -111,7 +111,7 @@ namespace tc
     bool FFmpegVulkanDecoder::InitCodecContext(AVCodecID codec_id) {
         decoder_ = const_cast<AVCodec*>(avcodec_find_decoder(codec_id));
         if (!decoder_) {
-            LOGI("can not find decoder for codec_id: {}", codec_id);
+            LOGI("can not find decoder for codec_id: {}", (int)codec_id);
             return false;
         }
 
