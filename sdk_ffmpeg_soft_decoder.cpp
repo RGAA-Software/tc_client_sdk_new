@@ -210,7 +210,7 @@ namespace tc
             bool format_change = false;
             auto format = (AVPixelFormat)codec_context->pix_fmt;
             if (last_format_ != format) {
-                LOGI("format : {} change to : {}", last_format_, format);
+                LOGI("format : {} change to : {}", (int)last_format_, (int)format);
                 last_format_ = format;
                 format_change = true;
             }
