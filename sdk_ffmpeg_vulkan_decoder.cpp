@@ -1,4 +1,6 @@
-﻿#include "sdk_ffmpeg_vulkan_decoder.h"
+﻿#ifdef WIN32
+
+#include "sdk_ffmpeg_vulkan_decoder.h"
 #include <iostream>
 #include <thread>
 #include <fstream>
@@ -94,7 +96,7 @@ namespace tc
         }
        
         if (codec_id == AV_CODEC_ID_NONE) {
-            LOGI("Unsupported codec type: {}", codec_type);
+            LOGI("Unsupported codec type: {}", (int)codec_type);
             return -1;
         }
 
@@ -225,7 +227,7 @@ namespace tc
             auto height = av_frame_->height;
 
             if (av_frame_->key_frame) {
-                LOGI("key frame!!!!!!! AV frame format: {}", av_frame_->format);
+                LOGI("key frame!!!!!!! AV frame format: {}", (int)av_frame_->format);
             }
 
             if (av_frame_->format != pix_format_) {
@@ -300,3 +302,5 @@ namespace tc
         return inited_;
     }
 }
+
+#endif

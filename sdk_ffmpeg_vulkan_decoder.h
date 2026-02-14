@@ -1,4 +1,5 @@
 #pragma once
+#ifdef WIN32
 
 extern "C"
 {
@@ -49,3 +50,4 @@ namespace tc
 
 }
 
+#endif

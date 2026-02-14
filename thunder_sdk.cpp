@@ -146,7 +146,7 @@ namespace tc
                     }
                 }
                 if (!video_decoder) {
-#if ANDROID
+#ifdef ANDROID
                     // Some Android devices can't decode 2 or more streams at the same time, so, re-create it .
                     if (!video_decoders_.empty()) {
                         for (auto& [mon_name, decoder] : video_decoders_) {
@@ -155,7 +155,7 @@ namespace tc
                         video_decoders_.clear();
                     }
 #endif
-                    auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
+                    //auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
                     //video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
 #if WIN32
                     // from now on, it's for d3d11va decoder
@@ -184,7 +184,17 @@ namespace tc
 #endif
 
                     if (!video_decoder) {
+                        // Android
+                        // Begin
+#ifdef ANDROID
+                        auto codec = (drt_ == DecoderRenderType::kMediaCodecSurface || drt_ == DecoderRenderType::kMediaCodecNv21) ? SupportedCodec::kMediaCodec : SupportedCodec::kFFmpeg;
+                        video_decoder = VideoDecoderFactory::Make(shared_from_this(), codec);
+                        LOGI("Create video decoder, codec: {}", (int)codec);
+                        // Android
+                        // End
+#else
                         video_decoder = std::make_shared<FFmpegVideoDecoder>(shared_from_this());
+#endif
                         bool ready = video_decoder->Ready();
                         if (!ready) {
                             auto result = video_decoder->Init(frame.mon_name(), frame.type(), frame.frame_width(),
