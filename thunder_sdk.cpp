@@ -489,11 +489,13 @@ namespace tc
 
     void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
         if (net_client_) {
-            net_client_->SetOnServerConfigurationCallback([=, this](std::shared_ptr<tc::Message>&& msg) {
+            net_client_->SetOnServerConfigurationCallback([=, this](std::shared_ptr<tc::Message> msg) {
                 cbk(std::move(msg));
                 if (!has_config_msg_) {
                     has_config_msg_ = true;
-                    msg_notifier_->SendAppMessage(SdkMsgFirstConfigInfoCallback());
+                    msg_notifier_->SendAppMessage(SdkMsgFirstConfigInfoCallback {
+                        .msg_ = msg,
+                    });
                 }
             });
         }

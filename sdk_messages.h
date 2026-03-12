@@ -123,7 +123,7 @@ namespace tc
 
     class SdkMsgFirstConfigInfoCallback {
     public:
-
+        std::shared_ptr<tc::Message> msg_ = nullptr;
     };
 
     // step 8
