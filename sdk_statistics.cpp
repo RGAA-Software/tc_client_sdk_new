@@ -15,19 +15,12 @@ namespace tc
     }
 
     void SdkStatistics::AppendDecodeDuration(const std::string& monitor_name, int32_t time) {
-        if (!decode_durations_.HasKey(monitor_name)) {
-            decode_durations_.Insert(monitor_name, {});
+        auto durations = decode_durations_.TryGet(monitor_name).value_or(std::vector<float>{});
+        if (durations.size() >= kMaxStatCounts) {
+            durations.erase(durations.begin());
         }
-        decode_durations_.VisitAllCond([&](std::string k, std::vector<float>& ds) -> bool {
-            if (monitor_name == k) {
-                if (ds.size() >= kMaxStatCounts) {
-                    ds.erase(ds.begin());
-                }
-                ds.push_back((float)time);
-                return true;
-            }
-            return false;
-        });
+        durations.push_back((float)time);
+        decode_durations_.Replace(monitor_name, durations);
     }
 
     std::map<std::string, std::vector<float>> SdkStatistics::GetDecodeDurations() {
@@ -39,19 +32,12 @@ namespace tc
     }
 
     void SdkStatistics::AppendVideoRecvGap(const std::string& monitor_name, int32_t time) {
-        if (!video_recv_gaps_.HasKey(monitor_name)) {
-            video_recv_gaps_.Insert(monitor_name, {});
+        auto gaps = video_recv_gaps_.TryGet(monitor_name).value_or(std::vector<float>{});
+        if (gaps.size() >= kMaxStatCounts) {
+            gaps.erase(gaps.begin());
         }
-        video_recv_gaps_.VisitAllCond([&](std::string k, std::vector<float>& gaps) -> bool {
-            if (monitor_name == k) {
-                if (gaps.size() >= kMaxStatCounts) {
-                    gaps.erase(gaps.begin());
-                }
-                gaps.push_back(time);
-                return true;
-            }
-            return false;
-        });
+        gaps.push_back((float)time);
+        video_recv_gaps_.Replace(monitor_name, gaps);
     }
 
     std::map<std::string, std::vector<float>> SdkStatistics::GetVideoRecvGaps() {
@@ -78,36 +64,28 @@ namespace tc
     }
 
     void SdkStatistics::TickVideoRecvFps(const std::string& monitor_name) {
-        if (!fps_video_recv_.HasKey(monitor_name)) {
+        if (!fps_video_recv_.TryGet(monitor_name).has_value()) {
             fps_video_recv_.Insert(monitor_name, std::make_shared<FpsStat>());
         }
-        fps_video_recv_.Get(monitor_name)->Tick();
+        if (auto fps_stat = fps_video_recv_.TryGet(monitor_name); fps_stat.has_value() && fps_stat.value()) {
+            fps_stat.value()->Tick();
+        }
     }
 
     void SdkStatistics::TickFrameRenderFps(const std::string& monitor_name) {
-        if (!fps_render_.HasKey(monitor_name)) {
+        if (!fps_render_.TryGet(monitor_name).has_value()) {
             fps_render_.Insert(monitor_name, std::make_shared<FpsStat>());
         }
-        fps_render_.Get(monitor_name)->Tick();
+        if (auto fps_stat = fps_render_.TryGet(monitor_name); fps_stat.has_value() && fps_stat.value()) {
+            fps_stat.value()->Tick();
+        }
     }
 
     void SdkStatistics::UpdateFrameSize(const std::string& monitor_name, int width, int height) {
-        if (!frames_size_.HasKey(monitor_name)) {
-            frames_size_.Insert(monitor_name, SdkStatFrameSize {
-                .width_ = width,
-                .height_ = height,
-            });
-        }
-        else {
-            frames_size_.VisitAllCond([&](std::string k, auto& size) {
-                if (k == monitor_name) {
-                    size.width_ = width;
-                    size.height_ = height;
-                    return true;
-                }
-                return false;
-            });
-        }
+        auto size = frames_size_.TryGet(monitor_name).value_or(SdkStatFrameSize{});
+        size.width_ = width;
+        size.height_ = height;
+        frames_size_.Replace(monitor_name, size);
     }
 
     std::map<std::string, SdkStatFrameSize> SdkStatistics::GetFramesSize() {
@@ -147,19 +125,12 @@ namespace tc
         });
 
         for (const auto& [mon_name, value] : monitor_fps) {
-            if (!video_recv_fps_.HasKey(mon_name)) {
-                video_recv_fps_.Insert(mon_name, {});
+            auto fps = video_recv_fps_.TryGet(mon_name).value_or(std::vector<float>{});
+            fps.push_back((float)value);
+            if (fps.size() > kMaxStatCounts) {
+                fps.erase(fps.begin());
             }
-            video_recv_fps_.VisitAllCond([&](std::string k, std::vector<float>& fps) -> bool {
-                if (mon_name == k) {
-                    fps.push_back(value);
-                    if (fps.size() > kMaxStatCounts) {
-                        fps.erase(fps.begin());
-                    }
-                    return true;
-                }
-                return false;
-            });
+            video_recv_fps_.Replace(mon_name, fps);
         }
     }
 
