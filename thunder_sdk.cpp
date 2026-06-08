@@ -249,7 +249,7 @@ namespace tc
                     if (!received_files_.contains(mon_name)) {
                         auto display_name = mon_name.size() > 4 ? mon_name.substr(4) : mon_name;
                         auto file_path = StringUtil::ToUTF8(FolderUtil::GetProgramDataPath()) + "/gr_data/client/recv_" + display_name + ".h264";
-                        auto recv_video_file = File::OpenForWriteB(file_path);
+                        auto recv_video_file = File::OpenForWriteB(U8Path(file_path));
                         received_files_[mon_name] = recv_video_file;
                     }
                     received_files_[mon_name]->Append(frame.data());
@@ -329,7 +329,7 @@ namespace tc
                 }
                 //LOGI("opus data size: {}, frame size: {}, samples: {}, channel: {}, PCM data size in char : {}", frame.data().size(), frame.frame_size(), frame.samples(), frame.channels(), pcm_data.size()*2);
                 if (debug_audio_decoder_) {
-                    static FilePtr pcm_audio = File::OpenForWriteB("1.test.pcm");
+                    static FilePtr pcm_audio = File::OpenForWriteB(U8Path("1.test.pcm"));
                     pcm_audio->Append((char *) pcm_data.data(), pcm_data.size()*2);
                 }
                 auto end = TimeUtil::GetCurrentTimestamp();
