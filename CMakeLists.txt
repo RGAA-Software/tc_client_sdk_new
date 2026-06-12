@@ -14,7 +14,6 @@ else()
 endif()
 
 if(MSVC)
-    add_compile_options($<IF:$<CONFIG:Debug>,/MTd,/MT>)
     add_compile_options("/bigobj")
 endif()
 
