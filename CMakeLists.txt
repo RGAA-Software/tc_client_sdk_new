@@ -70,7 +70,7 @@ if (ANDROID)
     target_link_libraries(tc_sdk PRIVATE ${FFMPEG_LIBRARIES} tc_relay_client)
     target_link_libraries(tc_sdk PRIVATE ${ANDROID_OPENSSL_LIBS})
 else ()
-    target_link_libraries(tc_sdk PRIVATE libprotobuf tc_relay_client)
+    target_link_libraries(tc_sdk PRIVATE protobuf::libprotobuf tc_relay_client)
 
     link_directories(${FFMPEG_ROOT}/lib)
 
