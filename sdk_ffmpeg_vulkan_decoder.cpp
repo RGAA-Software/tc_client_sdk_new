@@ -226,7 +226,7 @@ namespace tc
             auto width = av_frame_->width;
             auto height = av_frame_->height;
 
-            if (av_frame_->key_frame) {
+            if (av_frame_->flags & AV_FRAME_FLAG_KEY) {
                 LOGI("key frame!!!!!!! AV frame format: {}", (int)av_frame_->format);
             }
 
@@ -279,7 +279,6 @@ namespace tc
         }
 
         if (decoder_context_ != nullptr) {
-            avcodec_close(decoder_context_);
             avcodec_free_context(&decoder_context_);
             decoder_context_ = nullptr;
         }

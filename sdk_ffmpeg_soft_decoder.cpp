@@ -318,7 +318,6 @@ namespace tc
         }
 
         if (codec_context != nullptr) {
-            avcodec_close(codec_context);
             avcodec_free_context(&codec_context);
             codec_context = nullptr;
         }

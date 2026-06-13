@@ -520,7 +520,7 @@ namespace tc
             auto x3 = av_frame_->linesize[2];
 
             //LOGI("Frame size: {}x{}, x1,2,3 {} {} {}", width, height, x1, x2, x3);
-            if (av_frame_->key_frame) {
+            if (av_frame_->flags & AV_FRAME_FLAG_KEY) {
                 LOGI("key frame!!!!!!! AV frame format: {}", av_frame_->format);
             }
 
@@ -697,7 +697,6 @@ namespace tc
         }
 
         if (decoder_context_ != nullptr) {
-            avcodec_close(decoder_context_);
             avcodec_free_context(&decoder_context_);
             decoder_context_ = nullptr;
         }

@@ -71,11 +71,8 @@ if (ANDROID)
 else ()
     target_link_libraries(tc_sdk PRIVATE protobuf::libprotobuf tc_relay_client)
 
-    link_directories(${FFMPEG_ROOT}/lib)
-
     target_link_libraries(tc_sdk PRIVATE
             Qt6::Widgets Qt6::Core Qt6::OpenGL Qt6::OpenGLWidgets
-            ${FFMPEG_ROOT}/lib/avcodec.lib ${FFMPEG_ROOT}/lib/avutil.lib ${FFMPEG_ROOT}/lib/avformat.lib
-            ${FFMPEG_ROOT}/lib/swresample.lib ${FFMPEG_ROOT}/lib/swscale.lib ${FFMPEG_ROOT}/lib/avfilter.lib
+            ${FFMPEG_LIBRARIES}
     )
 endif ()
