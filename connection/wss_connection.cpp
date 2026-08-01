@@ -97,4 +97,8 @@ namespace tc
         }
     }
 
+    bool WssConnection::IsAlive() {
+        return client_ && client_->is_started();
+    }
+
 }

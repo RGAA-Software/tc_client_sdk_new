@@ -296,11 +296,19 @@ namespace tc
         else {
             auto queuing_msg_count = this->GetQueuingMediaMsgCount();
             int wait_count = 0;
-            while (queuing_msg_count >= kMaxQueuingFtMessages) {
+            while (queuing_msg_count >= kMaxQueuingFtMessages && wait_count < 200) {
+                if (!media_conn_ || !media_conn_->IsAlive()) {
+                    LOGW("===> [Media] connection not alive, drop the message, queuing: {}", queuing_msg_count);
+                    return;
+                }
                 //LOGI("===> queue too many msgs, count: {}, wait for 1ms", queuing_msg_count);
-                TimeUtil::DelayByCount(1);
+                TimeUtil::DelayBySleep(1);
                 queuing_msg_count = this->GetQueuingMediaMsgCount();
                 wait_count++;
+            }
+            if (wait_count >= 200) {
+                LOGW("===> [Media] wait timeout after {}ms, drop the message, queuing: {}", wait_count, queuing_msg_count);
+                return;
             }
 
             if (media_conn_) {
@@ -335,11 +343,19 @@ namespace tc
             // TODO:
             auto queuing_msg_count = this->GetQueuingFtMsgCount();
             int wait_count = 0;
-            while (queuing_msg_count >= kMaxQueuingFtMessages) {
+            while (queuing_msg_count >= kMaxQueuingFtMessages && wait_count < 2000) {
+                if (!ft_conn_ || !ft_conn_->IsAlive()) {
+                    LOGW("===> [WS File] connection not alive, drop the message, queuing: {}", queuing_msg_count);
+                    return;
+                }
                 //LOGI("===> queue too many msgs, count: {}, wait for 1ms", queuing_msg_count);
-                TimeUtil::DelayByCount(1);
+                TimeUtil::DelayBySleep(1);
                 queuing_msg_count = this->GetQueuingFtMsgCount();
                 wait_count++;
+            }
+            if (wait_count >= 2000) {
+                LOGW("===> [WS File] wait timeout after {}ms, drop the message, queuing: {}", wait_count, queuing_msg_count);
+                return;
             }
             if (wait_count > 0) {
                 LOGI("===> [WS File] wait for {}ms", wait_count);

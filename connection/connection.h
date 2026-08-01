@@ -48,6 +48,7 @@ namespace tc
         virtual void RequestResumeStream() {}
         virtual void On16msTimeout() {}
         virtual void RetryConnection() {}
+        virtual bool IsAlive() { return true; }
 
     protected:
         OnConnectedCallback conn_cbk_;

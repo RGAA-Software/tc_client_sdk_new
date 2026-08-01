@@ -29,6 +29,7 @@ namespace tc
         void Stop() override;
         void PostBinaryMessage(std::shared_ptr<Data> msg) override;
         void PostTextMessage(const std::string& msg) override;
+        bool IsAlive() override;
 
     private:
         std::string host_;
