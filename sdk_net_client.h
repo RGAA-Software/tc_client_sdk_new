@@ -78,6 +78,14 @@ namespace tc
         using OnRtcLocalVideoFrameCallback = std::function<void(int w, int h, std::shared_ptr<Data> i420)>;
         void SetOnRtcLocalVideoFrameCallback(OnRtcLocalVideoFrameCallback&& cbk);
 
+        // decoded audio(16-bit interleaved PCM) from the webrtc local(direct) connection
+        using OnRtcLocalAudioCallback = std::function<void(std::shared_ptr<Data> pcm, int sample_rate, int channels)>;
+        void SetOnRtcLocalAudioCallback(OnRtcLocalAudioCallback&& cbk);
+
+        // rtc local encoded-sink mode, old-render compat: current capturing monitor
+        // name(from ServerConfiguration) for the single dynamic track
+        void SetRtcLocalCapturingMonitorNameProvider(std::function<std::string()>&& provider);
+
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
 
@@ -96,6 +104,7 @@ namespace tc
         std::shared_ptr<WebRtcConnection> rtc_conn_ = nullptr;
         std::shared_ptr<WebRtcLocalConnection> rtc_local_conn_ = nullptr;
         OnRtcLocalVideoFrameCallback rtc_local_video_frame_cbk_;
+        OnRtcLocalAudioCallback rtc_local_audio_cbk_;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;

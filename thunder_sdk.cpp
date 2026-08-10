@@ -240,8 +240,8 @@ namespace tc
                     last_frame_indices_.insert({mon_name, frame.frame_index()});
                 }
                 auto frame_diff = frame.frame_index() - last_frame_indices_[frame.mon_name()];
-                if (frame_diff > 1) {
-                    LOGI("Video frame came, index: {}, diff: {}", frame.frame_index(), frame_diff);
+                if (frame_diff != 1) {
+                    LOGI("Video frame came, mon: [{}], index: {}, diff: {}, last: {}, extra: [{}]", mon_name, frame.frame_index(), (int64_t)frame_diff, last_frame_indices_[frame.mon_name()], frame.extra());
                 }
                 last_frame_indices_[mon_name] = frame.frame_index();
 
@@ -351,7 +351,26 @@ namespace tc
             this->OnRtcLocalVideoFrame(w, h, i420);
         });
 
+        // decoded audio(16-bit interleaved PCM) from the webrtc local(direct) connection:
+        // already decoded by webrtc's built-in opus decoder, feed the player directly
+        net_client_->SetOnRtcLocalAudioCallback([=, this](std::shared_ptr<Data> pcm, int sample_rate, int channels) {
+            if (exit_) { return; }
+            this->PostAudioTask([=, this]() {
+                if (audio_frame_cbk_) {
+                    audio_frame_cbk_(pcm, sample_rate, channels, 16);
+                }
+            });
+        });
+
         net_client_->Start();
+
+        // rtc local encoded-sink mode, old-render compat: when the answer carries no
+        // "monitors" array, the single dynamic track is mapped to the capturing
+        // monitor reported via ServerConfiguration
+        net_client_->SetRtcLocalCapturingMonitorNameProvider([=, this]() {
+            std::lock_guard<std::mutex> lk(rtc_cap_mon_mtx_);
+            return rtc_capturing_monitor_name_;
+        });
 
         // receiver
         // cast_receiver_ = CastReceiver::Make();

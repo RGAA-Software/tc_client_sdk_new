@@ -176,6 +176,24 @@ namespace tc
                     rtc_local_video_frame_cbk_(w, h, i420);
                 }
             });
+            rtc_local_conn_->SetOnAudioDataCallback([=, this](std::shared_ptr<Data> pcm, int sample_rate, int channels) {
+                if (rtc_local_audio_cbk_) {
+                    rtc_local_audio_cbk_(pcm, sample_rate, channels);
+                }
+            });
+            rtc_local_conn_->SetOnVideoMessageCallback([=, this](std::shared_ptr<tc::Message> m) {
+                // synthesized kVideoFrame from the encoded rtp tracks: dispatch exactly
+                // like ParseMessage would, but WITHOUT an app-level ack - rtp carries
+                // its own reliability(nack/pli), acking every frame would just flood
+                // the media data channel
+                this->stat_->AppendRecvDataSize((int64_t)m->ByteSizeLong());
+                if (raw_msg_cbk_) {
+                    raw_msg_cbk_(m);
+                }
+                if (video_frame_cbk_) {
+                    video_frame_cbk_(m);
+                }
+            });
         }
     }
 
@@ -477,6 +495,16 @@ namespace tc
 
     void NetClient::SetOnRtcLocalVideoFrameCallback(OnRtcLocalVideoFrameCallback&& cbk) {
         rtc_local_video_frame_cbk_ = std::move(cbk);
+    }
+
+    void NetClient::SetOnRtcLocalAudioCallback(OnRtcLocalAudioCallback&& cbk) {
+        rtc_local_audio_cbk_ = std::move(cbk);
+    }
+
+    void NetClient::SetRtcLocalCapturingMonitorNameProvider(std::function<std::string()>&& provider) {
+        if (rtc_local_conn_) {
+            rtc_local_conn_->SetCapturingMonitorNameProvider(std::move(provider));
+        }
     }
 
     void NetClient::HeartBeat() {

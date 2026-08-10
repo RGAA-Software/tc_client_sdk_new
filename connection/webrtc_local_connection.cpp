@@ -23,6 +23,10 @@ typedef void *(*FnGetInstance)();
 namespace tc
 {
 
+    // render side keeps at most one video track per monitor, capped at 4
+    // (see kMaxRtcVideoTracks in gr_render/plugins/net_rtc_local/rtc_local_plugin.h)
+    static constexpr int kMaxRtcLocalVideoTracks = 4;
+
     // render side error code, see gr_render/plugins/net_ws/http_handler.cpp(kHandlerErrRtcLocalOccupied)
     static constexpr int kRtcLocalRespOccupied = 704;
 
@@ -102,6 +106,17 @@ namespace tc
         // the final offer sdp is reported after ice gathering complete
         rtc_client_->SetLocalRtcMode(true);
 
+        // multi-track: ask for one video track per monitor(capped). an old render
+        // just answers a single track, the extra m-lines stay inactive.
+        rtc_client_->SetVideoTrackCount(kMaxRtcLocalVideoTracks);
+
+        // encoded-sink mode: video tracks are consumed as pre-decode H264 and decoded
+        // by the sdk's own FFmpegVulkanDecoder chain(zero-copy d3d11/pl_vulkan),
+        // not by webrtc's built-in software decoder
+        rtc_client_->SetOnEncodedVideoFrameCallback([=, this](int track_index, bool key, int w, int h, std::shared_ptr<Data> encoded) {
+            this->OnEncodedVideoFrame(track_index, key, w, h, encoded);
+        });
+
         rtc_client_->SetOnLocalSdpSetCallback([=, this](const std::string& sdp) {
             // called on the webrtc signaling thread, hand off to our own thread
             // before doing the blocking http request
@@ -126,6 +141,14 @@ namespace tc
         rtc_client_->SetOnVideoFrameCallback([=, this](int w, int h, std::shared_ptr<Data> i420) {
             if (video_frame_cbk_) {
                 video_frame_cbk_(w, h, i420);
+            }
+        });
+
+        // audio rtp track: decoded PCM via the dll's AudioSinkInterface(dummy ADM
+        // would discard it otherwise), played by the sdk's own AudioPlayer
+        rtc_client_->SetOnAudioDataCallback([=, this](std::shared_ptr<Data> pcm, int sample_rate, int channels) {
+            if (audio_data_cbk_) {
+                audio_data_cbk_(pcm, sample_rate, channels);
             }
         });
 
@@ -209,6 +232,25 @@ namespace tc
             message = obj.value("message", "");
             if (obj.contains("data") && obj["data"].is_object()) {
                 answer_sdp = obj["data"].value("answer_sdp", "");
+                // track→monitor mapping(multi-track render). missing on old renders,
+                // then the single track falls back to the capturing monitor from config
+                if (obj["data"].contains("monitors") && obj["data"]["monitors"].is_array()) {
+                    std::lock_guard<std::mutex> guard(track_mtx_);
+                    track_monitors_.clear();
+                    for (const auto& m : obj["data"]["monitors"]) {
+                        track_monitors_.push_back(RtcLocalTrackMonitor {
+                            .name_ = m.value("name", ""),
+                            .width_ = m.value("width", 0),
+                            .height_ = m.value("height", 0),
+                            .left_ = m.value("left", 0),
+                            .top_ = m.value("top", 0),
+                            .right_ = m.value("right", 0),
+                            .bottom_ = m.value("bottom", 0),
+                        });
+                    }
+                    track_frame_indices_.assign(track_monitors_.size(), 0);
+                    track_got_keyframe_.assign(track_monitors_.size(), false);
+                }
             }
         }
         catch (std::exception& e) {
@@ -232,9 +274,107 @@ namespace tc
         }
 
         LOGI("Got rtc local answer sdp, size: {}, will set remote desc.", answer_sdp.size());
+        {
+            std::lock_guard<std::mutex> guard(track_mtx_);
+            if (!track_monitors_.empty()) {
+                LOGI("Rtc local multi-track, {} monitor track(s):", track_monitors_.size());
+                for (size_t i = 0; i < track_monitors_.size(); ++i) {
+                    const auto& m = track_monitors_[i];
+                    LOGI("  track #{} -> {} {}x{} @({},{})-({},{})", i, m.name_,
+                         m.width_, m.height_, m.left_, m.top_, m.right_, m.bottom_);
+                }
+            }
+            else {
+                LOGI("Rtc local answer has no monitors info, single track, fallback to capturing monitor name.");
+            }
+        }
         if (rtc_client_) {
             rtc_client_->OnRemoteSdp(answer_sdp);
         }
+    }
+
+    void WebRtcLocalConnection::OnEncodedVideoFrame(int track_index, bool key, int w, int h, std::shared_ptr<Data> encoded) {
+        if (stopped_ || !video_msg_cbk_ || !encoded || encoded->Size() == 0) {
+            return;
+        }
+
+        RtcLocalTrackMonitor mon;
+        uint64_t frame_index = 0;
+        {
+            std::lock_guard<std::mutex> guard(track_mtx_);
+            if (track_index >= 0 && track_index < (int)track_monitors_.size()) {
+                // multi-track render: track #i is monitors[i]
+                mon = track_monitors_[track_index];
+            }
+            else {
+                // old render: single dynamic track following the capturing monitor.
+                // the name comes from ServerConfiguration; before the first config
+                // arrives the name is empty and frames are dropped(a key frame is
+                // re-requested by the pipeline, so nothing is lost permanently)
+                mon.name_ = capturing_monitor_provider_ ? capturing_monitor_provider_() : "";
+                mon.width_ = w;
+                mon.height_ = h;
+                mon.right_ = w;
+                mon.bottom_ = h;
+                track_index = 0;
+                if ((int)track_frame_indices_.size() <= track_index) {
+                    track_frame_indices_.resize(track_index + 1, 0);
+                    track_got_keyframe_.resize(track_index + 1, false);
+                }
+            }
+            if (mon.name_.empty()) {
+                return;
+            }
+            // the sdk decode chain inits a decoder with the FIRST frame it sees for
+            // a monitor - that must be an IDR. AddEncodedSink requests a key frame
+            // when attached, until it arrives drop deltas.
+            if (!track_got_keyframe_[track_index]) {
+                if (!key) {
+                    return;
+                }
+                track_got_keyframe_[track_index] = true;
+                LOGI("Rtc local track #{}({}): first key frame, start feeding the decoder chain.",
+                     track_index, mon.name_);
+            }
+            frame_index = ++track_frame_indices_[track_index];
+        }
+
+        // synthesize the exact kVideoFrame proto the relay/ws path delivers,
+        // so the standard per-monitor decode chain picks it up unchanged
+        auto msg = std::make_shared<tc::Message>();
+        msg->set_type(tc::kVideoFrame);
+        auto* frame = msg->mutable_video_frame();
+        frame->set_type(tc::kNetH264);
+        frame->set_data(encoded->CStr(), encoded->Size());
+        frame->set_frame_index(frame_index);
+        frame->set_key(key);
+        // the encoded resolution may be 0x0(not always parsed), fall back to the monitor rect
+        frame->set_frame_width(w > 0 ? w : mon.width_);
+        frame->set_frame_height(h > 0 ? h : mon.height_);
+        frame->set_mon_name(mon.name_);
+        frame->set_mon_left(mon.left_);
+        frame->set_mon_top(mon.top_);
+        frame->set_mon_right(mon.right_);
+        frame->set_mon_bottom(mon.bottom_);
+        frame->set_mon_index(track_index);
+        frame->set_image_format(tc::kI420);
+        // debug tag: lets the sdk side tell synthesized frames apart from any
+        // other kVideoFrame producer(see "Video frame came" log in thunder_sdk)
+        frame->set_extra("rtc_synth");
+
+        video_msg_cbk_(msg);
+    }
+
+    void WebRtcLocalConnection::SetOnVideoMessageCallback(const std::function<void(std::shared_ptr<tc::Message>)>& cbk) {
+        video_msg_cbk_ = cbk;
+    }
+
+    void WebRtcLocalConnection::SetOnAudioDataCallback(const std::function<void(std::shared_ptr<Data>, int, int)>& cbk) {
+        audio_data_cbk_ = cbk;
+    }
+
+    void WebRtcLocalConnection::SetCapturingMonitorNameProvider(std::function<std::string()>&& provider) {
+        capturing_monitor_provider_ = std::move(provider);
     }
 
     std::string WebRtcLocalConnection::MakeSafetyPwdMd5() {
