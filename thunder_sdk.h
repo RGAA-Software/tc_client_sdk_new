@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <mutex>
 
 #include "tc_message.pb.h"
 #include "sdk_params.h"
@@ -76,6 +77,7 @@ namespace tc
 
     private:
         void SendFirstFrameMessage(std::shared_ptr<RawImage> image, const SdkCaptureMonitorInfo& info);
+        void OnRtcLocalVideoFrame(int w, int h, std::shared_ptr<Data> i420);
         void RegisterEventListeners();
         void SendHelloMessage();
         void RequestIFrame();
@@ -133,6 +135,12 @@ namespace tc
 
         // last heartbeat callback
         uint64_t last_heartbeat_callback_ = 0;
+
+        // capturing monitor name from ServerConfiguration, used by the webrtc local
+        // video frames so that mouse events carry the REAL monitor name
+        // (render's event replayer drops events with unknown monitor names)
+        std::mutex rtc_cap_mon_mtx_;
+        std::string rtc_capturing_monitor_name_;
     };
 
 }

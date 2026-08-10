@@ -346,6 +346,11 @@ namespace tc
             });
         });
 
+        // decoded video frames from the webrtc local(direct) connection
+        net_client_->SetOnRtcLocalVideoFrameCallback([=, this](int w, int h, std::shared_ptr<Data> i420) {
+            this->OnRtcLocalVideoFrame(w, h, i420);
+        });
+
         net_client_->Start();
 
         // receiver
@@ -364,6 +369,54 @@ namespace tc
         msg.raw_image_ = image;
         msg.mon_info_ = info;
         msg_notifier_->SendAppMessage(msg);
+    }
+
+    void ThunderSdk::OnRtcLocalVideoFrame(int w, int h, std::shared_ptr<Data> i420) {
+        if (exit_) {
+            return;
+        }
+        if (!i420 || w <= 0 || h <= 0) {
+            return;
+        }
+
+        // statistics, keep the speed chart alive
+        statistics_->AppendRecvDataSize(i420->Size());
+
+        auto raw_image = RawImage::MakeI420(i420->DataAddr(), (int)i420->Size(), w, h);
+        // rtc mode carries a single video stream, report it as the capturing monitor.
+        // use the REAL monitor name from ServerConfiguration: the render's event replayer
+        // drops mouse events tagged with an unknown monitor name.
+        const auto mon_name = [=, this]() {
+            std::lock_guard<std::mutex> lk(rtc_cap_mon_mtx_);
+            return !rtc_capturing_monitor_name_.empty()
+                   ? rtc_capturing_monitor_name_
+                   : std::string("rtc_local");
+        }();
+        SdkCaptureMonitorInfo cap_mon_info {
+            .mon_name_ = mon_name,
+            .mon_index_ = 0,
+            .mon_left_ = 0,
+            .mon_top_ = 0,
+            .mon_right_ = w,
+            .mon_bottom_ = h,
+            .frame_width_ = w,
+            .frame_height_ = h,
+            .update_time_ = TimeUtil::GetCurrentTimestamp(),
+        };
+
+        this->PostMiscTask([=, this]() {
+            statistics_->TickVideoRecvFps(cap_mon_info.mon_name_);
+            statistics_->UpdateFrameSize(cap_mon_info.mon_name_, w, h);
+        });
+
+        if (video_frame_cbk_) {
+            video_frame_cbk_(raw_image, cap_mon_info);
+        }
+
+        if (!has_video_frame_msg_) {
+            has_video_frame_msg_ = true;
+            SendFirstFrameMessage(raw_image, cap_mon_info);
+        }
     }
 
     void ThunderSdk::PostMediaMessage(std::shared_ptr<Data> msg) {
@@ -490,6 +543,10 @@ namespace tc
     void ThunderSdk::SetOnServerConfigurationCallback(OnConfigCallback&& cbk) {
         if (net_client_) {
             net_client_->SetOnServerConfigurationCallback([=, this](std::shared_ptr<tc::Message> msg) {
+                if (msg && msg->has_config() && !msg->config().capturing_monitor_name().empty()) {
+                    std::lock_guard<std::mutex> lk(rtc_cap_mon_mtx_);
+                    rtc_capturing_monitor_name_ = msg->config().capturing_monitor_name();
+                }
                 cbk(std::move(msg));
                 if (!has_config_msg_) {
                     has_config_msg_ = true;

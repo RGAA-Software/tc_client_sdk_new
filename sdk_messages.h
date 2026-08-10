@@ -64,6 +64,10 @@ namespace tc
         std::string msg_;
     };
 
+    // webrtc local signaling rejected the device password (HTTP 403)
+    class SdkMsgRtcLocalAuthFailed {
+    };
+
     // progress connection begin
 
     // get remote device info

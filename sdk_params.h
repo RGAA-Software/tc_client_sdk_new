@@ -78,6 +78,12 @@ namespace tc
 
         // force gdi
         bool force_gdi_ = false;
+
+        // remote device passwords, used by the webrtc local(direct) connection(kWebRtc)
+        // plain random password, will be md5-ed before sending as safety_pwd_md5
+        std::string remote_device_random_pwd_;
+        // safety password, already in md5 form, sent as safety_pwd_md5 directly
+        std::string remote_device_safety_pwd_;
     };
 
 }

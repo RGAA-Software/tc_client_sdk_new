@@ -16,6 +16,7 @@
 #include "connection/wss_connection.h"
 #include "connection/relay_connection.h"
 #include "connection/webrtc_connection.h"
+#include "connection/webrtc_local_connection.h"
 #include "tc_common_new/time_util.h"
 #include "sdk_statistics.h"
 #include "tc_message_new/proto_converter.h"
@@ -88,6 +89,13 @@ namespace tc
                 rtc_conn_ = std::make_shared<WebRtcConnection>(relay_conn, sdk_params_, msg_notifier_);
             }
         }
+        else if (network_type_ == ClientNetworkType::kWebRtc) {
+            // webrtc local(direct): http signaling + rtp video track + data channels,
+            // one connection carries both media and ft messages
+            LOGI("Will connect by WebRTC local(direct), ip: {}, port: {}", sdk_params_->ip_, sdk_params_->port_);
+            rtc_local_conn_ = std::make_shared<WebRtcLocalConnection>(sdk_params_, msg_notifier_);
+            media_conn_ = rtc_local_conn_;
+        }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
             return;
@@ -151,6 +159,23 @@ namespace tc
                 this->stat_->AppendRecvDataSize(msg->Size());
             });
             rtc_conn_->Start();
+        }
+
+        if (rtc_local_conn_) {
+            // media messages are handled by the generic media_conn_ callback above
+            rtc_local_conn_->SetOnFtMessageCallback([=, this](std::shared_ptr<Data> msg) {
+                if (auto m = this->ParseMessage(msg); m) {
+                    auto ack = ProtoMessageMaker::MakeAck(m->device_id(), m->stream_id(), m->send_time(), m->type());
+                    rtc_local_conn_->PostFtMessage(ack);
+                }
+
+                this->stat_->AppendRecvDataSize(msg->Size());
+            });
+            rtc_local_conn_->SetOnRtcVideoFrameCallback([=, this](int w, int h, std::shared_ptr<Data> i420) {
+                if (rtc_local_video_frame_cbk_) {
+                    rtc_local_video_frame_cbk_(w, h, i420);
+                }
+            });
         }
     }
 
@@ -293,6 +318,25 @@ namespace tc
 
             rtc_conn_->PostMediaMessage(msg);
         }
+        else if (rtc_local_conn_ && rtc_local_conn_->IsMediaChannelReady()) {
+            auto queuing_msg_count = rtc_local_conn_->GetQueuingMediaMsgCount();
+            auto has_enough_buffer = rtc_local_conn_->HasEnoughBufferForQueuingMediaMessages();
+            int wait_count = 0;
+            while (queuing_msg_count >= kMaxQueuingFtMessages || !has_enough_buffer) {
+                if (!rtc_local_conn_->IsMediaChannelReady()) {
+                    return;
+                }
+                TimeUtil::DelayByCount(1);
+                queuing_msg_count = rtc_local_conn_->GetQueuingMediaMsgCount();
+                has_enough_buffer = rtc_local_conn_->HasEnoughBufferForQueuingMediaMessages();
+                wait_count++;
+            }
+            if (wait_count > 0) {
+                LOGI("===> [RTC Local Media] wait for {}ms", wait_count);
+            }
+
+            rtc_local_conn_->PostMediaMessage(msg);
+        }
         else {
             auto queuing_msg_count = this->GetQueuingMediaMsgCount();
             int wait_count = 0;
@@ -338,6 +382,25 @@ namespace tc
             }
 
             rtc_conn_->PostFtMessage(msg);
+        }
+        else if (rtc_local_conn_ && rtc_local_conn_->IsFtChannelReady()) {
+            auto queuing_msg_count = rtc_local_conn_->GetQueuingFtMsgCount();
+            auto has_enough_buffer = rtc_local_conn_->HasEnoughBufferForQueuingFtMessages();
+            int wait_count = 0;
+            while (queuing_msg_count >= kMaxQueuingFtMessages || !has_enough_buffer) {
+                if (!rtc_local_conn_->IsFtChannelReady()) {
+                    return;
+                }
+                TimeUtil::DelayByCount(1);
+                queuing_msg_count = rtc_local_conn_->GetQueuingFtMsgCount();
+                has_enough_buffer = rtc_local_conn_->HasEnoughBufferForQueuingFtMessages();
+                wait_count++;
+            }
+            if (wait_count > 0) {
+                LOGI("===> [RTC Local File] wait for {}ms", wait_count);
+            }
+
+            rtc_local_conn_->PostFtMessage(msg);
         }
         else {
             // TODO:
@@ -412,6 +475,10 @@ namespace tc
         raw_msg_cbk_ = std::move(cbk);
     }
 
+    void NetClient::SetOnRtcLocalVideoFrameCallback(OnRtcLocalVideoFrameCallback&& cbk) {
+        rtc_local_video_frame_cbk_ = std::move(cbk);
+    }
+
     void NetClient::HeartBeat() {
         auto msg = std::make_shared<Message>();
         msg->set_type(tc::kHeartBeat);
@@ -431,6 +498,9 @@ namespace tc
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             return rtc_conn_->GetQueuingMediaMsgCount();
         }
+        else if (rtc_local_conn_) {
+            return rtc_local_conn_->GetQueuingMediaMsgCount();
+        }
         else if (media_conn_) {
             return media_conn_->GetQueuingMsgCount();
         }
@@ -443,6 +513,9 @@ namespace tc
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             return rtc_conn_->GetQueuingFtMsgCount();
         }
+        else if (rtc_local_conn_) {
+            return rtc_local_conn_->GetQueuingFtMsgCount();
+        }
         else if (ft_conn_) {
             return ft_conn_->GetQueuingMsgCount();
         }
@@ -454,6 +527,9 @@ namespace tc
     void NetClient::On16msTimeout() {
         if (sdk_params_->enable_p2p_ && rtc_conn_) {
             rtc_conn_->On16msTimeout();
+        }
+        if (rtc_local_conn_) {
+            rtc_local_conn_->On16msTimeout();
         }
         if (ft_conn_) {
             ft_conn_->On16msTimeout();

@@ -37,6 +37,7 @@ namespace tc
     class MessageListener;
     class Connection;
     class WebRtcConnection;
+    class WebRtcLocalConnection;
     class SdkStatistics;
 
     class NetClient {
@@ -73,6 +74,10 @@ namespace tc
         void SetOnMonitorSwitchedCallback(OnMonitorSwitchedCallback&& cbk);
         void SetOnRawMessageCallback(OnRawMessageCallback&& cbk);
 
+        // decoded video frames(packed I420) from the webrtc local(direct) connection
+        using OnRtcLocalVideoFrameCallback = std::function<void(int w, int h, std::shared_ptr<Data> i420)>;
+        void SetOnRtcLocalVideoFrameCallback(OnRtcLocalVideoFrameCallback&& cbk);
+
         int64_t GetQueuingMediaMsgCount();
         int64_t GetQueuingFtMsgCount();
 
@@ -89,6 +94,8 @@ namespace tc
         std::shared_ptr<Connection> media_conn_ = nullptr;
         std::shared_ptr<Connection> ft_conn_ = nullptr;
         std::shared_ptr<WebRtcConnection> rtc_conn_ = nullptr;
+        std::shared_ptr<WebRtcLocalConnection> rtc_local_conn_ = nullptr;
+        OnRtcLocalVideoFrameCallback rtc_local_video_frame_cbk_;
         OnVideoFrameMsgCallback video_frame_cbk_;
         OnAudioFrameMsgCallback audio_frame_cbk_;
         OnCursorInfoSyncMsgCallback cursor_info_sync_cbk_;
