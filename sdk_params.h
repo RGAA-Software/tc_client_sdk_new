@@ -26,6 +26,8 @@ namespace tc
         bool enable_controller_ = false;
         std::string ip_;
         int port_;
+        // udp_direct(kUdpDirect)模式下 render 的 UDP 媒体端口,与 ws 控制面端口分开
+        int udp_port_ = 20381;
         std::string media_path_;
         std::string ft_path_;
         ClientType client_type_;

@@ -38,6 +38,7 @@ namespace tc
     class Connection;
     class WebRtcConnection;
     class WebRtcLocalConnection;
+    class UdpDirectConnection;
     class SdkStatistics;
 
     class NetClient {
@@ -103,6 +104,7 @@ namespace tc
         std::shared_ptr<Connection> ft_conn_ = nullptr;
         std::shared_ptr<WebRtcConnection> rtc_conn_ = nullptr;
         std::shared_ptr<WebRtcLocalConnection> rtc_local_conn_ = nullptr;
+        std::shared_ptr<UdpDirectConnection> udp_direct_conn_ = nullptr;
         OnRtcLocalVideoFrameCallback rtc_local_video_frame_cbk_;
         OnRtcLocalAudioCallback rtc_local_audio_cbk_;
         OnVideoFrameMsgCallback video_frame_cbk_;

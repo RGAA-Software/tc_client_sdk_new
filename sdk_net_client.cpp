@@ -17,6 +17,7 @@
 #include "connection/relay_connection.h"
 #include "connection/webrtc_connection.h"
 #include "connection/webrtc_local_connection.h"
+#include "connection/udp_direct_connection.h"
 #include "tc_common_new/time_util.h"
 #include "sdk_statistics.h"
 #include "tc_message_new/proto_converter.h"
@@ -95,6 +96,19 @@ namespace tc
             LOGI("Will connect by WebRTC local(direct), ip: {}, port: {}", sdk_params_->ip_, sdk_params_->port_);
             rtc_local_conn_ = std::make_shared<WebRtcLocalConnection>(sdk_params_, msg_notifier_);
             media_conn_ = rtc_local_conn_;
+        }
+        else if (network_type_ == ClientNetworkType::kUdpDirect) {
+            // GameStream 风格双通道:ws 控制面(可靠消息/状态机全复用) + 裸 UDP 媒体面,
+            // 见 docs/udp_gamestream_channel_plan.md
+            LOGI("Will connect by UDP direct, ws ctrl: {}:{}, udp media: {}:{}", sdk_params_->ip_,
+                 sdk_params_->port_, sdk_params_->ip_, sdk_params_->udp_port_);
+            if (sdk_params_->ssl_) {
+                media_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, media_path_);
+            }
+            else {
+                media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, media_path_);
+            }
+            udp_direct_conn_ = std::make_shared<UdpDirectConnection>(sdk_params_, msg_notifier_);
         }
         else {
             LOGE("Start failed! Don't know the connection type: {}", (int)network_type_);
@@ -195,6 +209,33 @@ namespace tc
                 }
             });
         }
+
+        if (udp_direct_conn_) {
+            // UDP 媒体面:组帧后合成的 kVideoFrame,与上面 rtc_local 相同的上送路径,
+            // 同样不回 Ack(裸 UDP 无应用层确认,丢帧走 IDR 请求恢复)
+            udp_direct_conn_->SetOnVideoMessageCallback([=, this](std::shared_ptr<tc::Message> m) {
+                this->stat_->AppendRecvDataSize((int64_t)m->ByteSizeLong());
+                if (raw_msg_cbk_) {
+                    raw_msg_cbk_(m);
+                }
+                if (video_frame_cbk_) {
+                    video_frame_cbk_(m);
+                }
+            });
+            // UDP 控制包踢人(kCtrlKick):复用"被接管"逻辑,与 kConnectionTakenOver 一致
+            udp_direct_conn_->SetOnKickCallback([=, this](const std::string& reason) {
+                LOGW("Udp direct connection kicked, reason: {}", reason);
+                msg_notifier_->SendAppMessage(SdkMsgConnectionTakenOver{});
+            });
+            // UDP watchdog 断线:走与媒体连接相同的断线回调路径
+            udp_direct_conn_->RegisterOnDisConnectedCallback([=, this]() {
+                LOGW("Udp direct media channel lost.");
+                if (dis_conn_cbk_) {
+                    dis_conn_cbk_();
+                }
+            });
+            udp_direct_conn_->Start(sdk_params_->ip_, sdk_params_->udp_port_, device_id_, stream_id_);
+        }
     }
 
     void NetClient::Exit() {
@@ -207,6 +248,9 @@ namespace tc
         }
         if (rtc_conn_) {
             rtc_conn_->Stop();
+        }
+        if (udp_direct_conn_) {
+            udp_direct_conn_->Stop();
         }
         LOGI("WS has exited...");
     }
@@ -224,6 +268,11 @@ namespace tc
         }
 
         if (net_msg->type() == tc::kVideoFrame) {
+            if (network_type_ == ClientNetworkType::kUdpDirect) {
+                // udp_direct 模式下视频走 UDP 媒体面,ws 控制面不应携带;
+                // 收到说明 render 未按 udp_media=1 过滤,直接丢弃防重复解码
+                return net_msg;
+            }
             {
 #if 0           //save file
                 tc::VideoFrame frame = net_msg->video_frame();
@@ -238,6 +287,7 @@ namespace tc
             }
         }
         else if (net_msg->type() == tc::kAudioFrame) {
+            // 注意:udp_direct 模式下音频仍走 ws 控制面(P2 才迁 UDP),此处不过滤
             if (audio_frame_cbk_) {
                 audio_frame_cbk_(net_msg);
             }
@@ -580,6 +630,10 @@ namespace tc
         }
         if (rtc_conn_) {
             rtc_conn_->RetryConnection();
+        }
+        if (udp_direct_conn_) {
+            // 裸 UDP 无重连概念,先空实现(ws 控制面断线即整体断线)
+            udp_direct_conn_->RetryConnection();
         }
     }
 }
