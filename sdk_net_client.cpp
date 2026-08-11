@@ -294,6 +294,10 @@ namespace tc
                 monitor_switched_cbk_(net_msg);
             }
         }
+        else if (net_msg->type() == tc::kConnectionTakenOver) {
+            // render 主动断开:被其它客户端接管
+            msg_notifier_->SendAppMessage(SdkMsgConnectionTakenOver{});
+        }
         else if (net_msg->type() == tc::kChangeMonitorResolutionResult) {
             auto sub = net_msg->change_monitor_resolution_result();
             msg_notifier_->SendAppMessage(SdkMsgChangeMonitorResolutionResult {

@@ -125,6 +125,13 @@ namespace tc
 
     };
 
+    // render 主动断开本连接(kConnectionTakenOver):被其它客户端接管,
+    // 需要明确提示并停止重连,而不是走普通断线重连流程
+    class SdkMsgConnectionTakenOver {
+    public:
+
+    };
+
     class SdkMsgFirstConfigInfoCallback {
     public:
         std::shared_ptr<tc::Message> msg_ = nullptr;
