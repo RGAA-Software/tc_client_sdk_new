@@ -9,6 +9,8 @@
 #include <memory>
 #include <string>
 #include <atomic>
+#include <chrono>
+#include <map>
 #include "tc_common_new/gr_udp_protocol.h"
 
 namespace asio2
@@ -76,6 +78,10 @@ namespace tc
         std::atomic_bool stopped_ = false;
         std::atomic_bool disconn_reported_ = false;
         std::atomic_int64_t last_recv_ms_ = 0;
+
+        // IDR 请求节流:per mon_slot 上次发 IDR 的时间(仅 udp io 线程访问,无需锁)
+        std::map<uint8_t, std::chrono::steady_clock::time_point> last_idr_time_;
+        static constexpr int64_t kIdrThrottleMs = 1000;
     };
 
 }

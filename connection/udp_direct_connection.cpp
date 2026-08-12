@@ -20,10 +20,26 @@ namespace tc
         reassembler_.on_frame_ = [this](const GrUdpFrameReassembler::CompleteFrame& frame) {
             this->OnCompleteFrame(frame);
         };
-        // 判丢:请 render 重发 IDR(空 mon_name = 所有屏)
+        // 判丢:请 render 重发 IDR(空 mon_name = 所有屏)。
+        // IDR 节流(moonlight 同款):网络差时狂要 IDR 只会加重拥塞——巨型 IDR 帧
+        // (可能 150+ shard)本身最易丢,丢了又要,无限 GOP 下永远花屏;按 mon_slot 1s 去重
         reassembler_.on_frame_lost_ = [this](uint8_t mon_slot, uint32_t lost_frame_index) {
+            auto now = std::chrono::steady_clock::now();
+            auto& last = last_idr_time_[mon_slot];
+            if (last.time_since_epoch().count() != 0 &&
+                now - last < std::chrono::milliseconds(kIdrThrottleMs)) {
+                return;
+            }
+            last = now;
             LOGW("Udp direct frame lost, mon slot: {}, frame: {}, request IDR.", mon_slot, lost_frame_index);
             this->RequestIdr("");
+        };
+        // 帧状态反馈:每帧一条(完成/判丢都报),驱动 render 端动态调 FEC 百分比;
+        // PostBinaryMessage 走 asio2 async_send 非阻塞,不会拖慢接收线程
+        reassembler_.on_frame_status_ = [this](uint8_t mon_slot, uint32_t frame_index,
+                                               uint16_t received, uint16_t lost) {
+            (void)mon_slot;
+            this->PostBinaryMessage(GrUdpProtocol::BuildFrameStatus(frame_index, received, lost));
         };
     }
 
@@ -46,6 +62,21 @@ namespace tc
                      udp_client_->local_port(), host_, udp_port_);
                 connected_ = true;
                 last_recv_ms_ = TimeUtil::GetCurrentTimestamp();
+                // 高动态画面一帧 ~89 个 UDP 包(~125KB)毫秒内突发,默认接收缓冲(~64KB)必然溢出丢包,
+                // 接收缓冲调 8MB、发送 1MB;Windows 上读回值可能与设置值不同,打出来即可
+                {
+                    asio::error_code ec;
+                    auto& sock = udp_client_->socket();
+                    sock.set_option(asio::socket_base::receive_buffer_size(8 * 1024 * 1024), ec);
+                    if (ec) LOGW("udp set rcvbuf 8MB failed: {}", ec.message());
+                    sock.set_option(asio::socket_base::send_buffer_size(1 * 1024 * 1024), ec);
+                    if (ec) LOGW("udp set sndbuf 1MB failed: {}", ec.message());
+                    asio::socket_base::receive_buffer_size rcv;
+                    asio::socket_base::send_buffer_size snd;
+                    sock.get_option(rcv, ec);
+                    sock.get_option(snd, ec);
+                    LOGI("udp direct socket buffer: rcv = {}, snd = {}", rcv.value(), snd.value());
+                }
                 // 立即发 hello,render 按源地址绑定媒体会话并触发该屏 IDR
                 this->PostBinaryMessage(GrUdpProtocol::BuildHello(device_id_, stream_id_));
                 // 1s 心跳:保持 NAT 映射,让 render 感知会话在线
