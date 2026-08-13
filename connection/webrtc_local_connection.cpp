@@ -175,7 +175,16 @@ namespace tc
                     }
                 });
             }
-            else if (state == kIceStateFailed || state == kIceStateDisconnected || state == kIceStateClosed) {
+            else if (state == kIceStateDisconnected) {
+                // 与 render 端 peer_callback 保持一致:ICE Disconnected 是瞬态,
+                // WebRTC 通常还能自行恢复到 Connected/Completed。这里不弹“断开重连”,
+                // 否则登录/显示切换或 take-over 的短暂抖动都会打断用户会话。
+                LOGI("Rtc local ice transient disconnected, keep connection state.");
+            }
+            else if (state == kIceStateFailed || state == kIceStateClosed) {
+                if (stopped_) {
+                    return;
+                }
                 if (connected_.exchange(false)) {
                     LOGW("Rtc local, disconnected, ice state: {}", state);
                     if (dis_conn_cbk_) {

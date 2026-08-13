@@ -222,6 +222,14 @@ namespace tc
                     video_frame_cbk_(m);
                 }
             });
+            // UDP 音频:jitter buffer 按序交付/丢帧信号(空 data)都从这里上送,
+            // 与 ws 路径一样直接进 audio_frame_cbk_(音频本就不走 raw_msg_cbk_)
+            udp_direct_conn_->SetOnAudioMessageCallback([=, this](std::shared_ptr<tc::Message> m) {
+                this->stat_->AppendRecvDataSize((int64_t)m->ByteSizeLong());
+                if (audio_frame_cbk_) {
+                    audio_frame_cbk_(m);
+                }
+            });
             // UDP 控制包踢人(kCtrlKick):复用"被接管"逻辑,与 kConnectionTakenOver 一致
             udp_direct_conn_->SetOnKickCallback([=, this](const std::string& reason) {
                 LOGW("Udp direct connection kicked, reason: {}", reason);
@@ -287,7 +295,11 @@ namespace tc
             }
         }
         else if (net_msg->type() == tc::kAudioFrame) {
-            // 注意:udp_direct 模式下音频仍走 ws 控制面(P2 才迁 UDP),此处不过滤
+            if (network_type_ == ClientNetworkType::kUdpDirect) {
+                // udp_direct 模式下音频走 UDP 媒体面,ws 控制面不应携带;
+                // 收到说明 render 未按 udp_media=1 过滤,直接丢弃防重复解码
+                return net_msg;
+            }
             if (audio_frame_cbk_) {
                 audio_frame_cbk_(net_msg);
             }

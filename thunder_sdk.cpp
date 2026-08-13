@@ -321,8 +321,15 @@ namespace tc
                 if (!audio_decoder_) {
                     audio_decoder_ = std::make_shared<OpusAudioDecoder>(frame.samples(), frame.channels());
                 }
-                std::vector<unsigned char> buffer(frame.data().begin(), frame.data().end());
-                auto pcm_data = audio_decoder_->Decode(buffer, frame.frame_size(), false);
+                std::vector<opus_int16> pcm_data;
+                if (frame.data().empty()) {
+                    // UDP 丢帧信号(extra="udp_lost"):无码流可解,走 Opus PLC 补一帧 20ms
+                    pcm_data = audio_decoder_->DecodeDummy(frame.frame_size());
+                }
+                else {
+                    std::vector<unsigned char> buffer(frame.data().begin(), frame.data().end());
+                    pcm_data = audio_decoder_->Decode(buffer, frame.frame_size(), false);
+                }
                 if (audio_frame_cbk_) {
                     auto data = Data::Make((char*)pcm_data.data(), pcm_data.size()*2);
                     audio_frame_cbk_(data, frame.samples(), frame.channels(), frame.bits());
