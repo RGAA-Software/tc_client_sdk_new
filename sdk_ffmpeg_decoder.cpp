@@ -334,7 +334,7 @@ namespace tc
             framesContext->height = FFALIGN(height, m_TextureAlignment);
 
             // We can have up to 16 reference frames plus a working surface
-            framesContext->initial_pool_size = 8;//17;//DECODER_BUFFER_POOL_SIZE;
+            framesContext->initial_pool_size = 17;
 
             auto d3d11vaFramesContext = (AVD3D11VAFramesContext*)framesContext->hwctx;
 

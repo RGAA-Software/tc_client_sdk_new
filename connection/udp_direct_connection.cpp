@@ -148,9 +148,9 @@ namespace tc
                 udp_client_->start_timer(kTimerHeartbeat, 1000, [this]() {
                     this->PostBinaryMessage(GrUdpProtocol::BuildHeartbeat(stream_id_));
                 });
-                // 无完整视频帧兜底:RFI 后 300ms 未恢复快速转 IDR;普通场景 2s 兜底。
-                // 定时器 250ms 跑一次,保证快速重试在 300ms 量级生效(节流 1s)。
-                udp_client_->start_timer(kTimerIdrRetry, 250, [this]() {
+                // 无完整视频帧兜底:2s 内没组出帧再请 IDR(节流 1s)。
+                // 丢帧恢复走 RFI 重试,不走这里。
+                udp_client_->start_timer(kTimerIdrRetry, 1000, [this]() {
                     this->CheckNeedIdr();
                 });
                 // watchdog:长时间收不到任何 UDP 包视为媒体面断开
@@ -282,13 +282,8 @@ namespace tc
         auto now = TimeUtil::GetCurrentTimestamp();
         auto last_frame = last_video_frame_ms_.load();
 
-        // RFI 已发但迟迟没组出新帧:恢复帧大概率也丢了,把兜底从 2s 缩短到 300ms。
-        auto last_rfi = last_rfi_request_ms_.load();
-        const bool rfi_pending = (last_rfi != 0 && now - last_rfi < kRfiRecoverWindowMs);
-        const int64_t timeout = rfi_pending ? kRfiRecoverTimeoutMs : kNoFrameTimeoutMs;
-
-        // 已经组出过完整视频帧,且在超时窗口内还有新帧,说明链路健康,不用打扰 render
-        if (last_frame != 0 && now - last_frame < timeout) {
+        // 单帧/多帧丢包靠 RFI 重试恢复(Moonlight 同款),这里只做"长时间完全没帧"的兜底。
+        if (last_frame != 0 && now - last_frame < kNoFrameTimeoutMs) {
             return;
         }
         // 1s 节流,防止关键帧风暴
@@ -297,8 +292,8 @@ namespace tc
             return;
         }
         last_idr_request_ms_ = now;
-        LOGW("Udp direct no complete video frame for >{}ms (rfi_pending={}), request IDR. last_frame={}, now={}",
-             timeout, rfi_pending, last_frame, now);
+        LOGW("Udp direct no complete video frame for >{}ms, request IDR. last_frame={}, now={}",
+             kNoFrameTimeoutMs, last_frame, now);
         this->RequestIdrKeepalive("");
     }
 

@@ -92,7 +92,7 @@ namespace tc
         std::atomic_int64_t last_recv_ms_ = 0;
         std::atomic_int64_t last_video_frame_ms_{0};
         std::atomic_int64_t last_idr_request_ms_{0};
-        // 最近一次 RFI 请求时间(ms)。用于 RFI 恢复帧也丢失时,快速升级为 IDR。
+        // 最近一次 RFI 请求时间(ms)。目前仅用于日志/诊断,恢复靠 RFI 重试而非 300ms 转 IDR。
         std::atomic_int64_t last_rfi_request_ms_{0};
         std::atomic_uint64_t recv_pkt_count_{0};
         std::atomic_uint64_t recv_video_pkt_count_{0};
@@ -102,11 +102,9 @@ namespace tc
         std::map<uint8_t, std::chrono::steady_clock::time_point> last_idr_time_;
         std::map<uint8_t, std::chrono::steady_clock::time_point> last_rfi_time_;
         static constexpr int64_t kIdrThrottleMs = 1000;
-        static constexpr int64_t kRfiThrottleMs = 250;
-        // 发过 RFI 后,若该窗口内仍组不出完整帧(恢复帧也丢了),快速转 IDR;
-        // 而非干等 kNoFrameTimeoutMs 的长兜底。
-        static constexpr int64_t kRfiRecoverTimeoutMs = 300;
-        static constexpr int64_t kRfiRecoverWindowMs = 2000;
+        // RFI 不节流(Moonlight 同款):每次判丢立即发 RFI,靠 render 的 range 失效覆盖连续丢帧;
+        // 恢复帧再丢也会被下一次判丢触发重发。0 = 关闭节流。
+        static constexpr int64_t kRfiThrottleMs = 0;
         static constexpr int64_t kNoFrameTimeoutMs = 2000;
 
         // 音频判丢日志节流计数(仅 udp io 线程访问):正常交付时清零
