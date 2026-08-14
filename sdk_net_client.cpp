@@ -102,11 +102,15 @@ namespace tc
             // 见 docs/udp_gamestream_channel_plan.md
             LOGI("Will connect by UDP direct, ws ctrl: {}:{}, udp media: {}:{}", sdk_params_->ip_,
                  sdk_params_->port_, sdk_params_->ip_, sdk_params_->udp_port_);
+            // 文件传输复用 ws 控制面同一条 ws 服务,走独立 /file/transfer 路由;
+            // 之前 kUdpDirect 未建 ft_conn_,导致文件传输(含剪贴板文件)被静默丢弃。
             if (sdk_params_->ssl_) {
                 media_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, media_path_);
+                ft_conn_ = std::make_shared<WssConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, ft_path_);
             }
             else {
                 media_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, media_path_);
+                ft_conn_ = std::make_shared<WsConnection>(sdk_params_, msg_notifier_, sdk_params_->ip_, sdk_params_->port_, ft_path_);
             }
             udp_direct_conn_ = std::make_shared<UdpDirectConnection>(sdk_params_, msg_notifier_);
         }
