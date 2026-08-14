@@ -9,6 +9,7 @@
 #include "tc_common_new/message_notifier.h"
 #include "tc_common_new/thread.h"
 #include "tc_common_new/time_util.h"
+#include <atomic>
 #include "tc_common_new/folder_util.h"
 #include "tc_common_new/string_util.h"
 #include "tc_client_sdk_new/gl/raw_image.h"
@@ -31,6 +32,54 @@
 
 namespace tc
 {
+
+    std::atomic<uint64_t> g_last_mouse_send_us{0};
+
+    namespace {
+        // [LAT-decode] 客户端解码耗时统计(D3D11VA 硬解,含 GPU 等待)
+        std::atomic<uint64_t> g_decode_frames{0};
+        std::atomic<uint64_t> g_decode_us_sum{0};
+        std::atomic<uint64_t> g_decode_us_max{0};
+
+        void DumpDecodeLatencyIfDue() {
+            static std::atomic<uint64_t> s_last_dump_us{0};
+            auto now = TimeUtil::GetCurrentTimePointUS();
+            auto last = s_last_dump_us.load();
+            if (now - last < 5000000) {
+                return;
+            }
+            if (!s_last_dump_us.compare_exchange_weak(last, now)) {
+                return;
+            }
+            auto n = g_decode_frames.exchange(0);
+            auto sum = g_decode_us_sum.exchange(0);
+            auto mx = g_decode_us_max.exchange(0);
+            LOGI("[LAT-decode] frames={} avg_us={} max_us={}",
+                 n, n > 0 ? (sum / n) : 0, mx);
+        }
+
+        // [LAT-roundtrip] 操作往返延迟:最近一次鼠标发送 -> 本帧解码完成(含输入+DWM 垂直同步+视频链路)
+        std::atomic<uint64_t> g_roundtrip_cnt{0};
+        std::atomic<uint64_t> g_roundtrip_us_sum{0};
+        std::atomic<uint64_t> g_roundtrip_us_max{0};
+
+        void DumpRoundtripLatencyIfDue() {
+            static std::atomic<uint64_t> s_last_dump_us{0};
+            auto now = TimeUtil::GetCurrentTimePointUS();
+            auto last = s_last_dump_us.load();
+            if (now - last < 5000000) {
+                return;
+            }
+            if (!s_last_dump_us.compare_exchange_weak(last, now)) {
+                return;
+            }
+            auto n = g_roundtrip_cnt.exchange(0);
+            auto sum = g_roundtrip_us_sum.exchange(0);
+            auto mx = g_roundtrip_us_max.exchange(0);
+            LOGI("[LAT-roundtrip] samples={} avg_us={} max_us={}",
+                 n, n > 0 ? (sum / n) : 0, mx);
+        }
+    }
 
     std::shared_ptr<ThunderSdk> ThunderSdk::Make(const std::shared_ptr<MessageNotifier>& notifier) {
         return std::make_shared<ThunderSdk>(notifier);
@@ -254,7 +303,17 @@ namespace tc
                     }
                     received_files_[mon_name]->Append(frame.data());
                 }
+                // [LAT-decode] 计时单帧解码耗时
+                auto dec_beg = TimeUtil::GetCurrentTimePointUS();
                 auto ret = video_decoder->Decode(frame.data());
+                auto dec_us = TimeUtil::GetCurrentTimePointUS() - dec_beg;
+                ++g_decode_frames;
+                g_decode_us_sum += dec_us;
+                {
+                    auto prev = g_decode_us_max.load();
+                    while (dec_us > prev && !g_decode_us_max.compare_exchange_weak(prev, dec_us)) {}
+                }
+                DumpDecodeLatencyIfDue();
                 if (!ret.has_value() && ret.error() != 0) {
                     IncreaseDecodeFailedCount(frame.mon_name());
                     if (GetDecodeFailedCount(frame.mon_name()) > 60) {
@@ -300,6 +359,21 @@ namespace tc
                 }
 
                 //LOGI("decode image size {}x{}", raw_image->img_width, raw_image->img_height);
+                // [LAT-roundtrip] 操作往返:最近一次鼠标发送 -> 本帧解码完成(只统计 100ms 内,过滤空闲期)
+                {
+                    auto last_mouse = g_last_mouse_send_us.load();
+                    if (last_mouse != 0) {
+                        auto now_us = TimeUtil::GetCurrentTimePointUS();
+                        auto rt_us = now_us - last_mouse;
+                        if (rt_us < 100000) {
+                            ++g_roundtrip_cnt;
+                            g_roundtrip_us_sum += rt_us;
+                            auto prev = g_roundtrip_us_max.load();
+                            while (rt_us > prev && !g_roundtrip_us_max.compare_exchange_weak(prev, rt_us)) {}
+                            DumpRoundtripLatencyIfDue();
+                        }
+                    }
+                }
                 if (video_frame_cbk_) {
                     video_frame_cbk_(raw_image, cap_mon_info);
                 }

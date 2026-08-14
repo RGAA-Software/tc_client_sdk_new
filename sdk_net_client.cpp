@@ -319,12 +319,17 @@ namespace tc
                 hb_cbk_(net_msg);
             }
 
-            // calculate network delay
+            // calculate network delay (心跳与鼠标事件同走 WS 控制面,此 RTT 即输入回环网络往返)
             const auto& hb = net_msg->on_heartbeat();
             auto send_timestamp = hb.timestamp();
             auto current_timestamp = TimeUtil::GetCurrentTimestamp();
             auto diff = current_timestamp - send_timestamp;
             stat_->AppendNetTimeDelay((int32_t)diff);
+            // 每 5 次心跳打一条,观测输入网络往返是否异常(局域网正常应 1~3ms)
+            static int s_hb_log_cnt = 0;
+            if (++s_hb_log_cnt % 5 == 1) {
+                LOGI("[LAT-net] heartbeat rtt={}ms", diff);
+            }
 
             // save render statistics
             auto& monitors_info = hb.monitors_info();

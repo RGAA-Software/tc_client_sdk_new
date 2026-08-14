@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <mutex>
+#include <atomic>
 
 #include "tc_message.pb.h"
 #include "sdk_params.h"
@@ -29,6 +30,10 @@ namespace tc
     class SdkTimer;
     class SdkStatistics;
     class File;
+
+    // [LAT-roundtrip] 客户端最近一次发送鼠标事件的单调时间戳(µs),由 ct_video_widget 写入,
+    // thunder_sdk 在解码出帧时读取,计算「鼠标发出 -> 看到新帧」的操作往返延迟。
+    extern std::atomic<uint64_t> g_last_mouse_send_us;
 
     // callbacks
     using OnVideoFrameDecodedCallback = std::function<void(std::shared_ptr<RawImage>, const SdkCaptureMonitorInfo&)>;
